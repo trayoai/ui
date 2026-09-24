@@ -1,6 +1,7 @@
 ---
 import '../styles/site.css'
 import { INSTALL_STEPS, VALUE, INVENTORY, API_NOTES, REPO, SITE } from '../content/kit'
+import heroLines from '../../public/hero-lines.svg?raw'
 
 const repoUrl = `https://github.com/${REPO}`
 
@@ -59,6 +60,11 @@ const md = (s: string, size = '12.5px') =>
 
   <!-- hero -->
   <section id="hero" class="hero panel mx-auto mt-2 flex max-w-6xl flex-col items-center justify-center px-6 pt-20 pb-20 text-center text-white md:pt-24 md:pb-24">
+    <div
+      class="hero-lines pointer-events-none absolute top-1/2 left-1/2 w-full -translate-x-1/2 -translate-y-1/2"
+      aria-hidden="true"
+      set:html={heroLines}
+    />
     <div class="relative z-10 flex max-w-4xl flex-col items-center">
       <p class="mb-5 text-xs font-semibold tracking-widest text-white/75 uppercase">Component library</p>
       <h1 class="text-4xl font-bold sm:text-5xl md:text-6xl">
@@ -79,6 +85,22 @@ const md = (s: string, size = '12.5px') =>
     </div>
 
   <script is:inline>
+    // Stagger the line sweep. Paths come in pairs (bar + hairline), and the
+    // wave runs from the far side back, matching the marketing site's order.
+    (function () {
+      var paths = document.querySelectorAll('.hero-lines path')
+      if (!paths.length) return
+      var pairs = Math.ceil(paths.length / 2)
+      var STAGGER = 0.07
+      document.querySelector('.hero-lines').style.setProperty(
+        '--sweep-duration', (pairs * STAGGER).toFixed(2) + 's'
+      )
+      for (var i = 0; i < paths.length; i++) {
+        var pair = Math.floor(i / 2)
+        paths[i].style.animationDelay = ((pairs - 1 - pair) * STAGGER).toFixed(2) + 's'
+      }
+    })();
+
     // Peach glow follows the pointer across the hero.
     //
     // Eased in rAF rather than with a CSS transition: interpolating a custom

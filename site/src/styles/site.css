@@ -186,12 +186,56 @@
     --glow-y: 72%;
   }
 }
-/* The site layers its noise at 50% in overlay; the texture is what keeps a
-   flat purple field from banding across a wide panel. */
+/* The grain. Same asset and same treatment as www.trayo.ai — repeat-tiled at
+   50% in `overlay`. This is most of what makes the panel read as gritty rather
+   than as a flat CSS gradient. */
 .hero::after {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
+  background-image: url('/noise.svg');
+  background-repeat: repeat;
   mix-blend-mode: overlay;
   opacity: 0.5;
+}
+
+/* ------------------------------------------------------------ hero lines
+   The vertical bars raining down the panel, lifted from the marketing site's
+   hero-lines.svg. Each bar is a pair of paths (the wide translucent column and
+   the hairline that runs on past it).
+
+   A wave of brightness sweeps across them: every pair animates the same
+   keyframe, offset by its index, so the highlight travels rather than pulsing
+   in unison. The site drives this with the `motion` library; here it is plain
+   CSS keyframes with a per-path animation-delay, which needs no runtime and
+   looks the same. */
+.hero-lines {
+  opacity: 0.4;
+}
+.hero-lines svg {
+  width: 100%;
+  height: auto;
+  min-width: 80rem;
+}
+.hero-lines path {
+  opacity: 0.18;
+  will-change: opacity, transform;
+  animation: hero-line-sweep var(--sweep-duration, 4.76s) ease-in-out infinite;
+}
+
+/* Percentages are the site's timings expressed against the full sweep:
+   0.5s fade in (10.5%), 0.8s hold (to 27.3%), 0.5s fade out (to 37.8%), then
+   the pair rests until the wave comes round again. */
+@keyframes hero-line-sweep {
+  0% { opacity: 0.18; transform: translateY(0); }
+  10.5% { opacity: 0.55; transform: translateY(-4px); }
+  27.3% { opacity: 0.55; transform: translateY(-4px); }
+  37.8% { opacity: 0.18; transform: translateY(0); }
+  100% { opacity: 0.18; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-lines path {
+    animation: none;
+    opacity: 0.18;
+  }
 }
 
 /* Vertical hairlines over a sand panel — the site's feature-block texture. */
