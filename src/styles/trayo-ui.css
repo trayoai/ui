@@ -1,0 +1,19 @@
+/* @trayo/gtm-ui — the one stylesheet to import.
+ *
+ * In your app's CSS entry:
+ *
+ *   @import "tailwindcss";
+ *   @import "@trayo/gtm-ui/styles";
+ *   @source "../node_modules/@trayo/gtm-ui/src";
+ *
+ * Order matters. Tailwind must come first (this file extends its theme via
+ * `@theme inline`), and the `@source` line tells Tailwind v4 to scan the
+ * library's components so their utility classes get generated.
+ *
+ * Light is the default. Put `class="dark"` on <html> for the dark palette.
+ */
+
+@import './fonts.css';
+@import './tokens.css';
+@import './typography.css';
+@import './animations.css';

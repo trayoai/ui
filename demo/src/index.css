@@ -1,0 +1,7 @@
+@import 'tailwindcss';
+@import '../../src/styles/trayo-ui.css';
+
+/* Tell Tailwind v4 to scan the library source so its utilities get generated.
+   In a consuming app this is `@source "../node_modules/@trayo/gtm-ui/src";` */
+@source '../../src';
+@source '.';

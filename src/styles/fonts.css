@@ -1,0 +1,36 @@
+/* Self-hosted Polymath — the prototype's heading typeface (@trayo/shared).
+ *
+ * Polymath is a licensed font (not on Google Fonts), so it ships as woff2
+ * alongside this file and is declared here. The role-based heading classes in
+ * typography.css reference it via `var(--font-heading)`.
+ *
+ * Imported by every CSS entry that uses typography.css, BEFORE typography.css:
+ *   - apps/web/src/styles/theme.css
+ *   - apps/admin/src/styles/index.css
+ *   - packages/storybook/.storybook/preview.css
+ *
+ * url()s are relative to this file; the consumer's bundler (Vite) rebases and
+ * emits the woff2 from packages/shared/src/styles/fonts/.
+ */
+
+@font-face {
+  font-family: 'Polymath';
+  src: url('./fonts/polymath-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Polymath';
+  src: url('./fonts/polymath-semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Polymath';
+  src: url('./fonts/polymath-bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}

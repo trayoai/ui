@@ -1,0 +1,1152 @@
+/* Shared design tokens (@trayo/shared)
+ *
+ * Single source of truth for:
+ *   1. CSS custom properties (:root / .light / .dark scopes)
+ *   2. Tailwind v4 @theme inline alias block (so utilities like
+ *      `bg-primary`, `border-border`, `text-muted-foreground` resolve)
+ *   3. A minimal @layer base reset that makes bare border/outline
+ *      utilities inherit the themed --border/--ring tokens instead
+ *      of Tailwind v4's `currentColor` default (which renders as
+ *      white-on-dark against the dark palette).
+ *
+ * Consumed by apps/web, apps/admin, and packages/storybook.
+ *
+ * Import AFTER `@import "tailwindcss"` and BEFORE `@source ...` in
+ * the consumer's CSS entry. Do NOT add @import "tailwindcss" here —
+ * the consumer owns Tailwind.
+ *
+ * LAYOUT / SPACING / RADIUS (extracted into the @theme block below):
+ *   - Radius: --radius is the prototype --r-card base (12px); the ramp derives
+ *     sm/md/lg/xl = 8/10/12/16. Pills use Tailwind's built-in `rounded-full`.
+ *   - Semantic layout tokens — feed column width, sidebar width, card padding,
+ *     inter-card gap — emit utilities (max-w-feed / w-sidebar / p-card /
+ *     gap-feed-gap). Provisioned for the Phase 6 migration; consumed then.
+ *   - We do NOT mirror the prototype's raw `--sp-1..8` scale: it is identical
+ *     to Tailwind's default 4px spacing scale (4/8/12/16/20/24/32/40 =
+ *     spacing 1/2/3/4/5/6/8/10), so Tailwind's scale IS the spacing system.
+ *
+ * INTENTIONALLY NOT PORTED from the prototype:
+ *   - The runtime SCALING systems `[data-density]` (compact/cozy/comfortable)
+ *     and `[data-size]` (--feed-zoom 1.0→1.42). These were tweaks-panel knobs
+ *     for design exploration, not a product feature; the foundation ships a
+ *     single fixed density (the prototype's cozy defaults). Re-introduce as
+ *     tokens only if the product adds a user-facing density control.
+ */
+
+/* Class-based dark variant (standard shadcn/Tailwind convention).
+ *
+ * This design system is light-by-default: `:root` ships the LIGHT palette, so an
+ * un-classed surface opens light — matching the approved prototype, where both
+ * next2-app.jsx and table-app.jsx default to light. `.dark` opts a subtree into
+ * the dark palette. Tailwind's `dark:` variant therefore engages ONLY under
+ * `.dark` — the convention every shadcn component is authored for (rather than
+ * Tailwind v4's default `prefers-color-scheme`).
+ *
+ * Apps opt in explicitly: apps/admin's ThemeProvider toggles `.light`/`.dark`
+ * (default dark); apps/web pins `class="dark"` on <html> to preserve its
+ * current always-dark shell until its pages migrate to the light-default views.
+ */
+@custom-variant dark (&:is(.dark, .dark *));
+
+:root {
+  --radius: 0.75rem; /* 12px — prototype --r-card base; ramp below → 8/10/12/16 */
+
+  /* Leading steps used by the type roles. `--lh-none` is for single-glyph
+     boxes (icon slots, count badges) where any leading offsets the glyph.
+     These are the APP's leading scale and deliberately do not reuse Tailwind's
+     `--leading-*` names: the values differ (ours 1.3/1.4/1.45/1.5 vs theirs
+     1.25/1.375/1.5/1.625), so taking their names would silently retune every
+     `leading-*` utility in both apps. */
+  --lh-none: 1;
+  --lh-tight: 1.3;
+  --lh-snug: 1.4;
+  --lh-normal: 1.45;
+  --lh-relaxed: 1.5;
+
+  --chart-1: oklch(0.69 0.19 61.3);
+  --chart-2: oklch(0.64 0.224 348.32);
+  --chart-3: oklch(0.537 0.149 264.05);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+
+  /* Self-serve funnel stages — a SEQUENTIAL violet ramp (deeper stage =
+   * more emphasis), not categorical: the stages nest, they don't compete.
+   * A step names a STAGE, so funnel-stages.tsx and trend-chart.tsx must both
+   * read them; changing one alone silently splits the page in two.
+   *
+   * Light defaults; `.dark` re-picks its own steps from the same ramp rather
+   * than flipping, because alpha over a surface cannot hold contrast at both
+   * ends. Two bounds fight here and both are load-bearing:
+   *   - Every step clears 3:1 against --color-app-card, since each can fill a
+   *     whole bar on a day the others are zero. That caps the ramp at the
+   *     surface end (light stops at 500; dark stops at 500 going the other
+   *     way, and at 300 before the violets lose chroma and read grey).
+   *   - Adjacent steps must stay apart, or the bands blur together. So spread
+   *     to the far end rather than bunching near the cap: light 500/800/950
+   *     scores CVD ΔE 20.9 where the tighter 500/600/800 managed only 12.3.
+   * Light 950/800/500 → 14.99 / 8.84 / 4.17 vs #fffdf8, CVD ΔE 20.9.
+   * Dark  300/400/500 → 7.95 / 5.40 / 3.47 vs #232837, CVD ΔE 22.5.
+   * (The chart's neutral "not tracked" band is held to the same bar: solid
+   * --muted-foreground = 3.07 light / 3.90 dark. At 0.25 alpha it was 1.27.) */
+  --funnel-sov: var(--color-violet-950);
+  --funnel-activated: var(--color-violet-800);
+  --funnel-started: var(--color-violet-500);
+
+  /* The two RATE lines on the trend chart. Deliberately NOT the --funnel-*
+   * ramp above: those bands are sequential (stages nest, darker = deeper),
+   * but two lines being compared are categorical — they need separate HUES,
+   * not two steps of one hue. Read as lines, violet-800 vs violet-950 is
+   * illegible however well it measures as filled bands.
+   * Light 600s / dark 400s, because a 2px line needs the contrast a big fill
+   * can do without: amber-500 is only 2.11:1 on #fffdf8, teal-500 2.45:1.
+   * Light → CVD ΔE 57.8, all >=3:1. Dark → ΔE 74.1, all >=3:1. */
+  --funnel-rate-activated: var(--color-amber-600);
+  --funnel-rate-sov: var(--color-teal-600);
+
+  /* ================================================================== */
+  /* Theme-invariant primitives — hold the SAME values in light + dark.  */
+  /* `.dark` overrides only the surface / text / border / alias layers   */
+  /* (everything below the "LIGHT palette" banner), never these.         */
+  /* ================================================================== */
+
+  /* Layer 1 — accent ramps (Tailwind-shaped) */
+  --color-indigo-300: #a5b4fc;
+  --color-indigo-400: #818cf8;
+  --color-indigo-500: #6366f1;
+  --color-indigo-600: #4f46e5;
+  --color-indigo-700: #4338ca;
+
+  /* Trayo in-app brand accent — violet in both themes.
+     Drives --accent-brand → --primary / --ring / CTAs. */
+  --color-brand: #845CFF;
+
+  --color-cyan-400: #22d3ee;
+  --color-cyan-500: #06b6d4;
+  --color-cyan-600: #0891b2;
+
+  /* Prototype accent ramps (EventCard type tones, person avatars, TypeChip) */
+  --color-emerald-300: #6ee7b7;
+  --color-emerald-400: #34d399;
+  --color-emerald-500: #10b981;
+  --color-amber-300: #fcd34d;
+  --color-amber-400: #fbbf24;
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #d97706;
+  --color-red-400: #f87171;
+  --color-red-500: #ef4444;
+  --color-violet-300: #c4b5fd;
+  --color-violet-400: #a78bfa;
+  --color-violet-500: #8b5cf6;
+  --color-violet-800: #5b21b6;
+  --color-violet-950: #2e1065;
+  --color-teal-400: #2dd4bf;
+  --color-teal-600: #0d9488;
+
+  /* Signal-type palette — newsfeed rail hue (TYPE_HUE → var(--dot-*)) AND the
+     accounts type-chip / tooltip dots. The approved prototype (next2-app.jsx +
+     table-app.jsx) uses this one palette for every type accent. */
+  --dot-news: #bc7e66;
+  --dot-career: #47b48e;
+  --dot-job: #bc9bd2;
+  /* People/watchlist signals (TRA-1065). Blue keeps it clearly distinct from
+     career green, which is the one it sits next to and is most confusable
+     with — both concern a person changing roles. */
+  --dot-people: #6f93d6;
+
+  /* Admin table chip palette — tenant counts pill (Accts / Sgnls / Evts)
+     and plan tier badges. Same hue/brightness family as the signal-type
+     palette but scoped to admin table UI. */
+  --pill-acct: #7399bb;
+  --pill-sgnl: #c4a25a;
+  --pill-evt: #c47d8d;
+  --pill-plan-free: #5aaebd;
+  --pill-plan-pro: #8b7ec8;
+  --pill-plan-ent: #b87ab0;
+  --pill-status-done: #5aab7a;
+  --pill-status-run: #7b9ed4;
+  --pill-status-fail: #c4706a;
+
+  /* Third-party brand accents — official external brand colors, theme-invariant
+     (LinkedIn's brand blue). */
+  --linkedin-brand: #0a66c2;
+
+  /* Brand hero gradient — CTA buttons + person avatars (prototype --brand-gradient) */
+  --gradient-cta: linear-gradient(135deg, #FFB82B 0%, #FF4F9E 100%);
+
+  /* Identity avatar gradients (prototype .opt-av-fb / .anchor-avatar tones).
+     Theme-invariant; white initials sit on top. */
+  --gradient-avatar:        linear-gradient(135deg, #6E79D6, #8E5BD0);
+  --gradient-avatar-violet: linear-gradient(135deg, #A78BFA, #7C3AED);
+  --gradient-avatar-teal:   linear-gradient(135deg, #5EEAD4, #14B8A6);
+  --gradient-avatar-amber:  linear-gradient(135deg, #FCD34D, #F59E0B);
+  --gradient-avatar-rose:   linear-gradient(135deg, #FDA4AF, #F43F5E);
+
+  /* Logo avatar fallback fill — solid warm orange; theme-invariant. */
+  --color-avatar-fallback: #e8a371;
+
+  /* Owner-stack fallback fills — monochromatic steps derived from surface-well.
+     Position-indexed (0 = darkest); dark initials sit on top. Overridden in .dark. */
+  --avatar-fallback-0: #e7c8a9;
+  --avatar-fallback-1: #ecd3ba;
+  --avatar-fallback-2: #efdbc7;
+
+  /* Owner marks in the audience bar's Assign pill (TRA-1651): the owner count
+     inside it and the unassigned dot on its corner. The fill is the owner
+     avatar tone (--avatar-fallback-0) in BOTH themes, because the marks stand
+     in for the faces they replaced and must read as the same family as the
+     owner avatars in the picker; white numerals exactly as the avatars set
+     their initials. White on the light tan is 1.59 — a mark, not text; the
+     count is spoken in full by the pill's tooltip and its sr-only summary. */
+  --owner-mark: #e7c8a9;
+  --owner-mark-foreground: #ffffff;
+
+  /* ================================================================== */
+  /* LIGHT palette (DEFAULT). An un-classed surface renders this, which   */
+  /* matches the approved prototype (both views open in light). `.dark`   */
+  /* mirrors this structure with the dark values. Exact prototype hex     */
+  /* (App-prototype/src/tokens.css `.light` scope) — no slate approxes.   */
+  /* ================================================================== */
+  --sidebar: hsl(0 0% 98%);
+  --sidebar-foreground: hsl(222 47% 11%);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: hsl(210 40% 96%);
+  --sidebar-accent-foreground: hsl(222 47% 11%);
+  --sidebar-hover: hsl(214 32% 88%);
+  --sidebar-border: hsl(214 32% 91%);
+  --sidebar-ring: var(--ring);
+
+  /* Layer 1 — app-surface ladder (light = prototype Option-2 warm cream:
+     signal.css [data-theme="light"] + next3.css [data-palette="new"] .card). */
+  --color-app-shell:       #fdf9ee; /* outer page background (--bg-app) */
+  --color-app-card:        #fffdf8; /* elevated card surface (--bg-card) */
+  --color-app-well:        #f8f1df; /* inset / nested surface (--bg-well) */
+  --color-app-row:         #FEFBF4; /* hovered row / chip surface (--bg-card-hover) */
+  --color-app-raised:      #ffffff; /* card-gradient top stop (--bg-raised) */
+
+  /* Layer 2 — semantic tokens (light). Components reference these;
+     theme swaps touch only Layer 2 + 3. */
+  --surface-shell: var(--color-app-shell);
+  --surface-card: var(--color-app-card);
+  --surface-well: var(--color-app-well);
+  --surface-row: var(--color-app-row);
+  /* Hover cards / popovers — one step brighter than card (pure white in
+     light, the raised step in dark) so floating surfaces read as elevated. */
+  --surface-popover: var(--color-app-raised);
+  /* Dialogs (TRA-1439). Light: the shell, what DialogContent always painted.
+     Dark: the raised surface — the highest elevation gets the lightest
+     surface, and a dialog sits above every popover. */
+  --surface-dialog: var(--surface-shell);
+  /* Fields (TRA-1439). What the Input primitive always painted — the raised
+     (white) surface in light, the well in dark — as ONE token, so the fill is
+     a single class that a consumer's `bg-transparent` cancels in both themes.
+     The forked `bg-app-raised dark:bg-surface-well` left the dark half alive
+     under an override. */
+  --surface-field: var(--color-app-raised);
+  /* CSV drop target inside the import dialogs (TRA-2040). Light: the card, a
+     step above the dialog shell, so the target reads as its own surface.
+     Dark: the row — the dialog is already the raised surface, so nothing can
+     step up, and the card there is two steps DOWN (a black pit). The row is
+     the same one-step recess the segmented-switch trough takes on a dialog. */
+  --surface-dropzone: var(--surface-card);
+  /* Opaque hover fill for a clickable card or row on the shell (TRA-2040).
+     Light: the well — what the shadcn `--accent` alias already gives such a
+     card. Dark: the row, the ladder's hover step. `--accent` in dark is a
+     translucent white wash, right for menu items on any popover, but on a
+     card it REPLACES the card's own fill and the shell's glow bleeds through. */
+  --surface-hover: var(--surface-well);
+
+  /* Card + shell gradients (prototype next3.css .card / .app). Light shell is
+     flat cream; light card is a subtle white→cream gradient. */
+  --gradient-shell: linear-gradient(160deg, #fdf9ee 0%, #fdf9ee 100%);
+  --gradient-card: linear-gradient(160deg, var(--color-app-raised) 0%, #FEFBF4 100%);
+  --gradient-card-hover: linear-gradient(160deg, #ffffff 0%, #FFFDF8 40%, #FEFBF4 100%);
+
+  /* Shell canvas grain — prototype `.app::before` SVG fractal-noise; same in
+     both themes. The warm/cool radial glows over it differ per theme (see the
+     `.app-shell-bg` rule below). */
+  --shell-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.36  0 0 0 0 0.18  0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/></svg>");
+
+  --text-primary: #1c1a17;   /* prototype --fg-1 */
+  --text-secondary: #6b6253; /* prototype --fg-2 */
+  --text-muted: #9a9180;     /* prototype --fg-3 */
+  --text-inverse: #FFFFFF;
+  /* Per-elevation text scale (TRA-1439). Light has one scale; the -raised
+     pair equals the base. The -card pair is the base value as a resolvable
+     alias — `var()` in a custom property resolves where it is DECLARED, so a
+     nested reset can reach it after a raised container has overridden
+     --text-secondary itself. See the @layer base rule at the end of this file. */
+  --text-secondary-card: var(--text-secondary);
+  --text-muted-card: var(--text-muted);
+  --text-secondary-raised: var(--text-secondary);
+  --text-muted-raised: var(--text-muted);
+
+  --border-subtle: rgb(120 90 40 / 0.14);  /* prototype --line */
+  --border-strong: rgb(120 90 40 / 0.24);  /* prototype --line-strong */
+
+  /* Brand accent — VIOLET in both themes (prototype Option-2 `--accent`).
+     `.dark` uses the brighter violet --color-brand-bright. `-text` is the
+     readable-on-bg accent, `-soft` a tint fill, `-line` an accent border. */
+  --accent-brand: var(--color-brand);
+  --accent-brand-foreground: hsl(0 0% 100%);
+  --accent-text: #845CFF;
+  --accent-soft: rgba(132, 92, 255, 0.10);
+  --accent-line: rgba(132, 92, 255, 0.38);
+
+
+  /* Status — success (emerald) + warning (amber), built from the palette
+     emerald/amber ramps. Mirrors the accent set: `-text` is readable on the
+     surface, `-soft` a tint fill, `-line` a hairline border. Brightens in
+     `.dark` (the `-text` flips to a light ramp step; alphas bump). */
+  --success-text: #047857;
+  --success-soft: rgba(16, 185, 129, 0.10);
+  --success-line: rgba(16, 185, 129, 0.38);
+  --warning-text: #b45309;
+  --warning-soft: rgba(245, 158, 11, 0.10);
+  --warning-line: rgba(245, 158, 11, 0.38);
+
+  /* Sidebar is a warm cream in light (prototype light --bg-sidebar) */
+  --surface-sidebar: #fefdf9;
+
+  /* Card edge — 1px hairline ring (prototype .card box-shadow); flips per theme. */
+  --shadow-card: 0 0 0 1px rgba(60, 40, 20, 0.08);
+  /* Card hover lift — ring + soft drop (prototype .card:hover, next3.css:394). */
+  --shadow-card-hover: 0 8px 20px rgba(60, 40, 20, 0.045), 0 1px 4px rgba(60, 40, 20, 0.025), 0 0 0 1px rgba(60, 40, 20, 0.08);
+
+  /* Find hero search-bar brand glow (TRA-1172). Brand purple rgb(132 92 255)
+     is the canonical brand; theme-invariant glow (matches the prototype). */
+  --shadow-search-glow: 0 1px 2px rgba(16, 17, 26, 0.04),
+    0 18px 50px -28px rgba(132, 92, 255, 0.45);
+  --shadow-search-glow-focus: 0 0 0 4px var(--accent-soft),
+    0 22px 60px -26px rgba(132, 92, 255, 0.55);
+
+  /* Floating bulk-actions bar drop shadow (design table.html `.selbar`): a soft
+     key + tight contact shadow so the pill reads as floating above the table.
+     Read via `shadow-[var(--shadow-bulk-bar)]`. The bar no longer lifts on hover,
+     so there is a single resting shadow. .dark overrides with black-based alphas. */
+  --shadow-bulk-bar: 0 18px 44px -12px rgba(16, 17, 26, 0.30), 0 3px 8px rgba(16, 17, 26, 0.08);
+
+  /* ---- Home drawer / table elevation (light) ---------------------------
+   * Promoted out of apps/web feature CSS (drawer.css), where these lived as
+   * raw rgba() — several with a hand-written `.dark` fork beside them. The
+   * forks collapse into the `.dark` arm of each token below, which is the
+   * whole point: a value that needs a per-theme patch belongs here.
+   */
+  --scrim-overlay: rgba(60, 50, 30, 0.18);
+  /* Soft edge for the viewport drawer (TRA-1857): the panel runs the full
+     screen height, so a heavy shadow reads as a hard band down the page. */
+  --shadow-drawer-panel: -8px 0 32px -12px rgba(16, 17, 26, 0.16);
+  /* Hover lift shared by the drawer's person / signal / account cards. */
+  --shadow-card-lift: 0 2px 10px -4px rgba(16, 17, 26, 0.18);
+  /* Active segment of a segmented control. */
+  --shadow-seg-active: 0 1px 2px rgba(16, 17, 26, 0.14);
+  /* Segmented switch (TRA-1439): trough, its edge, the thumb and the idle
+     label are tokens so the primitive needs no per-theme rule. Light = the
+     classes it used to hard-code. */
+  --seg-track: var(--surface-well);
+  --seg-track-line: var(--border-subtle);
+  --seg-thumb: var(--surface-card);
+  --seg-text-idle: var(--text-secondary);
+  /* Floating audience bar. Layered on Josh Comeau's "Designing Beautiful
+     Shadows" method: HUE-MATCHED ink (the cream shell's own hue with the
+     lightness dropped — a grey shadow on a warm ground desaturates it and reads
+     as grime, a hue-matched one reads as shade), five layers with a NEGATIVE
+     spread growing down the stack so the ramp fades out instead of ending on
+     a band, and EQUAL alpha per layer (ramping it with the blur is what makes
+     a layered shadow look like several). No x offset: the app lights from
+     directly overhead, like every --shadow-card*. */
+  --shadow-float-bar:
+    0 1px 1.2px hsl(43deg 52% 34% / 0.075),
+    0 2.9px 3.6px -0.6px hsl(43deg 52% 34% / 0.075),
+    0 6.6px 8.3px -1.2px hsl(43deg 52% 34% / 0.075),
+    0 14.2px 17.8px -1.9px hsl(43deg 52% 34% / 0.075),
+    0 28px 35px -2.5px hsl(43deg 52% 34% / 0.075);
+  /* A step BELOW the bar's, for everything that floats behind it: the added
+     notes, the pending row, the count panels. Same ink and the same fade-out,
+     but a shorter ramp at a lower alpha, so those cards read as sitting further
+     back while the bar stays the object in front. */
+  --shadow-float-behind:
+    0 1px 1.2px hsl(43deg 52% 34% / 0.05),
+    0 3.4px 4.2px -1.2px hsl(43deg 52% 34% / 0.05),
+    0 8px 10px -2.4px hsl(43deg 52% 34% / 0.05);
+  /* Logo tiles: a fixed white plate (logo art assumes white in BOTH themes)
+     plus an inner hairline that does flip. */
+  --logo-tile-backing: #fff;
+  --logo-tile-hairline: rgba(28, 26, 23, 0.08);
+  /* Overlapping tiles/faces in the audience bar: a solid card-colored band
+     cuts each out of its neighbour, plus a thin edge. NO drop/lift layer —
+     #2138 removed it deliberately ("a row of 26px tiles read as chips floating
+     over the pill"); these separate by band, not elevation. Re-adding a
+     blur/offset layer here re-opens that. */
+  --shadow-tile-overlap: 0 0 0 2px var(--surface-card), 0 0 0 2.5px rgba(28, 26, 23, 0.16),
+    inset 0 0 0 1px rgba(28, 26, 23, 0.08);
+  --shadow-face-overlap: 0 0 0 2px var(--surface-card);
+  /* Pressed/hover state of the solid brand CTA. */
+  --accent-brand-strong: color-mix(in oklab, var(--accent-brand) 88%, #000);
+  /* Warm-paper chip fill (Signals "Story" name chips). A light-theme flourish:
+     in dark the warm plate reads as a pale pill with a washed-out name, so the
+     token's dark arm settles onto the neutral well. This used to be a hex in
+     home-tables.css rescued by a hand-written `.dark` rule — same two values,
+     but here they are one token that flips itself. */
+  --surface-chip-warm: rgba(248, 241, 223, 0.61);
+
+  /* Layer 3 — shadcn aliases (light) */
+  --background: var(--surface-shell);
+  --foreground: var(--text-primary);
+  --card: var(--surface-card);
+  --card-foreground: var(--text-primary);
+  --popover: var(--surface-card);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--accent-brand);
+  --primary-foreground: var(--accent-brand-foreground);
+  --secondary: hsl(210 40% 96%);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--surface-well);
+  --muted-foreground: var(--text-muted);
+  --accent: var(--surface-well); /* menu-item hover — prototype hovers .filt-item/.acct-item/.of .pop with --bg-well; surface-row ≈ surface-card in light and reads as nothing */
+  --accent-foreground: var(--text-primary);
+  --destructive: hsl(0 84% 60%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: var(--border-subtle);
+  --input: var(--border-subtle);
+  --ring: var(--accent-brand);
+  --tooltip: #f3edf9; /* accent-soft 10% composited on surface-card — solid to avoid transparency */
+  --tooltip-foreground: var(--accent-text);
+}
+
+.light {
+
+  /* Dialog surface — same as :root (TRA-1439) */
+  --surface-dialog: var(--surface-shell);
+  /* Field surface — same as :root (TRA-1439) */
+  --surface-field: var(--color-app-raised);
+  /* Dropzone surface — same as :root (TRA-2040) */
+  --surface-dropzone: var(--surface-card);
+  /* Hover surface — same as :root (TRA-2040) */
+  --surface-hover: var(--surface-well);
+
+  /* Segmented switch — same as :root (TRA-1439) */
+  --seg-track: var(--surface-well);
+  --seg-track-line: var(--border-subtle);
+  --seg-thumb: var(--surface-card);
+  --seg-text-idle: var(--text-secondary);
+
+  --chart-1: oklch(0.69 0.19 61.3);
+  --chart-2: oklch(0.64 0.224 348.32);
+  --chart-3: oklch(0.537 0.149 264.05);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+
+  /* See :root. On the light card the ramp runs dark→light: the deepest
+   * funnel stage is the darkest mark. */
+  --funnel-sov: var(--color-violet-950);
+  --funnel-activated: var(--color-violet-800);
+  --funnel-started: var(--color-violet-500);
+
+  /* See :root. */
+  --funnel-rate-activated: var(--color-amber-600);
+  --funnel-rate-sov: var(--color-teal-600);
+
+  --sidebar: hsl(0 0% 98%);
+  --sidebar-foreground: hsl(222 47% 11%);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: hsl(210 40% 96%);
+  --sidebar-accent-foreground: hsl(222 47% 11%);
+  --sidebar-hover: hsl(214 32% 88%);
+  --sidebar-border: hsl(214 32% 91%);
+  --sidebar-ring: var(--ring);
+
+  /* Layer 1 — app-surface ladder (light — mirrors :root default) */
+  --color-app-shell:       #fdf9ee;
+  --color-app-card:        #fffdf8;
+  --color-app-well:        #f8f1df;
+  --color-app-row:         #FEFBF4;
+  --color-app-raised:      #ffffff;
+
+  /* Layer 2 — semantic tokens (light) */
+  --surface-shell: var(--color-app-shell);
+  --surface-card: var(--color-app-card);
+  --surface-well: var(--color-app-well);
+  --surface-row: var(--color-app-row);
+  --surface-popover: var(--color-app-raised);
+
+  --gradient-shell: linear-gradient(160deg, #fdf9ee 0%, #fdf9ee 100%);
+  --gradient-card: linear-gradient(160deg, var(--color-app-raised) 0%, #FEFBF4 100%);
+  --gradient-card-hover: linear-gradient(160deg, #ffffff 0%, #FFFDF8 40%, #FEFBF4 100%);
+
+  --text-primary: #1c1a17;
+  --text-secondary: #6b6253;
+  --text-muted: #9a9180;
+  --text-inverse: #FFFFFF;
+  /* Per-elevation text scale — same as :root */
+  --text-secondary-card: var(--text-secondary);
+  --text-muted-card: var(--text-muted);
+  --text-secondary-raised: var(--text-secondary);
+  --text-muted-raised: var(--text-muted);
+
+  --border-subtle: rgb(120 90 40 / 0.14);
+  --border-strong: rgb(120 90 40 / 0.24);
+
+  --accent-brand: var(--color-brand);
+  --accent-brand-foreground: hsl(0 0% 100%);
+  --accent-text: #845CFF;
+  --accent-soft: rgba(132, 92, 255, 0.10);
+  --accent-line: rgba(132, 92, 255, 0.38);
+
+  --success-text: #047857;
+  --success-soft: rgba(16, 185, 129, 0.10);
+  --success-line: rgba(16, 185, 129, 0.38);
+  --warning-text: #b45309;
+  --warning-soft: rgba(245, 158, 11, 0.10);
+  --warning-line: rgba(245, 158, 11, 0.38);
+
+  --surface-sidebar: #fefdf9;
+
+  /* Layer 3 — shadcn aliases (light) */
+  --background: var(--surface-shell);
+  --foreground: var(--text-primary);
+  --card: var(--surface-card);
+  --card-foreground: var(--text-primary);
+  --popover: var(--surface-card);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--accent-brand);
+  --primary-foreground: var(--accent-brand-foreground);
+  --secondary: hsl(210 40% 96%);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--surface-well);
+  --muted-foreground: var(--text-muted);
+  --accent: var(--surface-well); /* menu-item hover — prototype hovers .filt-item/.acct-item/.of .pop with --bg-well; surface-row ≈ surface-card in light and reads as nothing */
+  --accent-foreground: var(--text-primary);
+  --destructive: hsl(0 84% 60%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: var(--border-subtle);
+  --input: var(--border-subtle);
+  --ring: var(--accent-brand);
+  --tooltip: #f3edf9; /* accent-soft 10% composited on surface-card — solid to avoid transparency */
+  --tooltip-foreground: var(--accent-text);
+}
+
+.dark {
+
+  --chart-1: oklch(0.69 0.19 61.3);
+  --chart-2: oklch(0.64 0.224 348.32);
+  --chart-3: oklch(0.537 0.149 264.05);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.645 0.246 16.439);
+
+  /* Not an inversion of light — its own steps from the same ramp, chosen
+   * against the dark card: on this ground the ramp runs light→dark, so the
+   * deepest stage is the brightest mark.
+   * Dark 300/400/500 → 7.95 / 5.40 / 3.47 vs #232837, CVD ΔE 22.5. */
+  --funnel-sov: var(--color-violet-300);
+  --funnel-activated: var(--color-violet-400);
+  --funnel-started: var(--color-violet-500);
+
+  /* Brighter steps than light: a 2px line on the dark card needs them, and
+   * amber-600/teal-600 fall to 4.61/3.92 here. Dark → CVD ΔE 74.1. */
+  --funnel-rate-activated: var(--color-amber-400);
+  --funnel-rate-sov: var(--color-teal-400);
+
+  /* On the ladder (TRA-1439): the sidebar is the card — the surface the table
+     rows rest on — so the nav and the rows are one ground, a 1.35 panel on
+     the shell. Hover/active are the row step (1.19 on it), the border is the
+     hairline. The old hsl(222 47% …) set was a fourth, bluer colour family. */
+  --sidebar: var(--surface-card);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--surface-row);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-hover: var(--surface-row);
+  --sidebar-border: var(--border-subtle);
+  --sidebar-ring: var(--ring);
+
+  /* Layer 1 — app-surface ladder (dark, TRA-1439).
+   * A cool slate, hue 224° at S 20% — bluer than the near-neutral first
+   * trialled (S 10%, which read flat) and calmer than the prototype's S 29%.
+   * Steps are even, 1.19 / 1.19 / 1.20 well→card→row→raised, so a hover, a
+   * recessed field and a popover each read as one step. The card is the
+   * fixed point (text is tuned to it): popover on card 1.42, hovered row
+   * 1.19, well 1.19. The shell sits 1.25 under the card — the separation the
+   * app shipped and the one light has; a darker shell read as a black hole
+   * around the cards. That leaves the well only 1.05 above the shell, which
+   * is fine: wells sit inside cards, not on the shell. Every value was solved
+   * for its luminance, so the ratios do not depend on the cast. Trialled in
+   * t-skeleton (css/dark-palette.css, /before-after). */
+  --color-app-shell:       #12141B;
+  --color-app-card:        #232835;
+  --color-app-well:        #161921;
+  --color-app-row:         #2E3445;
+  --color-app-raised:      #384055;
+
+  /* Layer 2 — semantic tokens (dark) */
+  --surface-shell: var(--color-app-shell);
+  --surface-card: var(--color-app-card);
+  --surface-well: var(--color-app-well);
+  --surface-row: var(--color-app-row);
+  --surface-popover: var(--color-app-raised);
+  /* A dialog sits above every popover: the highest surface. Its Command list
+     steps back down to the card (ui/command.tsx). */
+  --surface-dialog: var(--surface-popover);
+  /* A field recesses on a dark ground: the well, one step under the card. */
+  --surface-field: var(--surface-well);
+  /* The drop target recesses one step under the raised dialog (TRA-2040):
+     the card would be two steps down and read as a black pit. */
+  --surface-dropzone: var(--surface-row);
+  /* A hovered card lifts one step to the row (TRA-2040); see :root. */
+  --surface-hover: var(--surface-row);
+
+  /* Card + shell gradients: the same stops as the ladder, named, so they
+     cannot drift from it. Shell runs its own top down to below the shell. */
+  --gradient-shell: linear-gradient(160deg, #181B24 0%, #0E1015 100%);
+  --gradient-card: linear-gradient(160deg, var(--color-app-raised) 0%, var(--color-app-well) 100%);
+  --gradient-card-hover: linear-gradient(160deg, var(--color-app-row) 0%, var(--color-app-card) 100%);
+
+  /* On the card: 12.49 / 6.51 / 4.28. On the raised surface muted falls to
+     3.00, so that surface carries its own scale — --text-*-raised below. */
+  --text-primary: #EAECF1;
+  --text-secondary: #A4ACC2;
+  --text-muted: #7F8AA9;
+  --text-inverse: hsl(0 0% 100%);
+  /* Per-elevation text scale: on the raised surface (#384055) secondary is
+     4.57 and muted 3.00 with the card-tuned values. These keep the ladder's
+     shape one surface up: primary 8.77 (unchanged) / 5.51 / 4.50. */
+  --text-secondary-card: var(--text-secondary);
+  --text-muted-card: var(--text-muted);
+  --text-secondary-raised: #B7BDCF;
+  --text-muted-raised: #A3ABC2;
+
+  /* Alphas, like light's brown-ink hairlines: a fixed fraction of white over
+     whatever surface, so a divider weighs the same on a hovered row (1.32)
+     and inside a popover (1.31) as on the card (1.32). The opaque greys were
+     1.06 and 1.13 there — row dividers vanished under hover. Strong: 1.85 /
+     1.82 / 1.76. */
+  --border-subtle: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.19);
+
+  /* Brand accent stays violet in dark — same --color-brand as light — and it
+     is the FILL (Outreach/Save buttons, white text on it), so it stays
+     saturated. As TEXT the violet desaturates to its 200 tone (Material's dark
+     rule) so it clears 4.5 on every elevation: hue 255°, L 80, S 75 → 6.87 on
+     the card, 4.82 on the raised surface (#a283ff was 3.68 there). The line is
+     that violet at 55%, 3.12 blended on the card — the non-text minimum. */
+  --accent-brand: var(--color-brand);
+  --accent-brand-foreground: hsl(0 0% 100%);
+  --accent-text: #B9A6F2;
+  --accent-soft: rgba(132, 92, 255, 0.16);
+  --accent-line: rgba(185, 166, 242, 0.55);
+
+
+  /* Status (dark) — `-text` brightens to a light ramp step so it reads on the
+     dark shell; tint/line alphas bump to match the dark accent set. */
+  --success-text: #6ee7b7;
+  --success-soft: rgba(16, 185, 129, 0.16);
+  --success-line: rgba(16, 185, 129, 0.45);
+  --warning-text: #fcd34d;
+  --warning-soft: rgba(245, 158, 11, 0.16);
+  --warning-line: rgba(245, 158, 11, 0.45);
+
+  /* Signal-type rail hues, admin table chips and the LinkedIn mark (dark,
+     TRA-1439). These were the light values byte for byte and on the dark card
+     landed anywhere from 2.59 (LinkedIn) to 6.14 (job). They are TEXT as much
+     as fill — the signal icon takes text-dot-*, status pills are text — so all
+     fourteen sit in one band: 4.5 on the raised surface, 6.41 on the card,
+     each its own hue at that luminance (OKLCH: hue and chroma held, lightness
+     solved). Being equal in luminance the dots differ only in hue, which is
+     what a category colour is for. Fills brighten with the text; the /15
+     tints follow proportionally. */
+  --dot-news: #DC9C83;
+  --dot-career: #52BE97;
+  --dot-job: #C09FD6;
+  /* People/watchlist signals (TRA-1065). Blue keeps it clearly distinct from
+     career green, which is the one it sits next to and is most confusable
+     with — both concern a person changing roles. */
+  --dot-people: #86ACF0;
+
+  /* Admin table chip palette — tenant counts pill (Accts / Sgnls / Evts)
+     and plan tier badges. Same band as the signal-type palette. */
+  --pill-acct: #89AFD2;
+  --pill-sgnl: #C9A75F;
+  --pill-evt: #E097A7;
+  --pill-plan-free: #63B7C6;
+  --pill-plan-pro: #AEA1EE;
+  --pill-plan-ent: #D696CE;
+  --pill-status-done: #6BBC8A;
+  --pill-status-run: #89ADE4;
+  --pill-status-fail: #EC948D;
+
+  /* LinkedIn's brand blue (#0a66c2) is 2.59 on the dark card — invisible as a
+     glyph. Same hue at the band (chroma 81%, the gamut limit there); LinkedIn's
+     own dark-mode blue, #70B5F9, is a near neighbour. */
+  --linkedin-brand: #6FAEFD;
+
+  /* Same object as --sidebar above: the card. */
+  --surface-sidebar: var(--surface-card);
+
+  /* Owner-stack fallback fills — the light theme's tan, as warm stone on dark.
+     Light paints three tan steps (hue 30°, L 78–86); dark had three cold
+     blue-greys within 1.07–1.28 of the surfaces around them, so in the owner
+     picker the circles all but vanished. Stone, not brown: hue 40° (toward
+     yellow, away from orange), S 13%, three steps dark → light. Fill vs card
+     3.01 / 3.52 / 4.10; white initials 4.9 / 4.2 / 3.6 (a mark, not text —
+     light runs them at 1.3–1.6). */
+  --avatar-fallback-0: #79705D;
+  --avatar-fallback-1: #857B66;
+  --avatar-fallback-2: #918670;
+  /* The owner marks follow step 0, so the Assign pill's count circle matches
+     the faces in the owner picker. */
+  --owner-mark: #79705D;
+
+  --shadow-card: inset 0 0 0 1px rgba(255, 255, 255, 0.11);
+  /* Card hover lift (prototype .card:hover dark, next3.css:431). */
+  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.35), 0 1px 4px rgba(0, 0, 0, 0.18), inset 0 0 0 1px rgba(255, 255, 255, 0.10);
+
+  /* Find hero search-bar brand glow (TRA-1172) — see :root note. */
+  --shadow-search-glow: 0 1px 2px rgba(16, 17, 26, 0.04),
+    0 18px 50px -28px rgba(132, 92, 255, 0.45);
+  --shadow-search-glow-focus: 0 0 0 4px var(--accent-soft),
+    0 22px 60px -26px rgba(132, 92, 255, 0.55);
+
+  /* Floating bulk-actions bar drop shadow (dark) — black-based alphas so the bar
+     separates from the dark shell. */
+  --shadow-bulk-bar: 0 22px 50px -12px rgba(0, 0, 0, 0.6), 0 3px 8px rgba(0, 0, 0, 0.3);
+
+  /* ---- Home drawer / table elevation (dark) ----------------------------
+   * The dark arms of the light values in `:root`. Each one absorbed a
+   * `.dark .hdw-*` rule that used to sit in apps/web feature CSS.
+   * `--shadow-card-lift` never had a dark fork and is deliberately not
+   * re-declared — it inherits `:root`. (`--shadow-seg-active` gained one in
+   * TRA-1439: an inset hairline, declared with the seg-* tokens below.)
+   */
+  --scrim-overlay: rgba(10, 12, 18, 0.32);
+  --shadow-drawer-panel: -10px 0 36px -12px rgba(0, 0, 0, 0.35);
+  /* Shadows stay DARK in a dark theme (no light glows) and the lighter raised
+     surface makes them visible. The light ramp at 22% darkened a dark card by
+     a 1.09 step — invisible. Two black layers, a tight contact and a wide
+     ambient, at the alpha --shadow-bulk-bar already uses (0.6 / 0.3), so the
+     bar and the bulk bar cast the same shadow; the same shape one step down
+     for the cards that float behind the bar. */
+  --shadow-float-bar: 0 2px 6px rgba(0, 0, 0, 0.35), 0 14px 36px -6px rgba(0, 0, 0, 0.55);
+  --shadow-float-behind: 0 1px 3px rgba(0, 0, 0, 0.3), 0 8px 22px -6px rgba(0, 0, 0, 0.45);
+  /* Backing stays white — logo art assumes a white plate in both themes. */
+  --logo-tile-hairline: rgba(255, 255, 255, 0.12);
+  --shadow-tile-overlap: 0 0 0 2px var(--surface-card), 0 0 0 2.5px rgba(255, 255, 255, 0.16),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  /* --shadow-face-overlap has NO dark arm: once #2138 removed its drop layer
+     both themes are just the ring, and `--surface-card` flips itself. Same
+     reasoning as --shadow-card-lift / --shadow-seg-active above. */
+  --surface-chip-warm: var(--surface-well);
+
+  /* Segmented switch (TRA-1439): in dark a card-coloured thumb on the well
+     was a 1.19 step, and inside the audience bar (raised) it vanished. Light's
+     device is a trough one step DOWN and a thumb one step UP; dark does the
+     same around the surface the switch sits on. The trough is the row step —
+     a 1.20 recess in the bar and the menu (a trough on the shell or the well
+     read as a black hole there) — and the thumb takes its own step above the
+     raised surface (1.22, 1.46 on the trough) with a white hairline for an
+     edge, since the shadow does not read here. The idle label lifts so it
+     does not read as disabled on the trough (7.7 there, 10.9 on the card). */
+  --seg-track: var(--surface-row);
+  --seg-track-line: var(--border-subtle);
+  --seg-thumb: #444D65;
+  --shadow-seg-active: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  --seg-text-idle: #C7CCDA;
+
+  /* Layer 3 — shadcn aliases (dark) */
+  --background: var(--surface-shell);
+  --foreground: var(--text-primary);
+  --card: var(--surface-card);
+  --card-foreground: var(--text-primary);
+  /* Lighter = higher on a dark ground. Menus, popovers and the audience bar's
+     panels take the raised surface (1.42 on the card); light keeps the card,
+     where shadows do the work. */
+  --popover: var(--surface-popover);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--accent-brand);
+  --primary-foreground: var(--accent-brand-foreground);
+  --secondary: var(--surface-row);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--surface-well);
+  --muted-foreground: var(--text-muted);
+  /* Menu-item hover (TRA-1439). Light keeps the well; here menus sit on the
+     raised surface and the well was a 1.70 step DOWN — a dark bar in a light
+     menu. Lighter = higher on a dark ground, so the hover is a fixed fraction
+     of white, like the hairlines: a 1.20 lift on the card (a list item) and
+     1.19 on the raised surface (a menu row), the ladder's own step. */
+  --accent: rgba(255, 255, 255, 0.06);
+  --accent-foreground: var(--text-primary);
+  --destructive: hsl(0 84% 60%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: var(--border-subtle);
+  --input: var(--border-subtle);
+  --ring: var(--accent-text); /* follows the text tone — never fainter than the text it outlines */
+  /* Was var(--avatar-fallback-1), which used to be border-strong. Avatars are
+     sand now and border-strong is an alpha (a surface cannot be translucent),
+     so the tooltip keeps the opaque grey as its own value. */
+  --tooltip: #464F69;
+  --tooltip-foreground: var(--text-primary);
+}
+
+@theme inline {
+  /* Clash Display — marketing wordmark + admin auth/app-title only
+     (apps/web Home, admin auth-layout/app-title). Loaded per-app via the
+     Google Fonts <link> in each index.html. */
+  --font-clash: 'Clash Display', sans-serif;
+
+  /* Prototype role fonts: Polymath for headings, system stack for body.
+     The approved prototype renders body/UI text in the system stack (NOT
+     Inter); only headings are a webfont (Polymath). Heading roles in
+     typography.css reference --font-heading; @font-face for Polymath ships
+     in fonts.css. */
+  --font-heading: 'Polymath', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Tailwind's `font-sans` and the document default (--default-font-family)
+     resolve to the body stack, so untagged text and `@apply font-sans` match
+     the body typography roles instead of falling back to ui-sans-serif. */
+  --font-sans: var(--font-body);
+
+  /* Radius ramp derived from --radius (12px), matching the prototype:
+     sm 8px (buttons/inputs), md 10px, lg 12px (--r-card), xl 16px (next3 .card).
+     Pills use Tailwind's built-in `rounded-full` (9999px) — no separate token. */
+  --radius-xs: 6px;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* NOTE: the card shadow tokens are NOT bridged here. Bridging them with the
+     same name (the @theme key equal to the runtime var) is self-referential and
+     resolves to nothing. Components read the plain per-theme vars directly via
+     the arbitrary `shadow-[var(...)]` utility instead. */
+
+  /* The type ramp is NOT declared here — see the `@theme` (non-inline) block
+     after this one. `inline` bakes values into the generated utilities and
+     emits no custom property, so a step declared here is unreachable from a
+     stylesheet, which is what forced a parallel scale to exist. */
+
+  /* Layout vocabulary — extracted from the prototype's foundation (signal.css,
+     cozy density). These emit Tailwind utilities (--container-* feeds max-w-*;
+     --spacing-* feeds w-/h-/p-/gap-/m-). The shell primitives `Sidebar`/`TopBar`
+     CONSUME these (w-sidebar / h-topbar); the feed-column set (max-w-feed,
+     p-card, gap-feed-gap) is still provisioned for the Phase 6 page migration. */
+  --container-feed: 680px;     /* feed column max width  (prototype --feed-max)  */
+  --container-page: 1280px;    /* wide/table column max  (prototype .tbl-wrap)   */
+  --spacing-sidebar: 14.5rem;  /* 232px sidebar width    (prototype --sidebar-w) */
+  --spacing-topbar: 3.25rem;   /* 52px top-bar height    (prototype .topbar)     */
+  --spacing-card: 1.25rem;     /* 20px card padding      (prototype --card-pad)  */
+  --spacing-feed-gap: 0.75rem; /* 12px gap between cards  (prototype --feed-gap)  */
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-tooltip: var(--tooltip);
+  --color-tooltip-foreground: var(--tooltip-foreground);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Layer 1 — app-surface ladder utility emission */
+  --color-app-shell: var(--color-app-shell);
+  --color-app-card: var(--color-app-card);
+  --color-app-well: var(--color-app-well);
+  --color-app-row: var(--color-app-row);
+  --color-app-raised: var(--color-app-raised);
+
+  /* Layer 2 — semantic token utility emission */
+  --color-surface-shell: var(--surface-shell);
+  --color-surface-card: var(--surface-card);
+  --color-surface-well: var(--surface-well);
+  --color-surface-row: var(--surface-row);
+  --color-surface-popover: var(--surface-popover);
+  --color-surface-dialog: var(--surface-dialog);
+  --color-surface-field: var(--surface-field);
+  --color-surface-dropzone: var(--surface-dropzone);
+  --color-surface-hover: var(--surface-hover);
+  --color-seg-track: var(--seg-track);
+  --color-seg-track-line: var(--seg-track-line);
+  --color-seg-thumb: var(--seg-thumb);
+  --color-seg-text-idle: var(--seg-text-idle);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-inverse: var(--text-inverse);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  --color-accent-brand: var(--accent-brand);
+  --color-accent-brand-foreground: var(--accent-brand-foreground);
+  --color-accent-text: var(--accent-text);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-line: var(--accent-line);
+  --color-success-text: var(--success-text);
+  --color-success-soft: var(--success-soft);
+  --color-success-line: var(--success-line);
+  --color-warning-text: var(--warning-text);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-line: var(--warning-line);
+
+  /* Layer 1 — accent ramp utility emission (text-indigo-400, bg-cyan-500/10, …
+     now resolve to project hex, not Tailwind's built-in oklch). */
+  --color-indigo-300: var(--color-indigo-300);
+  --color-indigo-400: var(--color-indigo-400);
+  --color-indigo-500: var(--color-indigo-500);
+  --color-indigo-600: var(--color-indigo-600);
+  --color-indigo-700: var(--color-indigo-700);
+  --color-cyan-400: var(--color-cyan-400);
+  --color-cyan-500: var(--color-cyan-500);
+  --color-cyan-600: var(--color-cyan-600);
+  --color-emerald-300: var(--color-emerald-300);
+  --color-emerald-400: var(--color-emerald-400);
+  --color-emerald-500: var(--color-emerald-500);
+  --color-amber-300: var(--color-amber-300);
+  --color-amber-400: var(--color-amber-400);
+  --color-amber-500: var(--color-amber-500);
+  --color-red-400: var(--color-red-400);
+  --color-red-500: var(--color-red-500);
+  --color-violet-300: var(--color-violet-300);
+  --color-violet-500: var(--color-violet-500);
+  --color-teal-400: var(--color-teal-400);
+
+  /* Signal-type + sidebar surface utility emission (bg-type-news, bg-surface-sidebar) */
+  --color-surface-sidebar: var(--surface-sidebar);
+  --color-linkedin: var(--linkedin-brand);
+  --color-dot-news: var(--dot-news);
+  --color-dot-career: var(--dot-career);
+  --color-dot-job: var(--dot-job);
+  --color-pill-acct: var(--pill-acct);
+  --color-pill-sgnl: var(--pill-sgnl);
+  --color-pill-evt: var(--pill-evt);
+  --color-pill-plan-free: var(--pill-plan-free);
+  --color-pill-plan-pro: var(--pill-plan-pro);
+  --color-pill-plan-ent: var(--pill-plan-ent);
+  --color-pill-status-done: var(--pill-status-done);
+  --color-pill-status-run: var(--pill-status-run);
+  --color-pill-status-fail: var(--pill-status-fail);
+}
+
+/* Base reset: make bare utilities (e.g. `border-b`, default `outline`)
+ * inherit the themed --border / --ring tokens. Without this, Tailwind
+ * v4's default currentColor resolution renders visible white borders
+ * and outlines against the dark palette. Matches the shadcn + Tailwind
+ * v4 default `@layer base` that admin was scaffolded with.
+ */
+/* Approved shell canvas (prototype `.app` + `.app::before`): the themed shell
+   gradient + a warm (top-right) and cool (bottom-left) radial glow + a faint
+   grain, composited into one layered background so the app wrapper needs no
+   `::before`/z-index plumbing. Apply to the full-height app shell element; its
+   children (sidebar opaque, content cards opaque) sit naturally on top, and
+   because the wrapper is viewport-sized the glow reads as a fixed canvas while
+   the inner content scrolls. Glow alphas are softer in dark, stronger in light
+   (prototype `:root[data-palette="new"]` light vs dark `.app::before`). */
+.app-shell-bg {
+  background-color: var(--surface-shell);
+  background-image:
+    radial-gradient(120% 80% at 85% 0%, rgba(255, 201, 168, 0.30) 0%, rgba(255, 201, 168, 0) 42%),
+    radial-gradient(90% 70% at 0% 100%, rgba(123, 93, 243, 0.10) 0%, rgba(123, 93, 243, 0) 46%),
+    var(--shell-grain),
+    var(--gradient-shell);
+  background-repeat: no-repeat, no-repeat, repeat, no-repeat;
+}
+:is(.dark) .app-shell-bg {
+  background-image:
+    radial-gradient(120% 80% at 85% 0%, rgba(255, 161, 130, 0.14) 0%, rgba(255, 161, 130, 0) 42%),
+    radial-gradient(90% 70% at 0% 100%, rgba(132, 92, 255, 0.12) 0%, rgba(132, 92, 255, 0) 46%),
+    var(--shell-grain),
+    var(--gradient-shell);
+}
+
+/* Brand mesh: a soft, slowly drifting "flow" gradient in the brand accents
+   (Slate Blue #845CFF, Vivid Lavender #CD81FF, Bright Salmon #FFA182, Peach
+   Deep #FF7B31) over Cream, with the shell grain. Two layers drift against
+   each other so the colours visibly shift. Position it absolutely behind page
+   chrome; for a band that should fade into the page, lay a static gradient
+   overlay over its bottom edge. Decorative only (aria-hidden). */
+.brand-mesh {
+  /* The caller positions it (absolute or relative): the layers below need a
+     positioned box, and a position set here would beat Tailwind utilities. */
+  overflow: hidden;
+  background-image: var(--shell-grain);
+}
+/* Performance: the layers only ever animate `transform`, and carry no filter,
+   blend mode or mask, so the GPU rasterizes each once and just moves it. The
+   earlier blur + multiply + mask version re-rasterized every frame (~14-30 fps
+   in a 1440px headless measurement vs ~80-120 fps now), for no visible gain:
+   the radial stops are already soft. Fade the band out with a static overlay
+   on top if needed, not a mask. */
+.brand-mesh::before {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background-image:
+    radial-gradient(40% 55% at 18% 30%, rgba(132, 92, 255, 0.42) 0%, rgba(132, 92, 255, 0) 70%),
+    radial-gradient(35% 50% at 48% 12%, rgba(205, 129, 255, 0.40) 0%, rgba(205, 129, 255, 0) 70%),
+    radial-gradient(45% 60% at 80% 28%, rgba(255, 161, 130, 0.55) 0%, rgba(255, 161, 130, 0) 70%),
+    radial-gradient(30% 45% at 92% 70%, rgba(255, 123, 49, 0.30) 0%, rgba(255, 123, 49, 0) 70%),
+    radial-gradient(40% 50% at 35% 80%, rgba(253, 220, 152, 0.50) 0%, rgba(253, 220, 152, 0) 70%);
+  will-change: transform;
+  animation: brand-mesh-flow 14s ease-in-out infinite alternate;
+}
+/* A second, cooler layer drifting against the first, so the colours visibly
+   shift into each other rather than the whole field sliding as one. */
+.brand-mesh::after {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background-image:
+    radial-gradient(30% 45% at 70% 60%, rgba(132, 92, 255, 0.30) 0%, rgba(132, 92, 255, 0) 70%),
+    radial-gradient(35% 45% at 25% 55%, rgba(255, 161, 130, 0.35) 0%, rgba(255, 161, 130, 0) 70%),
+    radial-gradient(25% 35% at 55% 35%, rgba(205, 129, 255, 0.30) 0%, rgba(205, 129, 255, 0) 70%);
+  will-change: transform;
+  animation: brand-mesh-counterflow 18s ease-in-out infinite alternate;
+}
+:is(.dark) .brand-mesh::before,
+:is(.dark) .brand-mesh::after {
+  opacity: 0.45;
+}
+@keyframes brand-mesh-flow {
+  0% { transform: translate3d(-6%, 3%, 0) rotate(-6deg) scale(1); }
+  50% { transform: translate3d(5%, -4%, 0) rotate(4deg) scale(1.12); }
+  100% { transform: translate3d(8%, 4%, 0) rotate(10deg) scale(1.05); }
+}
+@keyframes brand-mesh-counterflow {
+  0% { transform: translate3d(8%, -4%, 0) rotate(8deg) scale(1.1); }
+  50% { transform: translate3d(-6%, 5%, 0) rotate(-6deg) scale(0.95); }
+  100% { transform: translate3d(-10%, -3%, 0) rotate(-12deg) scale(1.08); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand-mesh::before,
+  .brand-mesh::after { animation: none; }
+}
+
+/* WHICH BLOCK DOES A TOKEN GO IN?
+   - A BRIDGE to a runtime var (`--color-x: var(--y)`) goes in `@theme inline`
+     above: inline is required there, because the value is itself a var and the
+     extra indirection would break per-theme flipping.
+   - A LITERAL scale value a stylesheet may need to read goes in the
+     `@theme static` block below.
+   That is the whole rule. `inline` and `static` are opposite opt-outs, not a
+   stylistic choice. */
+
+/* =====================================================================
+   THE TYPE RAMP — one declaration site for every font size in the app.
+   =====================================================================
+   `@theme` WITHOUT `inline` on purpose. Non-inline emits each key as a real
+   custom property on :root AND generates the matching utility, so one
+   declaration serves both consumers:
+
+     - markup:      class="text-caption"
+     - stylesheets: font-size: var(--text-caption)
+
+   `@theme inline` (the block above) does neither of those halves — it inlines
+   values into utilities and emits nothing — which is why an earlier pass had
+   to invent a parallel `--fs-*` set to make the ramp reachable from
+   `drawer.css` / `home-tables.css`. That duplication is gone; these are the
+   only font sizes.
+
+   `static` is load-bearing, not decoration. Tailwind tree-shakes theme
+   variables: it emits one only when a utility references it, or when a `var()`
+   in the SAME compilation unit does. Measured on this exact chain — plain
+   `@theme`, zero classNames used, and `--text-2xs` / `--text-caption` /
+   `--text-base` all vanish from the output. `static` opts out and emits every
+   key unconditionally.
+
+   Without it the ramp is not really single-sourced: `drawer.css` and
+   `home-tables.css` are imported from TSX and compiled separately, so their
+   `var(--text-caption)` references do NOT vote for retention — only incidental
+   classNames elsewhere in the app do. Deleting the last `text-caption` in an
+   unrelated refactor would silently strip the font-size off every table
+   header, day band and count chip. `__tests__/typography.spec.ts` builds with
+   zero candidates and asserts every step survives.
+
+   xs/sm/base/lg/2xl restate Tailwind's defaults at their existing values so
+   the whole ramp has one home rather than being split across ours and theirs.
+
+   This IS the locked ramp `styles/typography.css` builds its roles on, and its
+   spec asserts the roles against these values. Adding a half-pixel step here
+   re-opens the drift that made feature CSS a second type system.
+
+   PREFER A ROLE CLASS (`.text-body`, `.text-meta`, …). Reach for `var()` only
+   from a stylesheet that cannot attach one.
+   ===================================================================== */
+@theme static {
+  --text-2xs: 0.625rem;      /* 10 — micro-chrome: avatar initials, count badges */
+  --text-caption: 0.6875rem; /* 11 — small uppercase caption: table headers, day bands */
+  --text-xs: 0.75rem;        /* 12 — meta, labels, eyebrows */
+  --text-dense: 0.8125rem;   /* 13 — compact-table body/name; no Tailwind step exists */
+  --text-sm: 0.875rem;       /* 14 — body, entity names */
+  --text-base: 1rem;         /* 16 */
+  --text-lg: 1.125rem;       /* 18 — section + card titles */
+  --text-2xl: 1.5rem;        /* 24 — page title */
+  --text-hero: 2.5rem;       /* 40 */
+  --text-hero-sm: 2rem;      /* 32 — .text-hero below md (narrow viewports) */
+  --text-display: 3.5rem;    /* 56 */
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* A surface sets the text scale of what sits on it (TRA-1439). The raised
+     primitives — keyed on their own data-slot contract — redefine the two
+     text custom properties for their descendants; every consumer reads
+     var(--text-*) at use time, so no component changes. In light the -raised
+     tokens equal the base and this is a no-op. `--muted-foreground` is
+     restated because a custom property's var() resolves where it is declared
+     (the root), so the alias would otherwise keep the card's muted inside a
+     menu. The audience bar (apps/web drawer.css) applies the same three lines
+     to itself. */
+  [data-slot='popover-content'],
+  [data-slot='dropdown-menu-content'],
+  [data-slot='dropdown-menu-sub-content'],
+  [data-slot='select-content'],
+  [data-slot='dialog-content'],
+  [data-slot='alert-dialog-content'],
+  [data-slot='command'] {
+    --text-secondary: var(--text-secondary-raised);
+    --text-muted: var(--text-muted-raised);
+    --muted-foreground: var(--text-muted);
+  }
+  /* A nested surface resets the scale: the Command panel inside a dialog
+     steps back down to the card (see ui/command.tsx), and its text with it —
+     otherwise muted reads 6.42 there, a notch too bright. Any future
+     step-down surface carries the same reset. */
+  [data-slot='dialog-content'] [data-slot='command'] {
+    --text-secondary: var(--text-secondary-card);
+    --text-muted: var(--text-muted-card);
+    --muted-foreground: var(--text-muted);
+  }
+}
