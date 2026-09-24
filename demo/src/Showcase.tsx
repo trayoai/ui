@@ -228,6 +228,16 @@ function Section({
   )
 }
 
+/**
+ * Where the library itself (docs + source download) is published.
+ *
+ * `publish.sh` rewrites this literal in the built bundle once it knows the live
+ * tunnel host, so the demo always links back to its sibling URL. Left as the
+ * raw token in a local `pnpm demo`, where the link is just disabled.
+ */
+const LIBRARY_URL = 'REPLACE_LIB_URL'
+const libraryHref = LIBRARY_URL.startsWith('http') ? LIBRARY_URL : null
+
 export function Showcase() {
   const [dark, setDark] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set(['p-2']))
@@ -244,10 +254,19 @@ export function Showcase() {
             }
             subtitle='v0.1 — the component kit for apps built on the Trayo API'
             actions={
-              <label className='flex cursor-pointer items-center gap-2 text-meta'>
-                Dark
-                <Switch checked={dark} onCheckedChange={setDark} />
-              </label>
+              <>
+                {libraryHref && (
+                  <Button variant='secondary' size='sm' asChild>
+                    <a href={libraryHref}>
+                      Get the library <ArrowRight />
+                    </a>
+                  </Button>
+                )}
+                <label className='flex cursor-pointer items-center gap-2 text-meta'>
+                  Dark
+                  <Switch checked={dark} onCheckedChange={setDark} />
+                </label>
+              </>
             }
           />
 
@@ -547,9 +566,19 @@ export function Showcase() {
             </div>
           </Section>
 
-          <footer className='border-t border-border-subtle pt-6 text-meta'>
-            @trayo/gtm-ui v0.1 · light and dark from one token set · Polymath
-            headings, system body
+          <footer className='flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-border-subtle pt-6 text-meta'>
+            <span>
+              Trayo GTM UI v0.1 · light and dark from one token set · Polymath
+              headings, system body
+            </span>
+            {libraryHref && (
+              <>
+                <span aria-hidden>·</span>
+                <a href={libraryHref} className='text-accent-text hover:underline'>
+                  Get the library
+                </a>
+              </>
+            )}
           </footer>
         </PageContainer>
       </AppShell>

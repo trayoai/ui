@@ -11,6 +11,8 @@ not fetch, authenticate, or know anything about your data layer.
 
 **v0.1** — the surface is stable enough to build on; expect additions.
 
+**[See every component rendered, light and dark →](REPLACE_DEMO_URL)**
+
 ---
 
 ## Copy these files into your project

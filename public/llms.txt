@@ -122,6 +122,7 @@ optional and missing fields simply do not render.
 
 - <BASE_URL>/README.md    — full component surface, props, house rules
 - <BASE_URL>/AGENTS.md    — the short directive version
-- <BASE_URL>/showcase/    — a live page rendering every component, light and dark
+- REPLACE_DEMO_URL — the LIVE DEMO: every component rendered, light and dark.
+  Worth opening once to see what the components look like before you build.
 - <BASE_URL>/src/         — the raw source, browsable file by file
 - <BASE_URL>/files.txt    — manifest of every source path
