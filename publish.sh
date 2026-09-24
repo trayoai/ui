@@ -15,12 +15,22 @@
 # installable tarball, because `npm install <this-url>.tgz` records this
 # temporary host in the consumer's package.json and breaks their project the
 # day the tunnel dies.
+#
+# `./publish.sh --base <url>` builds the kit stamped for an arbitrary host and
+# stops before publishing to muxpad — used to produce the GitHub Pages copy,
+# which is the link we actually hand out (a mainstream domain, reachable on
+# networks that filter *.ts.net as VPN/remote-access).
 set -euo pipefail
 cd "$(dirname "$0")"
 
 SLUG=trayo-gtm-ui
 OUT=.publish
 STAGE=.stage
+
+BASE_OVERRIDE=""
+if [ "${1:-}" = "--base" ]; then
+  BASE_OVERRIDE="${2:?--base needs a URL}"
+fi
 
 echo "→ typecheck"
 pnpm typecheck
@@ -52,6 +62,22 @@ cp public/index.html public/llms.txt public/style.css "$OUT/"
 (cd "$OUT" && find src -type f | sort) > "$OUT/files.txt"
 
 rm -rf "$STAGE"
+
+# --- stamped-for-another-host build, then stop -------------------------------
+if [ -n "$BASE_OVERRIDE" ]; then
+  BASE="${BASE_OVERRIDE%/}"
+  echo "→ stamp $BASE (no muxpad publish)"
+  for f in "$OUT/index.html" "$OUT/llms.txt" "$OUT/README.md" "$OUT/AGENTS.md"; do
+    sed -i '' "s|https://REPLACE_BASE|$BASE|g; s|<BASE_URL>|$BASE|g; s|REPLACE_DEMO_URL|$BASE/demo/|g" "$f"
+  done
+  grep -rl 'REPLACE_LIB_URL' "$OUT/demo" | while read -r f; do
+    sed -i '' "s|REPLACE_LIB_URL|$BASE/|g" "$f"
+  done
+  # GitHub Pages would otherwise run Jekyll and drop files it considers special.
+  touch "$OUT/.nojekyll"
+  echo "   built in $OUT, stamped for $BASE"
+  exit 0
+fi
 
 # --- publish -----------------------------------------------------------------
 # First push, purely to learn the host muxpad is currently handing out.

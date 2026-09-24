@@ -73,6 +73,11 @@ variant over forking a component, and keep the token vocabulary intact.
 
 ## API shapes map straight through
 
+A person's photo arrives under two different names depending on the endpoint —
+`profileImageUrl` from `GET /v1/people`, `photoUrl` from `POST /v1/find`.
+`<Person>` reads both, so pass the API object through unchanged rather than
+remapping it. If you build the object by hand, do not drop the photo field.
+
 `PersonLike` and `CompanyLike` are loose supersets of `GET /v1/people` and
 `GET /v1/accounts` rows. Pass the API object directly; every field but `name`
 is optional and missing ones simply don't render.

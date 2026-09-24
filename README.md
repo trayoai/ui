@@ -129,6 +129,15 @@ It never degrades to initials.
 `PersonLike` is a loose superset of a `GET /v1/people` row, so an API response
 passes straight through. Everything but `name` is optional.
 
+> **The photo field has two names.** The Trayo API returns `profileImageUrl`
+> from `GET /v1/people`, but a `POST /v1/find` contacts result carries
+> `photoUrl` — and `photoUrl` is also what you send when creating a person.
+> `<Person>` reads both (plus `imageUrl` / `avatarUrl`), so either shape works;
+> `personPhotoUrl(person)` is exported if you need the resolved URL yourself.
+> Reading only one spelling is the usual reason every avatar falls back to the
+> placeholder face. LinkedIn is the same: `linkedinUsername` (read) and
+> `linkedinUrl` (write/find) are both accepted.
+
 > **On real photos.** The Trayo API publishes `profileImageUrl` as the raw
 > upstream URL, which is often a LinkedIn CDN link that refuses cross-origin
 > hotlinks. When it fails, the fallback face takes over silently — your UI never

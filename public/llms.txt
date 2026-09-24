@@ -133,6 +133,24 @@ drop the PNGs in your static directory, and set the base:
 7. <Button loading> — do not swap in your own spinner.
 8. Use cn() from ./trayo-ui, not bare clsx.
 
+## Photos: the field has two names
+
+The Trayo API is asymmetric about a person's photo, and reading only one
+spelling is why avatars silently fall back to the placeholder face:
+
+  - `GET /v1/people`       returns `profileImageUrl`
+  - `POST /v1/find`        results carry `photoUrl` (and `photoUrl` is also
+                           what you SEND when creating a person)
+
+<Person> accepts BOTH (plus `imageUrl` / `avatarUrl`), so passing an API object
+straight through works either way. Same story for LinkedIn: `linkedinUsername`
+(read) and `linkedinUrl` (write/find) are both accepted.
+
+If an avatar still shows the illustrated fallback, the photo URL is missing or
+failed to load — commonly a raw `media.licdn.com` URL, which refuses
+cross-origin hotlinks. That is expected and the fallback is the intended
+behaviour; wire up `personImageProxy` if you can proxy those server-side.
+
 ## API shapes map straight through
 
 `PersonLike` and `CompanyLike` are loose supersets of GET /v1/people and

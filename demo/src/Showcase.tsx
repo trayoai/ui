@@ -97,6 +97,18 @@ const PEOPLE: PersonLike[] = [
     profileImageUrl: 'https://i.pravatar.cc/240?img=68',
   },
   {
+    // Shaped like a POST /v1/find contacts result, which spells the photo
+    // `photoUrl` rather than `profileImageUrl`. Both resolve.
+    id: 'p-6',
+    name: 'Rafael Duarte',
+    title: 'Director of Revenue Operations',
+    company: 'Figma',
+    companyDomain: 'figma.com',
+    location: 'Lisbon, PT',
+    photoUrl: 'https://i.pravatar.cc/240?img=33',
+    linkedinUrl: 'https://www.linkedin.com/in/rduarte',
+  },
+  {
     id: 'p-5',
     name: 'Amara Osei',
     title: 'Senior Manager, Sales Development',
@@ -264,7 +276,7 @@ export function Showcase() {
           {/* ------------------------------------------------ people */}
           <Section
             title='People'
-            caption='The headline component. A person always gets a face: the real photo when it loads, otherwise one of the 50 built-in illustrated fallbacks, picked stably from the person id — never initials.'
+            caption='The headline component. A person always gets a face: the real photo when it loads, otherwise one of the 50 built-in illustrated fallbacks, picked stably from the person id — never initials. The photo is read from profileImageUrl OR photoUrl, because the Trayo API returns the first and find results carry the second.'
           >
             <div className='mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
               <PersonCard

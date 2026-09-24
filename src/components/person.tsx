@@ -22,9 +22,47 @@ export interface PersonLike {
   location?: string | null
   email?: string | null
   phone?: string | null
+  /**
+   * LinkedIn identity — same asymmetry as the photo below. `GET /v1/people`
+   * returns `linkedinUsername`; `linkedinUrl` is what you send and what other
+   * sources carry. Either works; a bare username or a full URL both resolve.
+   */
   linkedinUsername?: string | null
-  /** The Trayo API field name; a LinkedIn CDN URL is fine. */
+  linkedinUrl?: string | null
+  /**
+   * The person's photo. The Trayo API is ASYMMETRIC about this field and both
+   * spellings show up in real code, so both are accepted here:
+   *
+   *   - `profileImageUrl` — what `GET /v1/people` returns.
+   *   - `photoUrl`        — what a `POST /v1/find` contacts result carries
+   *                         (the raw, persistable URL), and what you SEND when
+   *                         creating a person.
+   *
+   * `imageUrl` / `avatarUrl` are accepted too, since they are the obvious
+   * guesses when mapping from somewhere else. First non-empty one wins — see
+   * `personPhotoUrl`.
+   */
   profileImageUrl?: string | null
+  photoUrl?: string | null
+  imageUrl?: string | null
+  avatarUrl?: string | null
+}
+
+/**
+ * The person's photo URL, whichever field it arrived in.
+ *
+ * Reach for this instead of `person.profileImageUrl` anywhere you need the raw
+ * URL: a find result spells it `photoUrl`, and reading only one spelling is how
+ * every avatar silently degrades to the placeholder face.
+ */
+export function personPhotoUrl(person: PersonLike): string | null {
+  return (
+    person.profileImageUrl ||
+    person.photoUrl ||
+    person.imageUrl ||
+    person.avatarUrl ||
+    null
+  )
 }
 
 function linkedinHref(username?: string | null): string | null {
@@ -93,7 +131,7 @@ export function Person({
   const avatar = (
     <PersonAvatar
       name={person.name}
-      src={person.profileImageUrl}
+      src={personPhotoUrl(person)}
       personId={person.id}
       size={avatarSize}
       contacted={contacted}
@@ -170,7 +208,7 @@ export function PersonContactLinks({
   person: PersonLike
   className?: string
 }) {
-  const li = linkedinHref(person.linkedinUsername)
+  const li = linkedinHref(person.linkedinUsername || person.linkedinUrl)
   const items: Array<{ key: string; href: string; label: string; icon: React.ReactNode }> = []
   if (person.email)
     items.push({ key: 'email', href: `mailto:${person.email}`, label: person.email, icon: <Mail /> })
@@ -244,7 +282,7 @@ export function PersonCard({
       <div className='flex items-start gap-3'>
         <PersonAvatar
           name={person.name}
-          src={person.profileImageUrl}
+          src={personPhotoUrl(person)}
           personId={person.id}
           size='xl'
           contacted={contacted}
