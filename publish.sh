@@ -54,11 +54,45 @@ cp public/index.html public/llms.txt public/style.css "$OUT/"
 rm -rf "$STAGE"
 
 # --- publish -----------------------------------------------------------------
-# First push, purely to learn the base URL the tunnel is currently handing out.
+# First push, purely to learn the host muxpad is currently handing out.
 echo "→ publish (pass 1 — discover the host)"
 URL=$(muxpad publish "$OUT" --name="$SLUG" | tail -1)
-BASE="${URL%/}"
-echo "   base: $BASE"
+CF_BASE="${URL%/}"
+
+# PREFER TAILSCALE FUNNEL OVER THE CLOUDFLARE QUICK TUNNEL.
+#
+# muxpad hands out a *.trycloudflare.com URL when its tunnel app is running,
+# and Cloudflare makes that URL useless to coding agents:
+#   - the zone-apex robots.txt (Cloudflare's, not ours — we serve a subpath and
+#     cannot override /robots.txt) carries `Disallow: /` for ClaudeBot,
+#     Claude-Web and anthropic-ai, among other AI agents;
+#   - every response also carries `x-robots-tag: none`.
+# A well-behaved fetcher obeys both and refuses to read the page, which is
+# exactly what this kit exists to be read by.
+#
+# The same muxpad public server is already exposed over Tailscale Funnel, which
+# serves no robots.txt (404) and sets no x-robots-tag. Same bytes, same server,
+# reachable by agents. So we publish through muxpad as usual but STAMP the
+# Funnel base into the docs.
+TS_BIN=/Applications/Tailscale.app/Contents/MacOS/Tailscale
+FUNNEL_BASE=""
+if [ -x "$TS_BIN" ]; then
+  # `funnel status` prints the public origin on a commented "#  - https://..."
+  # line under "# Funnel on:".
+  FUNNEL_BASE=$("$TS_BIN" funnel status 2>/dev/null \
+    | grep -oE 'https://[a-z0-9.-]+\.ts\.net(:[0-9]+)?' | head -1)
+fi
+
+if [ -n "$FUNNEL_BASE" ]; then
+  BASE="$FUNNEL_BASE/$SLUG"
+  echo "   base: $BASE  (Tailscale Funnel — agent-readable)"
+  echo "   also: $CF_BASE/  (Cloudflare tunnel — blocked for AI agents by CF robots.txt)"
+else
+  BASE="$CF_BASE"
+  echo "   base: $BASE"
+  echo "   WARNING: no Tailscale Funnel found; falling back to the Cloudflare"
+  echo "            tunnel, whose robots.txt blocks ClaudeBot and friends."
+fi
 
 echo "→ stamp $BASE and re-publish"
 # `|` as the sed delimiter: the replacement is a URL and contains slashes.
@@ -82,3 +116,6 @@ echo "Published: $BASE/"
 echo "  agent:   $BASE/llms.txt"
 echo "  vendor:  $BASE/trayo-ui.tar.gz"
 echo "  demo:    $BASE/demo/  (embedded on the page)"
+echo
+echo "Hand out the URL above. The Cloudflare mirror at $CF_BASE/ serves the"
+echo "same bytes but Cloudflare's robots.txt blocks AI agents from reading it."
