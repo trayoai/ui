@@ -1,0 +1,6 @@
+# `site` is a workspace package so that a plain `pnpm install` at the repo root
+# installs Astro too. Cloudflare runs `pnpm install --frozen-lockfile` from the
+# root; without this the site's dependencies are simply never installed and the
+# build dies with `astro: not found`.
+packages:
+  - site

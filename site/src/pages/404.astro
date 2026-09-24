@@ -1,0 +1,29 @@
+---
+// Required by `not_found_handling: "404-page"` in wrangler.jsonc — without a
+// real 404.html the config has nothing to serve.
+import '../styles/site.css'
+import { REPO } from '../content/kit'
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Not found — Trayo GTM UI</title>
+<meta name="robots" content="noindex" />
+</head>
+<body>
+  <main class="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center px-gutter text-center">
+    <p class="eyebrow mb-3">404</p>
+    <h1 class="text-4xl font-bold sm:text-5xl">Nothing here</h1>
+    <p class="mt-4 text-neutral-600">
+      That page doesn't exist. The component library and its install instructions are on the home page.
+    </p>
+    <div class="mt-7 flex flex-wrap items-center justify-center gap-3">
+      <a href="/" class="btn-primary">Go to ui.trayo.ai</a>
+      <a href="/demo" class="btn-ghost">See the demo</a>
+      <a href={`https://github.com/${REPO}`} class="btn-ghost">GitHub</a>
+    </div>
+  </main>
+</body>
+</html>

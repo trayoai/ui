@@ -1,63 +1,69 @@
-# Deploying ui.trayo.ai (Cloudflare Pages)
+# Deploying ui.trayo.ai
 
-One-time setup. `trayo.ai` is already a Cloudflare zone (www.trayo.ai is the
-`trayo-website` Pages project), so this is a second Pages project on the same
-zone and the DNS record is created for you.
+The repo is configured to build correctly **from the repository root**, which is
+what Cloudflare's "import a repository" flow uses. You should not need to set a
+root directory or a custom output directory.
 
-## 1. Create the Pages project
-
-Cloudflare dashboard → **Workers & Pages** → **Create** → **Pages** →
-**Connect to Git** → pick **trayoai/ui**.
-
-Set the build configuration exactly:
+## Build settings
 
 | Field | Value |
 |---|---|
-| Project name | `trayo-ui` |
-| Production branch | `main` |
-| Framework preset | **Astro** |
-| Build command | `npm run build` |
-| Build output directory | `dist` |
-| **Root directory** | `site` |
+| Build command | `pnpm run build` |
+| Deploy command | `npx wrangler deploy` |
+| Root directory | *(leave empty — the repo root)* |
 
-**Root directory = `site` is the one that is easy to miss.** The repo root is
-the component library; the website is the `site/` subdirectory. Leave it blank
-and the build fails immediately with "no package.json".
+Everything else is read from `wrangler.jsonc`, which is committed:
+the Worker name (`ui`) and the assets directory (`site/dist`).
 
 No environment variables and no secrets are needed.
 
-Save and deploy. First build takes ~1–2 minutes and lands on
-`trayo-ui.pages.dev`. Open it and confirm the page renders and `/demo` works.
+## Why it's wired this way
 
-## 2. Point ui.trayo.ai at it
+The repository root is the **component library**. The website is the `site/`
+workspace. Two things make a root-level build work:
 
-In the new project → **Custom domains** → **Set up a custom domain** →
-enter `ui.trayo.ai` → **Activate domain**.
+- **`pnpm-workspace.yaml` lists `site`.** Cloudflare runs
+  `pnpm install --frozen-lockfile` at the root; without the workspace entry the
+  site's dependencies are never installed and the build fails with
+  `astro: not found`.
+- **`wrangler.jsonc` points `assets.directory` at `site/dist`.** Left to
+  auto-detect, Wrangler assumed the root was a Vite app, looked for `./dist`,
+  and proposed SPA fallback routing — none of which is right here.
 
-Because `trayo.ai` is on Cloudflare, the CNAME is added for you and the
-certificate issues automatically — usually under a minute, occasionally a few.
+`pnpm run build` → `pnpm --filter trayo-ui-site build` → packs the vendor
+tarball, then `astro build`.
 
-## 3. Verify
+> The site's `build` script calls `scripts/pack.sh` explicitly rather than
+> relying on a `prebuild` hook: pnpm does not run pre/post scripts by default,
+> so a `prebuild` would silently stop packing the tarball.
 
-    curl -sI https://ui.trayo.ai/ | head -3
-    curl -s  https://ui.trayo.ai/llms.txt | head -5
-    curl -sI https://ui.trayo.ai/trayo-ui.tar.gz | head -3
-    npx degit trayoai/ui/src /tmp/vendor-check && ls /tmp/vendor-check
+## Point ui.trayo.ai at it
+
+In the project → **Settings** → **Domains & Routes** → add `ui.trayo.ai`.
+`trayo.ai` is already a Cloudflare zone, so the DNS record and certificate are
+created for you.
+
+## Verify
+
+```bash
+curl -sI https://ui.trayo.ai/ | head -3
+curl -s  https://ui.trayo.ai/llms.txt | head -5
+curl -sI https://ui.trayo.ai/trayo-ui.tar.gz | head -3
+npx degit trayoai/ui/src /tmp/vendor-check && ls /tmp/vendor-check
+```
 
 ## After that
 
-Every push to `main` rebuilds and redeploys. That is deliberate: `/llms.txt`
-and `/trayo-ui.tar.gz` are both generated at build time from the current
-`src/`, so the instructions an agent reads and the code it copies are always
-the same commit.
-
-Pull requests get their own preview URL automatically.
+Every push to `main` rebuilds and redeploys. That is deliberate: `/llms.txt` and
+`/trayo-ui.tar.gz` are both generated at build time from the current `src/`, so
+the instructions an agent reads and the code it copies are always the same
+commit.
 
 ## Notes
 
-- **Nothing to configure for agents.** Unlike the Cloudflare *quick tunnel*
-  (`*.trycloudflare.com`), a Pages site on your own domain serves no
-  AI-blocking `robots.txt` and no `x-robots-tag` header, so coding agents can
-  read it. Do not add a `robots.txt` that disallows them.
-- If you later want the site to live somewhere other than `site/`, update the
-  Root directory field — nothing in the repo hardcodes it.
+- **Nothing to configure for agents.** Unlike a Cloudflare *quick tunnel*
+  (`*.trycloudflare.com`), a site on your own domain serves no AI-blocking
+  `robots.txt` and no `x-robots-tag` header, so coding agents can read it. Do
+  not add a `robots.txt` that disallows them.
+- To reproduce a build exactly as CI does:
+  `rm -rf node_modules site/node_modules && pnpm install --frozen-lockfile && pnpm run build`

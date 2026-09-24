@@ -3,9 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prebuild": "bash scripts/pack.sh",
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "bash scripts/pack.sh && astro build",
     "preview": "astro preview"
   },
   "dependencies": {

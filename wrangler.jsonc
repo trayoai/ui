@@ -1,0 +1,26 @@
+{
+  // Deploy config for ui.trayo.ai.
+  //
+  // Committing this stops Wrangler's interactive auto-config from guessing on
+  // every build. Left to guess, it assumed the repo root was a Vite app,
+  // proposed `not_found_handling: single-page-application`, and looked for the
+  // output in `./dist` — none of which is true here. The repo root is the
+  // COMPONENT LIBRARY; the website is the `site/` workspace and its build
+  // output is `site/dist`.
+  //
+  // Build command (set in the Cloudflare dashboard): `pnpm run build`
+  // That resolves to `pnpm --filter trayo-ui-site build`, which packs the
+  // vendor tarball and then runs `astro build`.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ui",
+  "compatibility_date": "2026-09-21",
+  "assets": {
+    "directory": "./site/dist",
+    // A multi-page static site, NOT an SPA: every route is a real file, so a
+    // miss should 404 rather than silently serving index.html.
+    "not_found_handling": "404-page"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
