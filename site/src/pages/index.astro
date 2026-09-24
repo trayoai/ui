@@ -3,6 +3,23 @@ import '../styles/site.css'
 import { INSTALL_STEPS, RULES, INVENTORY, API_NOTES, REPO, SITE, VENDOR_DIR } from '../content/kit'
 
 const repoUrl = `https://github.com/${REPO}`
+
+/**
+ * Render our light markdown (backticks -> <code>) for `set:html`.
+ *
+ * HTML-escapes FIRST. The copy is full of JSX like `<Person>` and
+ * `<Button loading>`; without escaping, the browser parses those as unknown
+ * elements and they render as nothing — every rule silently lost its subject.
+ */
+const md = (s: string, size = '12.5px') =>
+  s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(
+      /`([^`]+)`/g,
+      `<code class="rounded bg-sand-light px-1 py-0.5 text-[${size}]">$1</code>`
+    )
 ---
 
 <!doctype html>
@@ -110,7 +127,7 @@ components for all UI in this app.</pre>
             <span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-purple text-xs font-bold text-white">{i + 1}</span>
             <h3 class="text-lg font-semibold">{step.title}</h3>
           </div>
-          <p class="mt-2 ml-9 text-sm text-neutral-600" set:html={step.body.replace(/`([^`]+)`/g, '<code class="rounded bg-sand-light px-1 py-0.5 text-[12.5px]">$1</code>')} />
+          <p class="mt-2 ml-9 text-sm text-neutral-600" set:html={md(step.body)} />
           <pre class="code code-wrap mt-3 ml-9">{step.code}</pre>
           {'alt' in step && step.alt && (
             <div class="mt-3 ml-9">
@@ -144,7 +161,7 @@ return data.map(p => <Person key={p.id} person={p} showContact />)`}</pre>
       {API_NOTES.map((n) => (
         <div class="card">
           <h3 class="text-sm font-semibold">{n.title}</h3>
-          <p class="mt-1.5 text-sm text-neutral-600" set:html={n.body.replace(/`([^`]+)`/g, '<code class="rounded bg-sand-light px-1 py-0.5 text-[12px]">$1</code>')} />
+          <p class="mt-1.5 text-sm text-neutral-600" set:html={md(n.body, '12px')} />
         </div>
       ))}
     </div>
@@ -172,7 +189,7 @@ return data.map(p => <Person key={p.id} person={p} showContact />)`}</pre>
     </p>
     <ol class="mt-5 list-decimal space-y-2.5 pl-5 text-sm text-neutral-600 marker:font-semibold marker:text-purple">
       {RULES.map((r) => (
-        <li set:html={r.replace(/`([^`]+)`/g, '<code class="rounded bg-sand-light px-1 py-0.5 text-[12.5px]">$1</code>')} />
+        <li set:html={md(r)} />
       ))}
     </ol>
   </section>
