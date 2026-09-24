@@ -11,7 +11,39 @@ not fetch, authenticate, or know anything about your data layer.
 
 **v0.1** — the surface is stable enough to build on; expect additions.
 
-**[See every component rendered, light and dark →](REPLACE_DEMO_URL)**
+**[See every component rendered, live →](https://ui.trayo.ai/demo)** · [ui.trayo.ai](https://ui.trayo.ai) · [llms.txt for coding agents](https://ui.trayo.ai/llms.txt)
+
+---
+
+## What it looks like
+
+A person always gets a face — the real photo when it loads, otherwise one of 50
+built-in illustrated fallbacks picked stably from the person id. Never initials.
+
+![Person cards, rows and avatar sizes](docs/screenshots/people.png)
+
+Companies resolve their logo from a domain alone, through Trayo's public logo
+proxy, landing on a warm initials tile when a company has no mark.
+
+![Company cards and rows](docs/screenshots/companies.png)
+
+`DataTable` is presentational — you own sorting, paging and selection. Put a
+`<Person>` or `<Company>` in the identity column and the table reads as Trayo.
+
+![Data table with people, companies and status badges](docs/screenshots/table.png)
+
+Buttons are pills at every size: solid brand violet for the primary action,
+outlined for secondary, receding for tertiary.
+
+![Button variants and sizes](docs/screenshots/buttons.png)
+
+### Light and dark from one token set
+
+Add `class="dark"` to `<html>`. The whole palette flips — no component changes.
+
+![The same person cards in dark mode](docs/screenshots/people-dark.png)
+
+![The same data table in dark mode](docs/screenshots/table-dark.png)
 
 ---
 

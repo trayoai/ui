@@ -8,7 +8,16 @@ cd "$(dirname "$0")/.."
 STAGE=$(mktemp -d)
 mkdir -p "$STAGE/trayo-ui" public
 cp -R ../src/. "$STAGE/trayo-ui/"
-cp ../README.md ../AGENTS.md "$STAGE/trayo-ui/"
+# Strip the repo-presentation screenshot gallery: those relative image paths
+# are dead once the files live in someone else's project.
+python3 -c '
+import sys
+src = open("../README.md").read()
+start = src.index("## What it looks like")
+end = src.index("---", src.index("docs/screenshots/table-dark.png")) + 4
+open(sys.argv[1], "w").write(src[:start] + src[end:])
+' "$STAGE/trayo-ui/README.md"
+cp ../AGENTS.md "$STAGE/trayo-ui/"
 tar -czf public/trayo-ui.tar.gz -C "$STAGE" trayo-ui
 rm -rf "$STAGE"
 echo "packed public/trayo-ui.tar.gz"
