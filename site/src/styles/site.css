@@ -78,29 +78,57 @@
     color: #1c1a17;
     -webkit-font-smoothing: antialiased;
   }
-  /* Anchored sections shouldn't hide under the sticky header. */
-  :target {
-    scroll-margin-top: 6rem;
+  /* Anchored sections shouldn't hide under the sticky header. Applied to any
+     element with an id, not just `:target` — in-page nav links and
+     scrollIntoView both need the offset, and `:target` only covers the former. */
+  [id] {
+    scroll-margin-top: 5.5rem;
   }
 }
 
 @layer components {
-  /* The site's pill CTA (www.trayo.ai uses this exact shape).
-     Tailwind v4's `@apply` only accepts real utilities, so the shared shape is
-     repeated rather than composed from a `.btn` base. */
-  .btn-primary {
-    @apply inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-full bg-purple px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-purple-deep;
+  /* --------------------------------------------------------------- buttons
+     www.trayo.ai's CTA hierarchy: a BLACK pill is the primary action, sand is
+     the secondary. Purple is the brand colour but it is not the button fill. */
+  .btn-black {
+    @apply inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-full bg-black px-5 py-2.5 text-sm leading-none font-semibold text-white transition hover:opacity-90 active:top-px;
+  }
+  .btn-sand {
+    @apply inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-full bg-sand px-5 py-2.5 text-sm leading-none font-semibold text-neutral-900 transition hover:brightness-95 active:top-px;
   }
   .btn-ghost {
-    @apply inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-full border border-sand-border bg-transparent px-5 py-2.5 text-sm font-semibold text-neutral-700 transition hover:bg-white;
+    @apply inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-full border border-sand-border bg-white/60 px-5 py-2.5 text-sm leading-none font-semibold text-neutral-700 transition hover:bg-white;
   }
 
+  /* ----------------------------------------------------------------- panels
+     Everything on the marketing site sits in a big 24px-rounded panel inset
+     from the page edge, rather than running full-bleed. */
+  .panel {
+    @apply relative overflow-hidden rounded-3xl;
+  }
+  /* Not `@apply panel …` — Tailwind v4's @apply only accepts real utilities,
+     so a class built from other custom classes fails the build. */
+  .panel-sand {
+    @apply relative overflow-hidden rounded-3xl bg-sand-light;
+  }
   .card {
     @apply rounded-2xl border border-sand-border bg-cream-light p-5;
   }
 
   .eyebrow {
     @apply text-xs font-semibold tracking-widest text-purple uppercase;
+  }
+
+  /* Dashed hairline — the site's section separator (2px dash, 8px gap). */
+  .dashed {
+    @apply h-px w-full;
+    background: repeating-linear-gradient(
+      to right,
+      rgb(138 138 138 / 0.5) 0,
+      rgb(138 138 138 / 0.5) 2px,
+      transparent 2px,
+      transparent 10px
+    );
   }
 
   /* Code blocks. Commands are meant to be copied whole, so they wrap rather
@@ -112,5 +140,56 @@
   .code-wrap {
     white-space: pre-wrap;
     word-break: break-word;
+  }
+}
+
+/* ------------------------------------------------------------------ hero
+   Rebuilt from the live site: a solid purple panel, two big soft blobs
+   bleeding in from the left (peach and violet, heavily blurred), and a noise
+   overlay in `mix-blend-overlay` on top. The blobs are radial gradients here
+   rather than the site's SVG shapes — same read, nothing to ship. */
+.hero {
+  background-color: var(--color-purple);
+}
+.hero::before,
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.hero::before {
+  background:
+    radial-gradient(60% 70% at 8% 75%, rgba(255, 161, 130, 0.85) 0%, rgba(255, 161, 130, 0) 62%),
+    radial-gradient(45% 55% at 2% 40%, rgba(205, 129, 255, 0.7) 0%, rgba(205, 129, 255, 0) 65%),
+    radial-gradient(50% 60% at 95% 15%, rgba(111, 0, 255, 0.55) 0%, rgba(111, 0, 255, 0) 70%);
+  filter: blur(40px);
+}
+/* The site layers its noise at 50% in overlay; the texture is what keeps a
+   flat purple field from banding across a wide panel. */
+.hero::after {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
+  mix-blend-mode: overlay;
+  opacity: 0.5;
+}
+
+/* Vertical hairlines over a sand panel — the site's feature-block texture. */
+.striped::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to right,
+    rgba(180, 140, 70, 0.07) 0,
+    rgba(180, 140, 70, 0.07) 1px,
+    transparent 1px,
+    transparent 9px
+  );
+}
+
+@media (max-width: 640px) {
+  h1 {
+    letter-spacing: -0.02em;
   }
 }
