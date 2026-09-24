@@ -254,19 +254,10 @@ export function Showcase() {
             }
             subtitle='v0.1 — the component kit for apps built on the Trayo API'
             actions={
-              <>
-                {libraryHref && (
-                  <Button variant='secondary' size='sm' asChild>
-                    <a href={libraryHref}>
-                      Get the library <ArrowRight />
-                    </a>
-                  </Button>
-                )}
-                <label className='flex cursor-pointer items-center gap-2 text-meta'>
-                  Dark
-                  <Switch checked={dark} onCheckedChange={setDark} />
-                </label>
-              </>
+              <label className='flex cursor-pointer items-center gap-2 text-meta'>
+                Dark
+                <Switch checked={dark} onCheckedChange={setDark} />
+              </label>
             }
           />
 
@@ -574,7 +565,14 @@ export function Showcase() {
             {libraryHref && (
               <>
                 <span aria-hidden>·</span>
-                <a href={libraryHref} className='text-accent-text hover:underline'>
+                <a
+                  href={libraryHref}
+                  // This page is embedded in an iframe on the library page;
+                  // _top so the link replaces the whole window rather than
+                  // loading the library page inside this frame.
+                  target='_top'
+                  className='text-accent-text hover:underline'
+                >
                   Get the library
                 </a>
               </>

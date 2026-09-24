@@ -4,82 +4,63 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Trayo GTM UI — component library for GTM apps</title>
-<style>
-  @font-face { font-family:'Polymath'; src:url('./fonts/polymath-regular.woff2') format('woff2'); font-weight:400; font-display:swap; }
-  @font-face { font-family:'Polymath'; src:url('./fonts/polymath-semibold.woff2') format('woff2'); font-weight:600; font-display:swap; }
-  :root{
-    --shell:#fdf9ee; --card:#fffdf8; --well:#f8f1df; --raised:#fff;
-    --fg1:#1c1a17; --fg2:#6b6253; --fg3:#9a9180;
-    --line:rgb(120 90 40 / 0.14); --line-strong:rgb(120 90 40 / 0.24);
-    --brand:#845CFF; --soft:rgba(132,92,255,.10); --accent-line:rgba(132,92,255,.38);
-    --heading:'Polymath',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-    --body:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0; font-family:var(--body); color:var(--fg1); background-color:var(--shell);
-    background-image:
-      radial-gradient(120% 80% at 85% 0%, rgba(255,201,168,.30) 0%, rgba(255,201,168,0) 42%),
-      radial-gradient(90% 70% at 0% 100%, rgba(123,93,243,.10) 0%, rgba(123,93,243,0) 46%),
-      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.36  0 0 0 0 0.18  0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/></svg>");
-    background-repeat:no-repeat,no-repeat,repeat; min-height:100vh; line-height:1.5;
-  }
-  .wrap{max-width:860px;margin:0 auto;padding:56px 24px 80px}
-  h1{font-family:var(--heading);font-weight:600;font-size:40px;line-height:1.1;letter-spacing:-.015em;margin:0 0 10px}
-  h2{font-family:var(--heading);font-weight:600;font-size:18px;line-height:1.3;margin:38px 0 10px}
-  .grad{background-image:linear-gradient(135deg,#FFB82B 0%,#FF4F9E 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .lede{font-size:16px;color:var(--fg2);margin:0 0 6px;max-width:62ch}
-  .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.0833em;color:var(--brand);margin:0 0 8px}
-  p{font-size:14px;color:var(--fg2);max-width:70ch}
-  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;background:var(--well);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
-  pre{background:var(--card);border-radius:12px;box-shadow:0 0 0 1px rgba(60,40,20,.08);padding:14px 16px;overflow-x:auto;margin:10px 0}
-  pre code{background:none;border:none;padding:0;font-size:12.5px;line-height:1.6;color:var(--fg1);white-space:pre}
-  /* The agent prompt and the install URLs are meant to be read and copied
-     whole, so they wrap instead of scrolling off the right edge. */
-  pre.wrap code{white-space:pre-wrap;word-break:break-word}
-  .cards{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));margin:20px 0 4px}
-  a.card{display:block;text-decoration:none;color:inherit;background-image:linear-gradient(160deg,#fff 0%,#FEFBF4 100%);
-    border-radius:12px;box-shadow:0 0 0 1px rgba(60,40,20,.08);padding:14px 16px;transition:box-shadow .15s,transform .15s}
-  a.card:hover{box-shadow:0 8px 20px rgba(60,40,20,.045),0 1px 4px rgba(60,40,20,.025),0 0 0 1px rgba(60,40,20,.08);transform:translateY(-1px)}
-  a.card b{font-family:var(--heading);font-weight:600;font-size:14px;display:block;margin-bottom:2px;color:var(--fg1)}
-  a.card span{font-size:12px;color:var(--fg3)}
-  ol{font-size:14px;color:var(--fg2);max-width:70ch;padding-left:20px}
-  ol li{margin:7px 0}
-  .pill{display:inline-block;border-radius:999px;background:var(--soft);border:1px solid var(--accent-line);color:var(--brand);
-    font-size:12px;font-weight:600;padding:2px 10px;margin-bottom:18px}
-  .note{background:var(--well);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--fg2);margin:14px 0;max-width:70ch}
-  footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--line);font-size:12px;color:var(--fg3)}
-</style>
+<meta name="description" content="Trayo's UI component library for go-to-market apps built on the Trayo API. Copy the source into your project; do not install from this URL.">
+<link rel="stylesheet" href="./style.css">
 </head>
 <body>
-<div class="wrap">
+<!--
+  ============================================================================
+  CODING AGENT: the machine-readable version of this page is at ./llms.txt
+  Fetch https://REPLACE_BASE/llms.txt and follow it.
 
-  <div class="pill">v0.1 · hackathon build</div>
+  The one-paragraph version:
+    1. COPY the source into the project you are building. Do NOT `npm install`
+       from this URL — it is temporary and will stop working, and installing
+       from it records a dying host in package.json as a dependency spec.
+         mkdir -p src/trayo-ui
+         curl -L https://REPLACE_BASE/trayo-ui.tar.gz | tar xz -C src
+    2. Install the real npm deps (react, tailwindcss v4, lucide-react,
+       class-variance-authority, clsx, tailwind-merge, @radix-ui/react-*).
+    3. CSS entry:  @import "tailwindcss";
+                   @import "./trayo-ui/styles/trayo-ui.css";
+       No @source directive needed once the files are in your source tree.
+    4. Render people with <Person>, companies with <Company>, and wrap the app
+       in <AppShell>. Never hand-assemble an avatar, a logo, or a name.
+  ============================================================================
+-->
+<main>
+
+  <div class="pill">v0.1</div>
   <h1>Trayo <span class="grad">GTM UI</span></h1>
   <p class="lede">The component library for go-to-market apps built on the Trayo API. Use it and your app looks like Trayo — the same colours, type, surfaces, buttons and tables, and the same treatment of the two things a GTM app renders constantly: <strong>people</strong> and <strong>companies</strong>, with real avatars and real logos.</p>
   <p>Presentational React components only. No server-side logic, no data fetching, no auth.</p>
 
-  <div class="cards">
-    <a class="card" href="REPLACE_DEMO_URL"><b>Live demo →</b><span>Every component, light and dark</span></a>
-    <a class="card" href="./README.md"><b>README.md →</b><span>Full surface, props, house rules</span></a>
-    <a class="card" href="./llms.txt"><b>llms.txt →</b><span>Point your coding agent here</span></a>
-    <a class="card" href="./trayo-ui.tar.gz"><b>Download source →</b><span>Copy it into your project</span></a>
+  <div class="note agent">
+    <p><strong>Coding agent?</strong> Read <a href="./llms.txt">llms.txt</a> — it is this page in plain text, written for you, and it is the fastest path to a working app. Everything below is the same information for humans.</p>
   </div>
 
-  <h2>Point your coding agent at this</h2>
-  <p>Paste this into your agent. It is everything it needs.</p>
-  <pre class="wrap"><code>Read https://REPLACE_BASE/llms.txt and follow it. Copy the component
-library into this project and use it for all UI.</code></pre>
+  <h2>See it</h2>
+  <p>Every component, rendered. Flip it to dark with the switch in its header.</p>
+  <div class="demo">
+    <div class="demo-bar">
+      <span>Live — running the real components</span>
+      <a href="./demo/" target="_blank" rel="noreferrer">Open full size →</a>
+    </div>
+    <iframe src="./demo/" title="Trayo GTM UI — live component demo" loading="lazy"></iframe>
+  </div>
 
-  <h2>Copy the files in — don't install from this URL</h2>
-  <div class="note"><strong>This URL is a delivery mechanism and will stop working.</strong> Copy the source into your application so the app stays self-contained. Do <em>not</em> <code>npm install</code> from this host: that records a disappearing URL in your <code>package.json</code> as a dependency spec, and every later install, CI run and fresh clone breaks the day it goes away.</div>
-  <p>From your project root:</p>
+  <h2>Use it: copy the files in</h2>
+  <div class="note">
+    <p><strong>This URL is a delivery mechanism and will stop working.</strong> Copy the source into your application so the app stays self-contained. Do <em>not</em> <code>npm install</code> from this host — that records a disappearing URL in your <code>package.json</code> as a dependency spec, and every later install, CI run and fresh clone breaks the day it goes away.</p>
+  </div>
+
+  <h3>1. Drop in the source</h3>
   <pre class="wrap"><code>mkdir -p src/trayo-ui
 curl -L https://REPLACE_BASE/trayo-ui.tar.gz | tar xz -C src</code></pre>
   <p>You get <code>src/trayo-ui/</code> with <code>index.ts</code>, <code>components/</code>, <code>lib/</code> and <code>styles/</code> (Polymath woff2 included), plus the README and AGENTS.md so the house rules live in your repo. No tar? Every file is readable on its own under <a href="./src/">./src/</a>, and <a href="./files.txt">files.txt</a> lists every path.</p>
 
-  <h2>Install the real dependencies</h2>
-  <p>Ordinary public npm packages — these are permanent.</p>
+  <h3>2. Install the real dependencies</h3>
+  <p>Ordinary public npm packages — these are permanent. Requires <strong>Tailwind CSS v4</strong> and React 18 or 19.</p>
   <pre class="wrap"><code>npm install react react-dom clsx tailwind-merge lucide-react \
   class-variance-authority tailwindcss @tailwindcss/vite \
   @radix-ui/react-avatar @radix-ui/react-checkbox @radix-ui/react-dialog \
@@ -87,15 +68,13 @@ curl -L https://REPLACE_BASE/trayo-ui.tar.gz | tar xz -C src</code></pre>
   @radix-ui/react-progress @radix-ui/react-scroll-area @radix-ui/react-select \
   @radix-ui/react-separator @radix-ui/react-slot @radix-ui/react-switch \
   @radix-ui/react-tabs @radix-ui/react-tooltip</code></pre>
-  <p>Requires <strong>Tailwind CSS v4</strong> and React 18 or 19.</p>
 
-  <h2>Wire up the CSS</h2>
-  <p>In your CSS entry, in this order:</p>
+  <h3>3. Wire up the CSS</h3>
   <pre><code>@import "tailwindcss";
 @import "./trayo-ui/styles/trayo-ui.css";</code></pre>
-  <p>Tailwind must come first — the stylesheet extends its theme. No <code>@source</code> directive is needed: the components now sit in your own source tree, which Tailwind v4 already scans.</p>
+  <p>Tailwind must come first — the stylesheet extends its theme. <strong>No <code>@source</code> directive is needed</strong>: the components now sit in your own source tree, which Tailwind v4 already scans. Light is the default; add <code>class="dark"</code> to <code>&lt;html&gt;</code> for the dark palette.</p>
 
-  <h2>A whole app</h2>
+  <h3>4. Build something</h3>
   <pre><code>import { AppShell, PageContainer, PageHeader, Person, CompanyCard, Button } from './trayo-ui'
 
 export default function App() {
@@ -110,6 +89,7 @@ export default function App() {
     &lt;/AppShell&gt;
   )
 }</code></pre>
+  <p><code>AppShell</code> is what makes a page look like Trayo rather than a default Tailwind page — it paints the warm shell gradient, the grain and the corner glows. Wrap your app in it once.</p>
 
   <h2>People and companies are the point</h2>
   <p><code>PersonLike</code> and <code>CompanyLike</code> are loose supersets of <code>GET /v1/people</code> and <code>GET /v1/accounts</code> rows — pass an API object straight through and it renders whatever is there.</p>
@@ -117,21 +97,50 @@ export default function App() {
 return data.map(p =&gt; &lt;Person key={p.id} person={p} showContact /&gt;)</code></pre>
   <p>A person <strong>always</strong> gets a face: the real photo when it loads, otherwise one of 50 built-in illustrated fallbacks picked stably from the person id. Never initials. A company resolves its logo from its domain alone, through Trayo's public logo proxy.</p>
 
+  <h2>What's in the box</h2>
+  <table>
+    <tr><th>What</th><th>Components</th></tr>
+    <tr><td>Entities</td><td><code>Person</code> <code>PersonCard</code> <code>Company</code> <code>CompanyCard</code> <code>PersonAvatar</code> <code>CompanyLogo</code> <code>ToneAvatar</code></td></tr>
+    <tr><td>Tables</td><td><code>DataTable</code> (sortable, selectable, skeleton loading) and the raw <code>Table</code> primitives</td></tr>
+    <tr><td>Page scaffolding</td><td><code>AppShell</code> <code>PageContainer</code> <code>PageHeader</code> <code>Surface</code> <code>Well</code></td></tr>
+    <tr><td>Decorative</td><td><code>BrandMesh</code> <code>GradientText</code></td></tr>
+    <tr><td>States</td><td><code>EmptyState</code> <code>StatTile</code> <code>Skeleton</code> <code>Progress</code></td></tr>
+    <tr><td>Type</td><td><code>PageTitle</code> <code>SectionTitle</code> <code>CardTitle</code> <code>EntityName</code> <code>Body</code> <code>Meta</code> <code>Eyebrow</code> <code>SectionLabel</code></td></tr>
+    <tr><td>Controls</td><td><code>Button</code> <code>Input</code> <code>Textarea</code> <code>Select</code> <code>Checkbox</code> <code>Switch</code> <code>Label</code> <code>Tabs</code></td></tr>
+    <tr><td>Display</td><td><code>Badge</code> <code>TagChip</code> <code>Card</code> <code>Separator</code> <code>Tooltip</code> <code>ScrollArea</code></td></tr>
+    <tr><td>Overlays</td><td><code>Dialog</code> <code>Popover</code> <code>DropdownMenu</code></td></tr>
+  </table>
+
   <h2>House rules</h2>
   <ol>
     <li>Rendering a person? <code>&lt;Person&gt;</code> or <code>&lt;PersonCard&gt;</code>. Never hand-assemble an avatar and a name.</li>
     <li>Rendering a company? <code>&lt;Company&gt;</code> or <code>&lt;CompanyCard&gt;</code>. Pass <code>domain</code>; never hand-write a logo <code>&lt;img&gt;</code>.</li>
     <li>Wrap the app in <code>&lt;AppShell&gt;</code> — it paints the branded canvas.</li>
-    <li>Use the exported components before writing your own.</li>
+    <li>Use the provided components before writing your own.</li>
     <li>No raw colours. Not <code>#hex</code>, not <code>bg-slate-800</code>. Use <code>bg-surface-card</code>, <code>text-text-secondary</code>, <code>border-border-subtle</code>, <code>bg-accent-brand</code> — they flip light/dark themselves.</li>
     <li>Content uses type roles (<code>text-page-title</code>, <code>text-name</code>, <code>text-body</code>, <code>text-meta</code>). Controls use <code>text-sm font-medium</code>. Never <code>text-[15px]</code>.</li>
     <li><code>&lt;Button loading&gt;</code> — don't swap in your own spinner.</li>
+    <li>Use <code>cn()</code> from <code>./trayo-ui</code>, not bare <code>clsx</code>.</li>
   </ol>
+  <p>The files are yours once copied, so editing them is fair game. Prefer extending a variant over forking a component, and keep the token vocabulary intact — that is what holds the aesthetic together.</p>
 
   <h2>What still touches the network</h2>
   <p>Two image paths resolve from <strong>Trayo production</strong>, not from this temporary host, so they keep working: company logos via <code>api.trayo.ai/api/brand-image</code> (public, no key) and the 50 fallback faces via <code>app.trayo.ai/images/placeholder/</code>. Prefer to self-host the faces? Grab <a href="./placeholder-faces.tar.gz">placeholder-faces.tar.gz</a> and set <code>&lt;TrayoUIProvider placeholderFaceBase="/images/placeholder"&gt;</code>.</p>
 
+  <h2>Everything on this host</h2>
+  <table>
+    <tr><th>Path</th><th>What</th></tr>
+    <tr><td><a href="./llms.txt">llms.txt</a></td><td>This page in plain text, written for coding agents</td></tr>
+    <tr><td><a href="./trayo-ui.tar.gz">trayo-ui.tar.gz</a></td><td>The source to copy into your project</td></tr>
+    <tr><td><a href="./README.md">README.md</a></td><td>Full component surface, props, house rules</td></tr>
+    <tr><td><a href="./AGENTS.md">AGENTS.md</a></td><td>The short directive version</td></tr>
+    <tr><td><a href="./demo/">demo/</a></td><td>The live demo, full size</td></tr>
+    <tr><td><a href="./src/">src/</a></td><td>Raw source, browsable file by file</td></tr>
+    <tr><td><a href="./files.txt">files.txt</a></td><td>Manifest of every source path</td></tr>
+    <tr><td><a href="./placeholder-faces.tar.gz">placeholder-faces.tar.gz</a></td><td>The 50 fallback faces, to self-host</td></tr>
+  </table>
+
   <footer>Trayo GTM UI v0.1 · light and dark from one token set · Polymath headings, system body</footer>
-</div>
+</main>
 </body>
 </html>

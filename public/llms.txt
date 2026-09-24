@@ -7,6 +7,30 @@ including their avatars and logos.
 
 Presentational React components only. No server-side logic, no data fetching.
 
+## QUICKSTART (the whole thing, then details below)
+
+    # 1. copy the source in — do NOT npm install from this URL
+    mkdir -p src/trayo-ui
+    curl -L <BASE_URL>/trayo-ui.tar.gz | tar xz -C src
+
+    # 2. real npm deps
+    npm install react react-dom clsx tailwind-merge lucide-react \
+      class-variance-authority tailwindcss @tailwindcss/vite \
+      @radix-ui/react-{avatar,checkbox,dialog,dropdown-menu,label,popover,progress,scroll-area,select,separator,slot,switch,tabs,tooltip}
+
+    # 3. CSS entry (order matters; no @source directive needed)
+    #    @import "tailwindcss";
+    #    @import "./trayo-ui/styles/trayo-ui.css";
+
+    # 4. use it
+    #    import { AppShell, PageContainer, Person, Company, Button } from './trayo-ui'
+
+Non-negotiables: wrap the app in <AppShell>. Render every person with <Person>
+and every company with <Company> — never hand-assemble an avatar, a logo or a
+name. Never write a raw colour or an arbitrary font size.
+
+Requires Tailwind CSS v4 and React 18 or 19.
+
 ## IMPORTANT: copy the files in. Do not install from this URL.
 
 This URL is a **temporary delivery mechanism** and will stop working. Your job
@@ -122,7 +146,7 @@ optional and missing fields simply do not render.
 
 - <BASE_URL>/README.md    — full component surface, props, house rules
 - <BASE_URL>/AGENTS.md    — the short directive version
-- REPLACE_DEMO_URL — the LIVE DEMO: every component rendered, light and dark.
+- REPLACE_DEMO_URL  — the LIVE DEMO: every component rendered, light and dark.
   Worth opening once to see what the components look like before you build.
 - <BASE_URL>/src/         — the raw source, browsable file by file
 - <BASE_URL>/files.txt    — manifest of every source path
