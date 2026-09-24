@@ -72,33 +72,34 @@ export default function App() {
   },
 ] as const
 
-/** Page-only: why this exists, in the reader's terms. */
+/** Page-only: why this matters, in the builder's terms — not the developer's. */
 export const VALUE = [
   {
-    title: 'Speaks Trayo natively',
+    title: 'It looks like it came from Trayo',
     body:
-      'The components take the shapes the Trayo API already returns — accounts, people, ' +
-      'signals, job changes. Hand a response straight to a component and it renders; ' +
-      'there is no mapping layer to write and none to keep in sync.',
+      'The same design system the Trayo app is built from — the colours, the type, the surfaces, ' +
+      'the density. What you build reads as part of the product your team already uses, not as a ' +
+      'separate thing bolted on beside it.',
   },
   {
-    title: 'People and companies, solved',
+    title: 'Credible before anyone clicks',
     body:
-      'The two things every GTM screen is full of. Faces and logos resolve on their own, ' +
-      'with built-in fallbacks that still look designed — so a list of 200 prospects never ' +
-      'degrades into a grid of grey initials.',
+      'Most internal tools are judged on the first screenshot, in a thread, by people who will ' +
+      'never open them. This is the difference between something that gets adopted and something ' +
+      'that gets politely ignored.',
   },
   {
-    title: 'Tables that carry dense screens',
+    title: 'The hard parts are already right',
     body:
-      'Sorting, selection, per-row actions, skeleton loading and empty states, with entity ' +
-      'cells that stay legible at speed. Most GTM work is a table, and this one is built for it.',
+      'People and companies are what a GTM screen is full of, and they are fiddly: faces, logos, ' +
+      'fallbacks, dense tables that stay legible. Those are solved here, so the quality does not ' +
+      'depend on how much time you had.',
   },
   {
-    title: 'One token set, light and dark',
+    title: 'Consistent across everything you build',
     body:
-      'Colour, type, surfaces and shadows come from the same tokens the Trayo app uses. ' +
-      'Flip a class and the whole palette follows — nothing to restyle, nothing to maintain.',
+      'The second tool matches the first, and the fifth matches both — without anyone maintaining ' +
+      'a style guide. Colour, type and dark mode all come from one token set.',
   },
 ] as const
 

@@ -1,8 +1,16 @@
 # AGENTS.md — building a GTM app with Trayo GTM UI
 
-You are building a go-to-market application against the Trayo API. This library
-is the UI layer. Read `README.md` for the full surface; this file is the short,
-directive version.
+You are building a go-to-market tool against the Trayo API. Build its UI from
+this library — not as a convenience, but as the thing that decides whether the
+result gets used. What you produce is judged on how it looks before anyone opens
+it; this is the design system the Trayo product itself is built from, so using it
+makes your tool read as part of the product your user already works in. It also
+solves the parts that are easy to get wrong and that a GTM screen is full of:
+people with real faces, companies with real logos, dense tables that stay
+legible.
+
+Read `README.md` for the full surface; this file is the short, directive
+version.
 
 ## Setup: copy the files in, never install from a temporary URL
 

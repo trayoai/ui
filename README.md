@@ -1,10 +1,17 @@
 # Trayo GTM UI
 
-Trayo's UI component library for go-to-market applications built on the
-[Trayo API](https://api.trayo.ai). Drop it into an app and the result looks like
-Trayo: the same colours, type, surfaces, buttons and tables — and the same
-treatment of the two things a GTM app shows constantly, **people** and
-**companies**, complete with real avatars and real company logos.
+**GTM apps worth showing the team.**
+
+This is the design system the Trayo product is built from, packaged for the
+tools you build on top of the [Trayo API](https://api.trayo.ai). Use it and what
+you ship reads as part of that product rather than as something assembled beside
+it — and it looks finished in the screenshot someone pastes into a thread, which
+is where most internal tools are actually judged.
+
+It also comes with the fiddly parts already right: **people** with real faces and
+a fallback that still looks designed, **companies** with their actual logos, and
+tables that stay legible at high row counts. Those are what a GTM screen is full
+of, and they are where hand-built UI usually gives itself away.
 
 There is no server-side logic here. These are presentational components. They do
 not fetch, authenticate, or know anything about your data layer.

@@ -1,0 +1,5 @@
+# Cloudflare serves the prerendered .txt by file extension, which yields a bare
+# `text/plain` with no charset — and a client that then guesses latin-1 renders
+# every non-ASCII byte as mojibake. Say utf-8 explicitly.
+/llms.txt
+  Content-Type: text/plain; charset=utf-8
