@@ -43,6 +43,7 @@ import {
   ToneAvatar,
   Well,
   type Column,
+  type SortState,
   type CompanyLike,
   type PersonLike,
 } from '../../../src'
@@ -218,6 +219,100 @@ const PEOPLE_COLUMNS: Column<PersonLike>[] = [
   },
 ]
 
+
+/* ------------------------------------------------------- accounts table */
+
+type AccountRow = {
+  id: string
+  company: CompanyLike
+  owner: PersonLike
+  score: number
+  signals: number
+  stage: 'Prospect' | 'Engaged' | 'Meeting booked'
+  lastActivity: string
+}
+
+const ACCOUNTS: AccountRow[] = [
+  { id: 'a-1', company: COMPANIES[0], owner: PEOPLE[0], score: 92, signals: 7, stage: 'Meeting booked', lastActivity: '2h ago' },
+  { id: 'a-2', company: COMPANIES[1], owner: PEOPLE[1], score: 86, signals: 4, stage: 'Engaged', lastActivity: 'Yesterday' },
+  { id: 'a-3', company: COMPANIES[2], owner: PEOPLE[2], score: 74, signals: 3, stage: 'Engaged', lastActivity: '3d ago' },
+  { id: 'a-4', company: COMPANIES[3], owner: PEOPLE[3], score: 61, signals: 2, stage: 'Prospect', lastActivity: '1w ago' },
+  { id: 'a-5', company: { id: 'c-5', name: 'Figma', domain: 'figma.com', industry: 'Design', employeeCount: 1400, location: 'San Francisco, CA' }, owner: PEOPLE[4], score: 58, signals: 1, stage: 'Prospect', lastActivity: '2w ago' },
+]
+
+const STAGE_VARIANT = {
+  'Meeting booked': 'success',
+  Engaged: 'accent',
+  Prospect: 'soft',
+} as const
+
+// A score reads faster as a filled bar than as a bare number, and the bar uses
+// the brand accent so the eye lands on the best accounts first.
+function ScoreCell({ value }: { value: number }) {
+  return (
+    <span className='flex items-center gap-2'>
+      <span className='h-1.5 w-12 shrink-0 overflow-hidden rounded-full bg-surface-well'>
+        <span className='block h-full rounded-full bg-accent-brand' style={{ width: `${value}%` }} />
+      </span>
+      <span className='text-body-sm tabular-nums text-text-secondary'>{value}</span>
+    </span>
+  )
+}
+
+const ACCOUNT_COLUMNS: Column<AccountRow>[] = [
+  {
+    id: 'account',
+    header: 'Account',
+    accessor: (r) => <Company company={r.company} showWebsite />,
+    className: 'min-w-[260px]',
+    sortable: true,
+  },
+  {
+    id: 'score',
+    header: 'Fit',
+    accessor: (r) => <ScoreCell value={r.score} />,
+    className: 'w-40',
+    sortable: true,
+  },
+  {
+    id: 'signals',
+    header: 'Signals',
+    accessor: (r) => <Badge variant='count'>{r.signals}</Badge>,
+    align: 'center',
+    className: 'w-24',
+    sortable: true,
+  },
+  {
+    id: 'stage',
+    header: 'Stage',
+    accessor: (r) => <Badge variant={STAGE_VARIANT[r.stage]}>{r.stage}</Badge>,
+    className: 'w-40',
+  },
+  {
+    id: 'owner',
+    header: 'Owner',
+    accessor: (r) => <Person person={r.owner} variant='inline' />,
+    className: 'w-48 hidden lg:table-cell',
+  },
+  {
+    id: 'last',
+    header: 'Last activity',
+    accessor: (r) => <span className='text-meta'>{r.lastActivity}</span>,
+    className: 'w-32 hidden xl:table-cell',
+  },
+  {
+    id: 'act',
+    header: '',
+    accessor: () => (
+      <Button size='xs' variant='secondary'>
+        Research <Sparkles />
+      </Button>
+    ),
+    align: 'right',
+    className: 'w-32',
+  },
+]
+
 /* --------------------------------------------------------------- sections */
 
 function Section({
@@ -253,6 +348,7 @@ const libraryHref = LIBRARY_URL.startsWith('http') ? LIBRARY_URL : null
 export function Showcase() {
   const [dark, setDark] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set(['p-2']))
+  const [sort, setSort] = useState<SortState>({ key: 'score', dir: 'desc' })
 
   return (
     <div className={dark ? 'dark' : undefined}>
@@ -430,9 +526,24 @@ export function Showcase() {
           {/* -------------------------------------------------- table */}
           <Section
             title='Tables'
-            caption='DataTable is presentational: you own sorting, paging and selection state. Put a Person or Company in the identity column and the table reads as Trayo.'
+            caption='DataTable is the workhorse — most GTM screens are a table. It is presentational: you own sorting, paging and selection, and it renders and reflects them. Put a Company or Person in the identity column and the whole table reads as Trayo.'
           >
-            <Surface padded={false} className='overflow-hidden p-1'>
+            <SectionLabel>Account table — sortable, with a fit score, signal counts and owners</SectionLabel>
+            <Surface padded={false} className='mb-6 overflow-hidden p-1'>
+              <DataTable
+                columns={ACCOUNT_COLUMNS}
+                rows={ACCOUNTS}
+                getRowKey={(r) => r.id}
+                count={ACCOUNTS.length}
+                sort={sort}
+                onSortChange={setSort}
+                layout='fixed'
+                tableClassName='min-w-[1040px]'
+              />
+            </Surface>
+
+            <SectionLabel>People table — row selection, contact status, per-row actions</SectionLabel>
+            <Surface padded={false} className='mb-6 overflow-hidden p-1'>
               <DataTable
                 columns={PEOPLE_COLUMNS}
                 rows={PEOPLE}
@@ -454,6 +565,44 @@ export function Showcase() {
                 }}
               />
             </Surface>
+
+            <div className='grid gap-4 lg:grid-cols-2'>
+              <div>
+                <SectionLabel>Loading — skeleton rows, never a false "empty"</SectionLabel>
+                <Surface padded={false} className='overflow-hidden p-1'>
+                  <DataTable
+                    columns={PEOPLE_COLUMNS.slice(0, 2)}
+                    rows={[]}
+                    getRowKey={(p) => p.id!}
+                    loading
+                    skeletonRows={4}
+                    layout='fixed'
+                    tableClassName='min-w-[420px]'
+                  />
+                </Surface>
+              </div>
+              <div>
+                <SectionLabel>Empty — your own message and call to action</SectionLabel>
+                <Surface padded={false} className='overflow-hidden p-1'>
+                  <DataTable
+                    columns={PEOPLE_COLUMNS.slice(0, 2)}
+                    rows={[]}
+                    getRowKey={(p) => p.id!}
+                    empty={
+                      <EmptyState
+                        icon={<Search />}
+                        title='No people match'
+                        description='Widen the filters, or import a list to get started.'
+                        action={<Button size='sm'><Plus /> Import people</Button>}
+                        className='border-0'
+                      />
+                    }
+                    layout='fixed'
+                    tableClassName='min-w-[420px]'
+                  />
+                </Surface>
+              </div>
+            </div>
           </Section>
 
           {/* ---------------------------------------------- controls */}

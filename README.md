@@ -17,33 +17,34 @@ not fetch, authenticate, or know anything about your data layer.
 
 ## What it looks like
 
-A person always gets a face — the real photo when it loads, otherwise one of 50
-built-in illustrated fallbacks picked stably from the person id. Never initials.
+Most GTM screens are a table, so that is where the library does the most work.
+`DataTable` composes `<Company>` and `<Person>` in its cells, which is what makes
+a dense screen still read as Trayo.
 
-![Person cards, rows and avatar sizes](docs/screenshots/people.png)
+<img src="docs/screenshots/accounts-table.png" width="1352" alt="Account table: company logos and firmographics, a sortable fit score, signal counts, stage badges and an owner per row" />
 
-Companies resolve their logo from a domain alone, through Trayo's public logo
-proxy, landing on a warm initials tile when a company has no mark.
+Row selection, contact status and per-row actions:
 
-![Company cards and rows](docs/screenshots/companies.png)
+<img src="docs/screenshots/people-table.png" width="1352" alt="People table with row selection, company logos, location and reachability badges" />
 
-`DataTable` is presentational — you own sorting, paging and selection. Put a
-`<Person>` or `<Company>` in the identity column and the table reads as Trayo.
+Sorting, paging and selection are yours to own — the table renders and reflects
+them, and ships loading and empty states so a list never flashes a false
+"nothing found".
 
-![Data table with people, companies and status badges](docs/screenshots/table.png)
+<img src="docs/screenshots/accounts-table-dark.png" width="1352" alt="The same account table in dark mode" />
 
-Buttons are pills at every size: solid brand violet for the primary action,
-outlined for secondary, receding for tertiary.
+Add `class="dark"` to `<html>` and the whole palette flips. One token set, no
+component changes.
 
-![Button variants and sizes](docs/screenshots/buttons.png)
+### Entity cards
 
-### Light and dark from one token set
+<img src="docs/screenshots/people-cards.png" width="1352" alt="Person cards with photo, title, company, tags and contact actions" />
 
-Add `class="dark"` to `<html>`. The whole palette flips — no component changes.
+<img src="docs/screenshots/company-cards.png" width="1352" alt="Company cards with logo, industry, headcount, location and a summary" />
 
-![The same person cards in dark mode](docs/screenshots/people-dark.png)
+### Buttons
 
-![The same data table in dark mode](docs/screenshots/table-dark.png)
+<img src="docs/screenshots/buttons.png" width="1352" alt="Button variants and sizes: default, secondary, tertiary, destructive, destructive-outline and quiet" />
 
 ---
 
@@ -135,6 +136,78 @@ glows. Wrap your app in it once.
 
 ---
 
+## Tables
+
+Most GTM screens are a table, and `DataTable` is the component you will reach for
+most. It is **presentational**: you own sorting, paging and selection state, and
+it renders and reflects them. Put a `<Company>` or `<Person>` in the identity
+column and a dense screen still reads as Trayo.
+
+```tsx
+type AccountRow = { id: string; company: CompanyLike; owner: PersonLike; score: number; stage: string }
+
+const columns: Column<AccountRow>[] = [
+  {
+    id: 'account',
+    header: 'Account',
+    accessor: (r) => <Company company={r.company} showWebsite />,
+    className: 'min-w-[260px]',
+    sortable: true,
+  },
+  { id: 'score', header: 'Fit',    accessor: (r) => <ScoreBar value={r.score} />, className: 'w-40', sortable: true },
+  { id: 'stage', header: 'Stage',  accessor: (r) => <Badge variant="accent">{r.stage}</Badge>, className: 'w-40' },
+  { id: 'owner', header: 'Owner',  accessor: (r) => <Person person={r.owner} variant="inline" />, className: 'w-48 hidden lg:table-cell' },
+  { id: 'act',   header: '',       accessor: () => <Button size="xs" variant="secondary">Research</Button>, align: 'right', className: 'w-32' },
+]
+
+<DataTable
+  columns={columns}
+  rows={rows}
+  getRowKey={(r) => r.id}
+  count={rows.length}
+  sort={sort}
+  onSortChange={setSort}
+  onRowClick={(r) => navigate(`/accounts/${r.id}`)}
+  loading={isLoading}
+  empty={<EmptyState title="No accounts match" />}
+  selection={{ selectedKeys, onToggleRow, onToggleAllPage }}
+  layout="fixed"
+  tableClassName="min-w-[1040px]"
+/>
+```
+
+### Column options
+
+| Field | What it does |
+|---|---|
+| `id` | Stable key, and the sort key when `sortable` is set |
+| `header` | Any node — a string, or a label with an icon |
+| `accessor(row)` | Returns the cell. This is where `<Person>` / `<Company>` go |
+| `align` | `left` (default), `center`, `right` |
+| `width` / `className` | Sizing and responsive hiding, e.g. `w-40`, `hidden lg:table-cell`. Applied to the header **and** every body cell so they can't drift |
+| `sortable` | Turns the header into a sort toggle keyed on `id` |
+
+### Behaviour worth knowing
+
+- **`loading`** renders skeleton rows instead of `rows`, so a list never flashes
+  a false "nothing found" while a query is in flight. The `empty` fallback only
+  shows when `!loading && rows.length === 0`.
+- **`selection`** is fully controlled — you hold the selected-key set, so it can
+  span pages. Omit it entirely and no checkbox column renders.
+- **`layout="fixed"`** makes the per-column `width`/`className` hints
+  authoritative. Pin the columns that matter and leave exactly one column
+  width-less: it absorbs surplus space and is the first to shrink. Pair it with
+  a `min-w-*` in `tableClassName` so the flexible column can't collapse to zero
+  before horizontal scrolling kicks in.
+- **`onRowClick`** makes the whole row navigate; interactive cells inside it
+  still receive their own clicks.
+- **`renderSubRow`** adds a full-width detail row beneath any row.
+
+The raw `Table` / `TableHeader` / `TableRow` / `TableCell` primitives are
+exported too, for tables that don't fit the `DataTable` shape.
+
+---
+
 ## People and companies
 
 These two are the reason this library exists. **Whenever you render a person or
@@ -142,14 +215,9 @@ a company, use them** instead of assembling an avatar and a name by hand.
 
 ### `<Person>` / `<PersonCard>`
 
-A person always gets a **face**. The resolution chain is the whole point:
-
-1. the real photo, if `profileImageUrl` loads and isn't a LinkedIn generic
-   silhouette;
-2. otherwise one of Trayo's **50 illustrated placeholder faces**, chosen stably
-   from the person's id — the same person gets the same face everywhere, forever.
-
-It never degrades to initials.
+A person always gets a **face**: their photo when it is available, otherwise one
+of 50 illustrated fallbacks chosen stably from the person's id — the same person
+gets the same face everywhere, forever. It never degrades to initials.
 
 ```tsx
 <Person person={apiPerson} />                        // row — lists and tables
@@ -171,21 +239,10 @@ passes straight through. Everything but `name` is optional.
 > placeholder face. LinkedIn is the same: `linkedinUsername` (read) and
 > `linkedinUrl` (write/find) are both accepted.
 
-> **On real photos.** The Trayo API publishes `profileImageUrl` as the raw
-> upstream URL, which is often a LinkedIn CDN link that refuses cross-origin
-> hotlinks. When it fails, the fallback face takes over silently — your UI never
-> breaks. If you run an image proxy that can fetch those URLs server-side, wire
-> it up once and more real photos will resolve:
->
-> ```tsx
-> <TrayoUIProvider personImageProxy={(url) => `/api/img?u=${encodeURIComponent(url)}`}>
-> ```
-
 ### `<Company>` / `<CompanyCard>`
 
-Pass a **domain** and nothing else. The logo resolves through Trayo's public
-logo proxy (`/api/brand-image` — logo.dev with a favicon fallback, no API key
-needed), landing on a warm initials tile for companies with no mark.
+Pass a **domain** and nothing else — the logo resolves itself, landing on a warm
+initials tile for companies with no mark.
 
 ```tsx
 <Company company={{ name: 'Ramp', domain: 'ramp.com' }} />
@@ -206,56 +263,6 @@ works too, but `domain` alone is the common and better case.
 ```
 
 Sizes: `xs sm md lg xl 2xl`.
-
-### What resolves over the network
-
-Both image paths point at **Trayo production**, not at whatever host you
-downloaded this from, so they keep working indefinitely:
-
-| | |
-|---|---|
-| company logos | `https://api.trayo.ai/api/brand-image?domain=…` (public, no key, rate-limited per caller) |
-| fallback faces | `https://app.trayo.ai/images/placeholder/NN.png` |
-
-To self-host the faces, copy the 50 PNGs into your static directory and point
-the library at them:
-
-```tsx
-<TrayoUIProvider placeholderFaceBase="/images/placeholder">
-```
-
----
-
-## Tables
-
-`DataTable` is presentational — **you** own sorting, paging and selection state;
-it renders and reflects them. Put a `<Person>` or `<Company>` in the identity
-column and the table immediately reads as Trayo.
-
-```tsx
-const columns: Column<Row>[] = [
-  { id: 'person',  header: 'Person',  accessor: (r) => <Person person={r} />, sortable: true },
-  { id: 'company', header: 'Company', accessor: (r) => <Company company={r.account} variant="inline" />, className: 'w-56' },
-  { id: 'act',     header: '',        accessor: () => <Button size="xs">Reach out</Button>, align: 'right' },
-]
-
-<DataTable
-  columns={columns}
-  rows={rows}
-  getRowKey={(r) => r.id}
-  sort={sort}
-  onSortChange={setSort}
-  loading={isLoading}                 // renders skeleton rows, never a false "empty"
-  empty={<EmptyState title="No results" />}
-  selection={{ selectedKeys, onToggleRow, onToggleAllPage }}
-  layout="fixed"                      // makes the per-column `width` hints authoritative
-/>
-```
-
-The raw `Table` / `TableRow` / `TableCell` primitives are exported too, for
-tables that don't fit the `DataTable` shape.
-
----
 
 ## Everything else
 
@@ -331,9 +338,8 @@ Everything works with no provider. Wrap only to override:
 
 ```tsx
 <TrayoUIProvider
-  brandImageOrigin="https://api.trayo.ai"          // the company-logo proxy
-  personImageProxy={(url) => `/api/img?u=${url}`}  // make more real photos load
-  placeholderFaceBase="/images/placeholder"        // self-host the fallback faces
+  personImageProxy={(url) => `/api/img?u=${url}`}  // route person photos through your own proxy
+  placeholderFaceBase="/images/placeholder"        // serve the fallback faces yourself
 >
 ```
 

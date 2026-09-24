@@ -10,11 +10,15 @@ mkdir -p "$STAGE/trayo-ui" public
 cp -R ../src/. "$STAGE/trayo-ui/"
 # Strip the repo-presentation screenshot gallery: those relative image paths
 # are dead once the files live in someone else's project.
+#
+# Sliced between two HEADINGS, not between filenames — an earlier version keyed
+# the end of the slice off a specific screenshot name and broke silently-ish the
+# moment the screenshots were renamed.
 python3 -c '
 import sys
 src = open("../README.md").read()
 start = src.index("## What it looks like")
-end = src.index("---", src.index("docs/screenshots/table-dark.png")) + 4
+end = src.index("## Copy these files into your project")
 open(sys.argv[1], "w").write(src[:start] + src[end:])
 ' "$STAGE/trayo-ui/README.md"
 cp ../AGENTS.md "$STAGE/trayo-ui/"
