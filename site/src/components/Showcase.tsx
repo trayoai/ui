@@ -59,7 +59,7 @@ const PEOPLE: PersonLike[] = [
     companyDomain: 'ramp.com',
     location: 'New York, NY',
     email: 'dana@ramp.com',
-    linkedinUsername: 'danawhitfield',
+    profileUrl: 'https://ramp.com/team/dana',
     // A photo that loads — the component shows the real face.
     profileImageUrl: 'https://i.pravatar.cc/240?img=47',
   },
@@ -72,7 +72,7 @@ const PEOPLE: PersonLike[] = [
     location: 'Remote — EU',
     email: 'marcus@vercel.com',
     phone: '+1 415 555 0142',
-    linkedinUsername: 'moyelaran',
+    profileUrl: 'https://vercel.com/team/marcus',
     profileImageUrl: 'https://i.pravatar.cc/240?img=12',
   },
   {
@@ -82,10 +82,9 @@ const PEOPLE: PersonLike[] = [
     company: 'Notion',
     companyDomain: 'notion.so',
     location: 'San Francisco, CA',
-    linkedinUsername: 'praghunathan',
-    // A LinkedIn CDN URL that refuses to load cross-origin — the built-in
-    // fallback face takes over silently. This is the common real-world case.
-    profileImageUrl: 'https://media.licdn.com/dms/image/v2/expired-profile.jpg',
+    // A photo URL that no longer resolves — the built-in fallback face takes
+    // over silently. This is the common real-world case.
+    profileImageUrl: '/photo-that-no-longer-exists.jpg',
   },
   {
     id: 'p-4',
@@ -107,7 +106,6 @@ const PEOPLE: PersonLike[] = [
     companyDomain: 'figma.com',
     location: 'Lisbon, PT',
     photoUrl: 'https://i.pravatar.cc/240?img=33',
-    linkedinUrl: 'https://www.linkedin.com/in/rduarte',
   },
   {
     id: 'p-5',
@@ -118,7 +116,7 @@ const PEOPLE: PersonLike[] = [
     location: 'London, UK',
     email: 'amara@stripe.com',
     phone: '+44 20 7555 0198',
-    linkedinUsername: 'amaraosei',
+    profileUrl: 'https://stripe.com/team/amara',
   },
 ]
 

@@ -1,6 +1,5 @@
 import * as React from 'react'
-import { Mail, MapPin, Phone } from 'lucide-react'
-import { LinkedInIcon } from './icons'
+import { Mail, MapPin, Phone, UserRound } from 'lucide-react'
 import { cn } from '../lib/cn'
 import { Badge } from './ui/badge'
 import { CompanyLogo } from './company-logo'
@@ -23,12 +22,11 @@ export interface PersonLike {
   email?: string | null
   phone?: string | null
   /**
-   * LinkedIn identity — same asymmetry as the photo below. `GET /v1/people`
-   * returns `linkedinUsername`; `linkedinUrl` is what you send and what other
-   * sources carry. Either works; a bare username or a full URL both resolve.
+   * Absolute URL to the person's public profile. Rendered as a profile link in
+   * the contact row; omit it and no link appears. Map whatever your source
+   * calls it onto this field.
    */
-  linkedinUsername?: string | null
-  linkedinUrl?: string | null
+  profileUrl?: string | null
   /**
    * The person's photo. The Trayo API is ASYMMETRIC about this field and both
    * spellings show up in real code, so both are accepted here:
@@ -65,12 +63,6 @@ export function personPhotoUrl(person: PersonLike): string | null {
   )
 }
 
-function linkedinHref(username?: string | null): string | null {
-  if (!username) return null
-  if (username.startsWith('http')) return username
-  return `https://www.linkedin.com/in/${username.replace(/^\/?in\//, '')}`
-}
-
 /* ------------------------------------------------------------------ Person */
 
 export interface PersonProps {
@@ -82,7 +74,7 @@ export interface PersonProps {
    */
   variant?: 'row' | 'inline' | 'stacked'
   size?: AvatarSize
-  /** Show email / phone / LinkedIn glyph links when the person has them. */
+  /** Show email / phone / profile glyph links when the person has them. */
   showContact?: boolean
   contacted?: boolean
   /** Right-hand slot — a Button, a menu, a score. */
@@ -208,14 +200,14 @@ export function PersonContactLinks({
   person: PersonLike
   className?: string
 }) {
-  const li = linkedinHref(person.linkedinUsername || person.linkedinUrl)
+  const profile = person.profileUrl || null
   const items: Array<{ key: string; href: string; label: string; icon: React.ReactNode }> = []
   if (person.email)
     items.push({ key: 'email', href: `mailto:${person.email}`, label: person.email, icon: <Mail /> })
   if (person.phone)
     items.push({ key: 'phone', href: `tel:${person.phone}`, label: person.phone, icon: <Phone /> })
-  if (li)
-    items.push({ key: 'li', href: li, label: 'LinkedIn profile', icon: <LinkedInIcon /> })
+  if (profile)
+    items.push({ key: 'profile', href: profile, label: 'View profile', icon: <UserRound /> })
   if (!items.length) return null
   return (
     <span className={cn('flex shrink-0 items-center gap-1', className)}>
@@ -225,8 +217,8 @@ export function PersonContactLinks({
           href={i.href}
           title={i.label}
           aria-label={i.label}
-          target={i.key === 'li' ? '_blank' : undefined}
-          rel={i.key === 'li' ? 'noreferrer' : undefined}
+          target={i.key === 'profile' ? '_blank' : undefined}
+          rel={i.key === 'profile' ? 'noreferrer' : undefined}
           className='flex size-7 items-center justify-center rounded-full border border-transparent text-text-muted transition-all hover:border-accent-line hover:bg-accent-soft hover:text-accent-text [&_svg]:size-3.5'
         >
           {i.icon}
@@ -246,7 +238,7 @@ export interface PersonCardProps {
   tags?: string[]
   /** Footer slot, usually the primary CTA. */
   footer?: React.ReactNode
-  /** Show email / phone / LinkedIn glyph links. On by default for cards. */
+  /** Show email / phone / profile glyph links. On by default for cards. */
   showContact?: boolean
   contacted?: boolean
   /** Top-right slot — a menu, a score, a secondary action. */

@@ -166,9 +166,6 @@
   --pill-status-run: #7b9ed4;
   --pill-status-fail: #c4706a;
 
-  /* Third-party brand accents — official external brand colors, theme-invariant
-     (LinkedIn's brand blue). */
-  --linkedin-brand: #0a66c2;
 
   /* Brand hero gradient — CTA buttons + person avatars (prototype --brand-gradient) */
   --gradient-cta: linear-gradient(135deg, #FFB82B 0%, #FF4F9E 100%);
@@ -647,9 +644,9 @@
   --warning-soft: rgba(245, 158, 11, 0.16);
   --warning-line: rgba(245, 158, 11, 0.45);
 
-  /* Signal-type rail hues, admin table chips and the LinkedIn mark (dark,
+  /* Signal-type rail hues and admin table chips (dark,
      TRA-1439). These were the light values byte for byte and on the dark card
-     landed anywhere from 2.59 (LinkedIn) to 6.14 (job). They are TEXT as much
+     landed anywhere from 2.59 to 6.14 (job). They are TEXT as much
      as fill — the signal icon takes text-dot-*, status pills are text — so all
      fourteen sit in one band: 4.5 on the raised surface, 6.41 on the card,
      each its own hue at that luminance (OKLCH: hue and chroma held, lightness
@@ -676,10 +673,6 @@
   --pill-status-run: #89ADE4;
   --pill-status-fail: #EC948D;
 
-  /* LinkedIn's brand blue (#0a66c2) is 2.59 on the dark card — invisible as a
-     glyph. Same hue at the band (chroma 81%, the gamut limit there); LinkedIn's
-     own dark-mode blue, #70B5F9, is a near neighbour. */
-  --linkedin-brand: #6FAEFD;
 
   /* Same object as --sidebar above: the card. */
   --surface-sidebar: var(--surface-card);
@@ -939,7 +932,6 @@
 
   /* Signal-type + sidebar surface utility emission (bg-type-news, bg-surface-sidebar) */
   --color-surface-sidebar: var(--surface-sidebar);
-  --color-linkedin: var(--linkedin-brand);
   --color-dot-news: var(--dot-news);
   --color-dot-career: var(--dot-career);
   --color-dot-job: var(--dot-job);

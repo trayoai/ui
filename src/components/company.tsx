@@ -21,7 +21,6 @@ export interface CompanyLike {
   employeeCount?: number | string | null
   location?: string | null
   description?: string | null
-  linkedinUrl?: string | null
 }
 
 function formatEmployees(v?: number | string | null): string | null {

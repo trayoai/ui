@@ -141,4 +141,4 @@ export {
   placeholderFaceIndex,
   placeholderFaceUrl,
 } from './lib/placeholder-faces'
-export { isLinkedInSilhouette } from './lib/profile-image'
+export type { IsGenericPhoto } from './lib/profile-image'

@@ -137,9 +137,4 @@ export const API_NOTES = [
       'which is also the field you send when creating a person. `<Person>` reads both (plus `imageUrl` / `avatarUrl`), ' +
       'so pass the API object straight through rather than remapping it.',
   },
-  {
-    title: 'So does their LinkedIn',
-    body:
-      '`linkedinUsername` on read, `linkedinUrl` on write and in find results. Both are accepted.',
-  },
 ] as const

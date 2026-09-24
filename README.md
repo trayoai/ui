@@ -223,7 +223,7 @@ gets the same face everywhere, forever. It never degrades to initials.
 <Person person={apiPerson} />                        // row — lists and tables
 <Person person={apiPerson} variant="inline" />        // avatar + name, in a sentence
 <Person person={apiPerson} variant="stacked" />       // centred, for a tile
-<Person person={apiPerson} showContact contacted />   // email/phone/LinkedIn glyphs + a "we reached out" check
+<Person person={apiPerson} showContact contacted />   // email/phone/profile glyphs + a "we reached out" check
 <PersonCard person={apiPerson} summary="…" tags={['CISO']} footer={<Button size="sm">Reach out</Button>} />
 ```
 
@@ -236,8 +236,7 @@ passes straight through. Everything but `name` is optional.
 > `<Person>` reads both (plus `imageUrl` / `avatarUrl`), so either shape works;
 > `personPhotoUrl(person)` is exported if you need the resolved URL yourself.
 > Reading only one spelling is the usual reason every avatar falls back to the
-> placeholder face. LinkedIn is the same: `linkedinUsername` (read) and
-> `linkedinUrl` (write/find) are both accepted.
+> placeholder face.
 
 ### `<Company>` / `<CompanyCard>`
 

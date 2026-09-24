@@ -13,15 +13,21 @@ export interface TrayoUIConfig {
    */
   brandImageOrigin: string
   /**
-   * Optional proxy for PERSON photos. Raw `profileImageUrl` values from the
-   * Trayo API point at LinkedIn's CDN, which frequently refuses cross-origin
-   * hotlinks — when it does, `<PersonAvatar>` drops to the illustrated
-   * placeholder face. Supply a function here (e.g. pointing at your own
-   * image-proxy route) to turn an upstream URL into one your app can load.
+   * Optional proxy for PERSON photos. A raw upstream photo URL often refuses to
+   * load cross-origin; when it fails, `<PersonAvatar>` drops to the illustrated
+   * fallback face. Supply a function here — pointing at your own image-proxy
+   * route — to turn an upstream URL into one your app can load.
    *
    * Return `null`/`undefined` to skip the photo entirely.
    */
   personImageProxy?: (url: string) => string | null | undefined
+  /**
+   * Optional test for "this URL is a generic outline, not a real photo". A
+   * match is treated as no photo at all, so the illustrated fallback face shows
+   * instead of a stock silhouette. Which URLs qualify depends on your data
+   * source, so there is no default.
+   */
+  isGenericPhoto?: (url: string) => boolean
   /**
    * Where the 50 illustrated placeholder faces are served from. By default the
    * bundled PNGs are imported through your bundler, which is what you want.
