@@ -150,6 +150,10 @@
    rather than the site's SVG shapes — same read, nothing to ship. */
 .hero {
   background-color: var(--color-purple);
+  /* Position of the peach glow. Updated by the pointer handler on the page;
+     these are the resting values it eases back to. */
+  --glow-x: 12%;
+  --glow-y: 72%;
 }
 .hero::before,
 .hero::after {
@@ -160,10 +164,27 @@
 }
 .hero::before {
   background:
-    radial-gradient(60% 70% at 8% 75%, rgba(255, 161, 130, 0.85) 0%, rgba(255, 161, 130, 0) 62%),
+    /* The peach glow tracks the cursor; the violet and deep-purple fields stay
+       put so the panel keeps its shape as it moves. */
+    radial-gradient(
+      55% 65% at var(--glow-x) var(--glow-y),
+      rgba(255, 161, 130, 0.9) 0%,
+      rgba(255, 161, 130, 0) 62%
+    ),
     radial-gradient(45% 55% at 2% 40%, rgba(205, 129, 255, 0.7) 0%, rgba(205, 129, 255, 0) 65%),
     radial-gradient(50% 60% at 95% 15%, rgba(111, 0, 255, 0.55) 0%, rgba(111, 0, 255, 0) 70%);
   filter: blur(40px);
+  /* The JS eases the values every frame, so nothing to transition here —
+     a CSS transition on a custom property would need @property to interpolate
+     at all, and would fight the easing where it is supported. */
+  will-change: background;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero {
+    --glow-x: 12%;
+    --glow-y: 72%;
+  }
 }
 /* The site layers its noise at 50% in overlay; the texture is what keeps a
    flat purple field from banding across a wide panel. */

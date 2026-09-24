@@ -50,7 +50,7 @@ const md = (s: string, size = '12.5px') =>
       <a href="#install" class="hidden rounded-full px-3 py-1.5 hover:bg-white sm:inline-block">Install</a>
       <a href="#docs" class="hidden rounded-full px-3 py-1.5 hover:bg-white sm:inline-block">Docs</a>
       <a href="/llms.txt" class="btn-sand">For agents</a>
-      <a href={repoUrl} class="btn-black">GitHub</a>
+      <a href={repoUrl} class="btn-black"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-4"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>GitHub</a>
     </nav>
   </div>
 </header>
@@ -58,7 +58,7 @@ const md = (s: string, size = '12.5px') =>
 <main class="px-gutter">
 
   <!-- hero -->
-  <section class="hero panel mx-auto mt-2 flex max-w-6xl flex-col items-center justify-center px-6 pt-20 pb-20 text-center text-white md:pt-24 md:pb-24">
+  <section id="hero" class="hero panel mx-auto mt-2 flex max-w-6xl flex-col items-center justify-center px-6 pt-20 pb-20 text-center text-white md:pt-24 md:pb-24">
     <div class="relative z-10 flex max-w-4xl flex-col items-center">
       <p class="mb-5 text-xs font-semibold tracking-widest text-white/75 uppercase">Component library</p>
       <h1 class="text-4xl font-bold sm:text-5xl md:text-6xl">
@@ -77,6 +77,54 @@ const md = (s: string, size = '12.5px') =>
         React&nbsp;18/19 · Tailwind&nbsp;v4 · light and dark · free and open source
       </p>
     </div>
+
+  <script is:inline>
+    // Peach glow follows the pointer across the hero.
+    //
+    // Eased in rAF rather than with a CSS transition: interpolating a custom
+    // property needs @property to work at all, and this way the easing is
+    // identical everywhere. Only writes while the values are still moving, so
+    // it idles at zero cost once the pointer stops.
+    (function () {
+      var hero = document.getElementById('hero')
+      if (!hero) return
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+      var REST_X = 12, REST_Y = 72
+      var curX = REST_X, curY = REST_Y
+      var tgtX = REST_X, tgtY = REST_Y
+      var raf = 0
+
+      function frame() {
+        // Lerp — the lag is what makes it feel like a light source rather than
+        // a cursor attachment.
+        curX += (tgtX - curX) * 0.08
+        curY += (tgtY - curY) * 0.08
+        hero.style.setProperty('--glow-x', curX.toFixed(2) + '%')
+        hero.style.setProperty('--glow-y', curY.toFixed(2) + '%')
+        if (Math.abs(tgtX - curX) > 0.05 || Math.abs(tgtY - curY) > 0.05) {
+          raf = requestAnimationFrame(frame)
+        } else {
+          raf = 0
+        }
+      }
+      function kick() { if (!raf) raf = requestAnimationFrame(frame) }
+
+      hero.addEventListener('pointermove', function (e) {
+        // Ignore touch: there is no hover, and a tap would jump the glow.
+        if (e.pointerType === 'touch') return
+        var r = hero.getBoundingClientRect()
+        tgtX = ((e.clientX - r.left) / r.width) * 100
+        tgtY = ((e.clientY - r.top) / r.height) * 100
+        kick()
+      })
+      hero.addEventListener('pointerleave', function () {
+        tgtX = REST_X
+        tgtY = REST_Y
+        kick()
+      })
+    })()
+  </script>
   </section>
 
   <div class="mx-auto max-w-5xl">
@@ -225,7 +273,7 @@ components for all UI in this app.</pre>
     <div class="flex flex-wrap items-center justify-between gap-3 pt-6 text-sm text-neutral-500">
       <span>Trayo GTM UI — light and dark from one token set.</span>
       <span class="flex gap-4">
-        <a href={repoUrl} class="hover:text-purple">GitHub</a>
+        <a href={repoUrl} class="inline-flex items-center gap-1.5 hover:text-purple"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-4"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>GitHub</a>
         <a href="/demo" class="hover:text-purple">Demo</a>
         <a href="/llms.txt" class="hover:text-purple">llms.txt</a>
         <a href="https://www.trayo.ai" class="hover:text-purple">trayo.ai</a>
