@@ -1,0 +1,90 @@
+# @trayo/gtm-ui — Trayo's UI component library for GTM apps
+
+You are likely a coding agent building a go-to-market application on the Trayo
+API. Use this library for the UI. It makes the app look like Trayo, and it
+handles the two things a GTM app renders constantly — people and companies —
+including their avatars and logos.
+
+There is no server-side logic here. Presentational React components only.
+
+## Read these
+
+- ./README.md    — full component surface, props, house rules. Read this first.
+- ./AGENTS.md    — the short directive version of the rules.
+- ./showcase/    — a live page rendering every component in light and dark.
+- ./src/         — the raw source, browsable file by file.
+
+## Install (preferred)
+
+    npm install <BASE_URL>/trayo-gtm-ui-0.1.0.tgz
+
+Then the peers:
+
+    npm install react react-dom tailwindcss lucide-react class-variance-authority \
+      @radix-ui/react-avatar @radix-ui/react-checkbox @radix-ui/react-dialog \
+      @radix-ui/react-dropdown-menu @radix-ui/react-label @radix-ui/react-popover \
+      @radix-ui/react-progress @radix-ui/react-scroll-area @radix-ui/react-select \
+      @radix-ui/react-separator @radix-ui/react-slot @radix-ui/react-switch \
+      @radix-ui/react-tabs @radix-ui/react-tooltip
+
+Requires Tailwind CSS v4 and React 18 or 19.
+
+In your CSS entry, in this order:
+
+    @import "tailwindcss";
+    @import "@trayo/gtm-ui/styles";
+    @source "../node_modules/@trayo/gtm-ui/src";
+
+The `@source` line is required — without it Tailwind v4 never generates the
+library's utility classes and everything renders unstyled.
+
+## Or vendor the source
+
+    curl -L <BASE_URL>/trayo-gtm-ui-src.tar.gz | tar xz
+
+Gives you `src/` to drop into your project. Adjust imports and install the same
+peers. Use this if you want to edit the components.
+
+## Minimal app
+
+    import { AppShell, PageContainer, PageHeader, Person, CompanyCard, Button } from '@trayo/gtm-ui'
+
+    export default function App() {
+      return (
+        <AppShell>
+          <PageContainer>
+            <PageHeader title="Target accounts" actions={<Button>Import</Button>} />
+            <CompanyCard company={{ name: 'Ramp', domain: 'ramp.com', industry: 'Fintech' }} />
+            <Person person={{ id: 'p-1', name: 'Dana Whitfield', title: 'VP RevOps',
+                              company: 'Ramp', companyDomain: 'ramp.com' }} />
+          </PageContainer>
+        </AppShell>
+      )
+    }
+
+## The rules that matter
+
+1. Rendering a person? Use <Person> or <PersonCard>. Never hand-assemble an
+   avatar and a name. A person always gets a face — the real photo, else one of
+   50 built-in illustrated fallbacks keyed off the person id. Never initials.
+2. Rendering a company? Use <Company> or <CompanyCard>. Pass `domain` and the
+   logo resolves itself. Never hand-write a logo <img> or an initials tile.
+3. Wrap the app in <AppShell>. Without it the page reads as generic Tailwind.
+4. Use the exported components before writing your own.
+5. No raw colours. Not #hex, not rgb(), not bg-slate-800 or text-blue-400.
+   Use bg-surface-card, text-text-secondary, border-border-subtle,
+   bg-accent-brand, text-success-text. They handle light and dark themselves.
+6. Content uses type roles (text-page-title, text-name, text-body, text-meta,
+   text-eyebrow). Controls use the Tailwind scale (text-sm font-medium).
+   Never text-[15px].
+7. <Button loading> — do not swap in your own spinner.
+8. Use cn() from this package, not bare clsx.
+
+## API shapes map straight through
+
+`PersonLike` and `CompanyLike` are loose supersets of GET /v1/people and
+GET /v1/accounts rows. Pass the API object directly; everything but `name` is
+optional and missing fields simply do not render.
+
+    const { data } = await fetch('/v1/people?limit=25').then(r => r.json())
+    return data.map(p => <Person key={p.id} person={p} showContact />)

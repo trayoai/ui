@@ -1,5 +1,6 @@
 import * as React from 'react'
-import { Linkedin, Mail, MapPin, Phone } from 'lucide-react'
+import { Mail, MapPin, Phone } from 'lucide-react'
+import { LinkedInIcon } from './icons'
 import { cn } from '../lib/cn'
 import { Badge } from './ui/badge'
 import { CompanyLogo } from './company-logo'
@@ -176,7 +177,7 @@ export function PersonContactLinks({
   if (person.phone)
     items.push({ key: 'phone', href: `tel:${person.phone}`, label: person.phone, icon: <Phone /> })
   if (li)
-    items.push({ key: 'li', href: li, label: 'LinkedIn profile', icon: <Linkedin /> })
+    items.push({ key: 'li', href: li, label: 'LinkedIn profile', icon: <LinkedInIcon /> })
   if (!items.length) return null
   return (
     <span className={cn('flex shrink-0 items-center gap-1', className)}>

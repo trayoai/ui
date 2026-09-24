@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>@trayo/gtm-ui — Trayo's component library for GTM apps</title>
+<style>
+  @font-face { font-family:'Polymath'; src:url('./fonts/polymath-regular.woff2') format('woff2'); font-weight:400; font-display:swap; }
+  @font-face { font-family:'Polymath'; src:url('./fonts/polymath-semibold.woff2') format('woff2'); font-weight:600; font-display:swap; }
+  :root{
+    --shell:#fdf9ee; --card:#fffdf8; --well:#f8f1df; --raised:#fff;
+    --fg1:#1c1a17; --fg2:#6b6253; --fg3:#9a9180;
+    --line:rgb(120 90 40 / 0.14); --line-strong:rgb(120 90 40 / 0.24);
+    --brand:#845CFF; --soft:rgba(132,92,255,.10); --accent-line:rgba(132,92,255,.38);
+    --heading:'Polymath',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    --body:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:var(--body); color:var(--fg1); background-color:var(--shell);
+    background-image:
+      radial-gradient(120% 80% at 85% 0%, rgba(255,201,168,.30) 0%, rgba(255,201,168,0) 42%),
+      radial-gradient(90% 70% at 0% 100%, rgba(123,93,243,.10) 0%, rgba(123,93,243,0) 46%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.36  0 0 0 0 0.18  0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/></svg>");
+    background-repeat:no-repeat,no-repeat,repeat; min-height:100vh; line-height:1.5;
+  }
+  .wrap{max-width:860px;margin:0 auto;padding:56px 24px 80px}
+  h1{font-family:var(--heading);font-weight:600;font-size:40px;line-height:1.1;letter-spacing:-.015em;margin:0 0 10px}
+  h2{font-family:var(--heading);font-weight:600;font-size:18px;line-height:1.3;margin:38px 0 10px}
+  .grad{background-image:linear-gradient(135deg,#FFB82B 0%,#FF4F9E 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{font-size:16px;color:var(--fg2);margin:0 0 6px;max-width:62ch}
+  .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.0833em;color:var(--brand);margin:0 0 8px}
+  p{font-size:14px;color:var(--fg2);max-width:70ch}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;background:var(--well);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+  pre{background:var(--card);border-radius:12px;box-shadow:0 0 0 1px rgba(60,40,20,.08);padding:14px 16px;overflow-x:auto;margin:10px 0}
+  pre code{background:none;border:none;padding:0;font-size:12.5px;line-height:1.6;color:var(--fg1);white-space:pre}
+  /* The agent prompt and the install URLs are meant to be read and copied
+     whole, so they wrap instead of scrolling off the right edge. */
+  pre.wrap code{white-space:pre-wrap;word-break:break-word}
+  .cards{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));margin:20px 0 4px}
+  a.card{display:block;text-decoration:none;color:inherit;background-image:linear-gradient(160deg,#fff 0%,#FEFBF4 100%);
+    border-radius:12px;box-shadow:0 0 0 1px rgba(60,40,20,.08);padding:14px 16px;transition:box-shadow .15s,transform .15s}
+  a.card:hover{box-shadow:0 8px 20px rgba(60,40,20,.045),0 1px 4px rgba(60,40,20,.025),0 0 0 1px rgba(60,40,20,.08);transform:translateY(-1px)}
+  a.card b{font-family:var(--heading);font-weight:600;font-size:14px;display:block;margin-bottom:2px;color:var(--fg1)}
+  a.card span{font-size:12px;color:var(--fg3)}
+  ol{font-size:14px;color:var(--fg2);max-width:70ch;padding-left:20px}
+  ol li{margin:7px 0}
+  .pill{display:inline-block;border-radius:999px;background:var(--soft);border:1px solid var(--accent-line);color:var(--brand);
+    font-size:12px;font-weight:600;padding:2px 10px;margin-bottom:18px}
+  .note{background:var(--well);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--fg2);margin:14px 0;max-width:70ch}
+  footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--line);font-size:12px;color:var(--fg3)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="pill">v0.1 · hackathon build</div>
+  <h1>Trayo <span class="grad">GTM UI</span></h1>
+  <p class="lede">The component library for go-to-market apps built on the Trayo API. Use it and your app looks like Trayo — the same colours, type, surfaces, buttons and tables, and the same treatment of the two things a GTM app renders constantly: <strong>people</strong> and <strong>companies</strong>, with real avatars and real logos.</p>
+  <p>Presentational React components only. No server-side logic, no data fetching, no auth.</p>
+
+  <div class="cards">
+    <a class="card" href="./showcase/"><b>Live showcase →</b><span>Every component, light and dark</span></a>
+    <a class="card" href="./README.md"><b>README.md →</b><span>Full surface, props, house rules</span></a>
+    <a class="card" href="./llms.txt"><b>llms.txt →</b><span>Point your coding agent here</span></a>
+    <a class="card" href="./src/"><b>Browse src/ →</b><span>Read any component's source</span></a>
+  </div>
+
+  <h2>Point your coding agent at this</h2>
+  <p>Paste this into your agent. It is everything it needs to get going.</p>
+  <pre class="wrap"><code>Read https://REPLACE_BASE/llms.txt and follow it. Use @trayo/gtm-ui
+for all UI in this app.</code></pre>
+
+  <h2>Install</h2>
+  <pre class="wrap"><code>npm install https://REPLACE_BASE/trayo-gtm-ui-0.1.0.tgz
+
+npm install react react-dom tailwindcss lucide-react class-variance-authority \
+  @radix-ui/react-avatar @radix-ui/react-checkbox @radix-ui/react-dialog \
+  @radix-ui/react-dropdown-menu @radix-ui/react-label @radix-ui/react-popover \
+  @radix-ui/react-progress @radix-ui/react-scroll-area @radix-ui/react-select \
+  @radix-ui/react-separator @radix-ui/react-slot @radix-ui/react-switch \
+  @radix-ui/react-tabs @radix-ui/react-tooltip</code></pre>
+  <p>Requires <strong>Tailwind CSS v4</strong> and React 18 or 19. Prefer to vendor the source instead? <code>curl -L https://REPLACE_BASE/trayo-gtm-ui-src.tar.gz | tar xz</code></p>
+
+  <h2>Wire up the CSS</h2>
+  <p>In your CSS entry, in this order:</p>
+  <pre><code>@import "tailwindcss";
+@import "@trayo/gtm-ui/styles";
+@source "../node_modules/@trayo/gtm-ui/src";</code></pre>
+  <div class="note"><strong>The <code>@source</code> line is not optional.</strong> Without it Tailwind v4 never scans the library, generates none of its utility classes, and every component renders unstyled. This is the one setup mistake worth checking first.</div>
+
+  <h2>A whole app</h2>
+  <pre><code>import { AppShell, PageContainer, PageHeader, Person, CompanyCard, Button } from '@trayo/gtm-ui'
+
+export default function App() {
+  return (
+    &lt;AppShell&gt;
+      &lt;PageContainer&gt;
+        &lt;PageHeader title="Target accounts" actions={&lt;Button&gt;Import&lt;/Button&gt;} /&gt;
+        &lt;CompanyCard company={{ name: 'Ramp', domain: 'ramp.com', industry: 'Fintech' }} /&gt;
+        &lt;Person person={{ id: 'p-1', name: 'Dana Whitfield', title: 'VP RevOps',
+                          company: 'Ramp', companyDomain: 'ramp.com' }} /&gt;
+      &lt;/PageContainer&gt;
+    &lt;/AppShell&gt;
+  )
+}</code></pre>
+
+  <h2>People and companies are the point</h2>
+  <p><code>PersonLike</code> and <code>CompanyLike</code> are loose supersets of <code>GET /v1/people</code> and <code>GET /v1/accounts</code> rows — pass an API object straight through and it renders whatever is there.</p>
+  <pre><code>const { data } = await fetch('/v1/people?limit=25').then(r =&gt; r.json())
+return data.map(p =&gt; &lt;Person key={p.id} person={p} showContact /&gt;)</code></pre>
+  <p>A person <strong>always</strong> gets a face: the real photo when it loads, otherwise one of 50 built-in illustrated fallbacks picked stably from the person id. Never initials. A company resolves its logo from its domain alone, through Trayo's public logo proxy.</p>
+
+  <h2>House rules</h2>
+  <ol>
+    <li>Rendering a person? <code>&lt;Person&gt;</code> or <code>&lt;PersonCard&gt;</code>. Never hand-assemble an avatar and a name.</li>
+    <li>Rendering a company? <code>&lt;Company&gt;</code> or <code>&lt;CompanyCard&gt;</code>. Pass <code>domain</code>; never hand-write a logo <code>&lt;img&gt;</code>.</li>
+    <li>Wrap the app in <code>&lt;AppShell&gt;</code> — it paints the branded canvas.</li>
+    <li>Use the exported components before writing your own.</li>
+    <li>No raw colours. Not <code>#hex</code>, not <code>bg-slate-800</code>. Use <code>bg-surface-card</code>, <code>text-text-secondary</code>, <code>border-border-subtle</code>, <code>bg-accent-brand</code> — they flip light/dark themselves.</li>
+    <li>Content uses type roles (<code>text-page-title</code>, <code>text-name</code>, <code>text-body</code>, <code>text-meta</code>). Controls use <code>text-sm font-medium</code>. Never <code>text-[15px]</code>.</li>
+    <li><code>&lt;Button loading&gt;</code> — don't swap in your own spinner.</li>
+  </ol>
+
+  <footer>@trayo/gtm-ui v0.1 · light and dark from one token set · Polymath headings, system body</footer>
+</div>
+</body>
+</html>
