@@ -58,6 +58,16 @@ export function CompanyLogo({
   React.useEffect(() => setFailed(0), [candidates])
 
   const src = candidates[failed]
+
+  // An image can finish loading BEFORE React attaches `onLoad` — served from
+  // cache, or already complete by the time a server-rendered island hydrates.
+  // React does not replay the event, so without this the logo sits at opacity 0
+  // behind the initials forever, even though the bytes arrived fine.
+  const imgRef = React.useRef<HTMLImageElement | null>(null)
+  React.useEffect(() => {
+    const el = imgRef.current
+    if (el?.complete && el.naturalWidth > 0) setLoadedSrc(el.getAttribute('src'))
+  }, [src])
   const loaded = !!src && loadedSrc === src
   const radius = shape === 'circle' ? 'rounded-full' : undefined
 
@@ -80,6 +90,7 @@ export function CompanyLogo({
       {src && (
         <img
           key={src}
+          ref={imgRef}
           src={src}
           alt={name}
           aria-hidden={!loaded}

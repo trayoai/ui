@@ -112,10 +112,26 @@ const md = (s: string, size = '12.5px') =>
           <span class="flex items-center gap-2 text-xs text-neutral-500">
             <span class="size-1.5 rounded-full bg-green"></span> Live
           </span>
-          <a href="/demo" target="_blank" rel="noreferrer" class="text-xs font-semibold text-purple">Open full size →</a>
+          <a href="/demo" target="_blank" rel="noreferrer" class="text-xs font-semibold text-purple">Open the full demo →</a>
         </div>
-        <iframe src="/demo" title="Trayo GTM UI — live component demo" loading="lazy" class="block h-[820px] w-full border-0 bg-white"></iframe>
+        <iframe
+          id="demo-frame"
+          src="/embed"
+          title="Trayo GTM UI — live components"
+          scrolling="no"
+          class="block w-full border-0 bg-white"
+          style="height: 1500px"
+        ></iframe>
       </div>
+      <script is:inline>
+        // The frame posts its content height; match it so the demo never gets
+        // its own scrollbar and reads as part of the page.
+        addEventListener('message', function (e) {
+          if (!e.data || e.data.type !== 'trayo-ui-demo-height') return
+          var f = document.getElementById('demo-frame')
+          if (f) f.style.height = e.data.height + 'px'
+        })
+      </script>
     </div>
   </section>
 

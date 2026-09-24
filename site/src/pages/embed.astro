@@ -1,0 +1,39 @@
+---
+// The demo as embedded on the home page.
+//
+// It is still a separate document — the library's token set and the marketing
+// one both define Tailwind themes (down to --font-sans), so putting them in one
+// document makes one of them lose. What changed is that this frame reports its
+// height to the parent and never scrolls itself, so it reads as part of the
+// page rather than as a window cut into it.
+import '../styles/demo.css'
+import { Showcase } from '../components/Showcase'
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trayo GTM UI — embedded demo</title>
+<meta name="robots" content="noindex" />
+<style>
+  /* No inner scrollbar: the parent sizes the frame to this content. */
+  html, body { overflow: hidden; }
+</style>
+</head>
+<body>
+  <Showcase compact client:load />
+  <script is:inline>
+    // Report height on every change — fonts, images and the dark toggle all
+    // reflow the content after first paint.
+    function post() {
+      var h = document.documentElement.scrollHeight
+      parent.postMessage({ type: 'trayo-ui-demo-height', height: h }, '*')
+    }
+    new ResizeObserver(post).observe(document.body)
+    addEventListener('load', post)
+    document.addEventListener('click', function () { setTimeout(post, 350) })
+    post()
+  </script>
+</body>
+</html>

@@ -345,15 +345,15 @@ function Section({
 const LIBRARY_URL = 'REPLACE_LIB_URL'
 const libraryHref = LIBRARY_URL.startsWith('http') ? LIBRARY_URL : null
 
-export function Showcase() {
+export function Showcase({ compact = false }: { compact?: boolean } = {}) {
   const [dark, setDark] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set(['p-2']))
   const [sort, setSort] = useState<SortState>({ key: 'score', dir: 'desc' })
 
   return (
     <div className={dark ? 'dark' : undefined}>
-      <AppShell>
-        <PageContainer width='wide'>
+      <AppShell className={compact ? 'min-h-0' : undefined}>
+        <PageContainer width='wide' className={compact ? 'py-6' : undefined}>
           <PageHeader
             title={
               <>
@@ -605,118 +605,123 @@ export function Showcase() {
             </div>
           </Section>
 
-          {/* ---------------------------------------------- controls */}
-          <Section title='Buttons' caption='Pills at every size. Primary is the solid brand violet; secondary outlines it; tertiary recedes.'>
-            <Surface>
-              <div className='flex flex-col gap-5'>
-                {(['default', 'secondary', 'tertiary', 'destructive', 'destructive-outline', 'quiet'] as const).map(
-                  (v) => (
-                    <div key={v} className='flex flex-wrap items-center gap-3'>
-                      <span className='w-44 shrink-0 text-meta'>{v}</span>
-                      {(['xs', 'sm', 'default', 'lg'] as const).map((s) => (
-                        <Button key={s} variant={v} size={s}>
-                          {s === 'default' ? 'Reach out' : 'Reach out'}
-                        </Button>
-                      ))}
-                      <Button variant={v} loading>
-                        Saving…
-                      </Button>
-                      <Button variant={v} disabled>
-                        Disabled
-                      </Button>
-                      <Button variant={v} size='icon'>
-                        <Plus />
-                      </Button>
-                    </div>
-                  )
-                )}
-              </div>
-            </Surface>
-          </Section>
-
-          <Section title='Type, stats and empty states'>
-            <div className='grid gap-4 lg:grid-cols-3'>
+          {!compact && (
+            <>
+            {/* ---------------------------------------------- controls */}
+            <Section title='Buttons' caption='Pills at every size. Primary is the solid brand violet; secondary outlines it; tertiary recedes.'>
               <Surface>
-                <SectionLabel>Type roles</SectionLabel>
-                <div className='flex flex-col gap-2'>
-                  <span className='text-page-title text-text-primary'>Page title · 24</span>
-                  <span className='text-section text-text-primary'>Section · 18</span>
-                  <span className='text-card-title text-text-primary'>Card title · 18</span>
-                  <span className='text-name text-text-primary'>Entity name · 14</span>
-                  <span className='text-body text-text-secondary'>Body copy · 14</span>
-                  <span className='text-meta'>Meta · 12</span>
-                  <Eyebrow>Eyebrow · 12 uppercase</Eyebrow>
-                  <span className='text-code text-text-secondary'>text-code · 13 mono</span>
+                <div className='flex flex-col gap-5'>
+                  {(['default', 'secondary', 'tertiary', 'destructive', 'destructive-outline', 'quiet'] as const).map(
+                    (v) => (
+                      <div key={v} className='flex flex-wrap items-center gap-3'>
+                        <span className='w-44 shrink-0 text-meta'>{v}</span>
+                        {(['xs', 'sm', 'default', 'lg'] as const).map((s) => (
+                          <Button key={s} variant={v} size={s}>
+                            {s === 'default' ? 'Reach out' : 'Reach out'}
+                          </Button>
+                        ))}
+                        <Button variant={v} loading>
+                          Saving…
+                        </Button>
+                        <Button variant={v} disabled>
+                          Disabled
+                        </Button>
+                        <Button variant={v} size='icon'>
+                          <Plus />
+                        </Button>
+                      </div>
+                    )
+                  )}
                 </div>
               </Surface>
+            </Section>
 
-              <div className='flex flex-col gap-4'>
-                <div className='grid grid-cols-2 gap-4'>
-                  <StatTile label='Accounts tracked' value='1,284' delta='+12%' />
-                  <StatTile label='Signals this week' value='47' delta='-4%' />
-                </div>
+            <Section title='Type, stats and empty states'>
+              <div className='grid gap-4 lg:grid-cols-3'>
                 <Surface>
-                  <SectionLabel>Form controls</SectionLabel>
-                  <div className='flex flex-col gap-3'>
-                    <Input placeholder='Search accounts…' />
-                    <Select defaultValue='ciso'>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='ciso'>New security leader</SelectItem>
-                        <SelectItem value='funding'>Funding round</SelectItem>
-                        <SelectItem value='hiring'>Hiring surge</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <div className='flex flex-wrap gap-1.5'>
-                      <Badge variant='accent'>Accent</Badge>
-                      <Badge variant='success'>Success</Badge>
-                      <Badge variant='warning'>Warning</Badge>
-                      <Badge variant='soft'>Soft tag</Badge>
-                      <Badge variant='count'>12</Badge>
-                    </div>
+                  <SectionLabel>Type roles</SectionLabel>
+                  <div className='flex flex-col gap-2'>
+                    <span className='text-page-title text-text-primary'>Page title · 24</span>
+                    <span className='text-section text-text-primary'>Section · 18</span>
+                    <span className='text-card-title text-text-primary'>Card title · 18</span>
+                    <span className='text-name text-text-primary'>Entity name · 14</span>
+                    <span className='text-body text-text-secondary'>Body copy · 14</span>
+                    <span className='text-meta'>Meta · 12</span>
+                    <Eyebrow>Eyebrow · 12 uppercase</Eyebrow>
+                    <span className='text-code text-text-secondary'>text-code · 13 mono</span>
                   </div>
                 </Surface>
-              </div>
 
-              <div className='flex flex-col gap-4'>
-                <EmptyState
-                  icon={<Search />}
-                  title='No accounts match'
-                  description='Widen the industry filter, or import a list to start tracking.'
-                  action={
-                    <Button size='sm'>
-                      <Plus /> Import accounts
-                    </Button>
-                  }
-                />
-                <Surface>
-                  <SectionLabel>Tabs and wells</SectionLabel>
-                  <Tabs defaultValue='people'>
-                    <TabsList>
-                      <TabsTrigger value='people'>
-                        <Users /> People
-                      </TabsTrigger>
-                      <TabsTrigger value='companies'>
-                        <Building2 /> Companies
-                      </TabsTrigger>
-                    </TabsList>
-                    <TabsContent value='people'>
-                      <Well className='mt-3'>
-                        <Person person={PEOPLE[4]} size='md' showContact />
-                      </Well>
-                    </TabsContent>
-                    <TabsContent value='companies'>
-                      <Well className='mt-3'>
-                        <Company company={COMPANIES[3]} showWebsite />
-                      </Well>
-                    </TabsContent>
-                  </Tabs>
-                </Surface>
+                <div className='flex flex-col gap-4'>
+                  <div className='grid grid-cols-2 gap-4'>
+                    <StatTile label='Accounts tracked' value='1,284' delta='+12%' />
+                    <StatTile label='Signals this week' value='47' delta='-4%' />
+                  </div>
+                  <Surface>
+                    <SectionLabel>Form controls</SectionLabel>
+                    <div className='flex flex-col gap-3'>
+                      <Input placeholder='Search accounts…' />
+                      <Select defaultValue='ciso'>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='ciso'>New security leader</SelectItem>
+                          <SelectItem value='funding'>Funding round</SelectItem>
+                          <SelectItem value='hiring'>Hiring surge</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <div className='flex flex-wrap gap-1.5'>
+                        <Badge variant='accent'>Accent</Badge>
+                        <Badge variant='success'>Success</Badge>
+                        <Badge variant='warning'>Warning</Badge>
+                        <Badge variant='soft'>Soft tag</Badge>
+                        <Badge variant='count'>12</Badge>
+                      </div>
+                    </div>
+                  </Surface>
+                </div>
+
+                <div className='flex flex-col gap-4'>
+                  <EmptyState
+                    icon={<Search />}
+                    title='No accounts match'
+                    description='Widen the industry filter, or import a list to start tracking.'
+                    action={
+                      <Button size='sm'>
+                        <Plus /> Import accounts
+                      </Button>
+                    }
+                  />
+                  <Surface>
+                    <SectionLabel>Tabs and wells</SectionLabel>
+                    <Tabs defaultValue='people'>
+                      <TabsList>
+                        <TabsTrigger value='people'>
+                          <Users /> People
+                        </TabsTrigger>
+                        <TabsTrigger value='companies'>
+                          <Building2 /> Companies
+                        </TabsTrigger>
+                      </TabsList>
+                      <TabsContent value='people'>
+                        <Well className='mt-3'>
+                          <Person person={PEOPLE[4]} size='md' showContact />
+                        </Well>
+                      </TabsContent>
+                      <TabsContent value='companies'>
+                        <Well className='mt-3'>
+                          <Company company={COMPANIES[3]} showWebsite />
+                        </Well>
+                      </TabsContent>
+                    </Tabs>
+                  </Surface>
+                </div>
               </div>
-            </div>
-          </Section>
+            </Section>
+
+            </>
+          )}
 
           <footer className='flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-border-subtle pt-6 text-meta'>
             <span>
