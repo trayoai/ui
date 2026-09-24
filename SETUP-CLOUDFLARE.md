@@ -8,12 +8,20 @@ root directory or a custom output directory.
 
 | Field | Value |
 |---|---|
-| Build command | `pnpm run build` |
 | Deploy command | `npx wrangler deploy` |
+| Build command | *(optional — see below)* |
 | Root directory | *(leave empty — the repo root)* |
 
 Everything else is read from `wrangler.jsonc`, which is committed:
 the Worker name (`ui`) and the assets directory (`site/dist`).
+
+**The build runs from `postinstall`,** so it happens during
+`pnpm install --frozen-lockfile` whether or not a build command is configured.
+That is deliberate: committing `wrangler.jsonc` disables Wrangler's
+auto-configuration, which is what had been running the build before it existed —
+so with a config and no build command, `wrangler deploy` would find no
+`site/dist` and fail. Setting the dashboard's build command to `pnpm run build`
+as well is harmless (it just builds twice).
 
 No environment variables and no secrets are needed.
 

@@ -26,7 +26,8 @@
     "typecheck": "tsc --noEmit",
     "site:dev": "pnpm --filter trayo-ui-site dev",
     "site:build": "pnpm --filter trayo-ui-site build",
-    "build": "pnpm --filter trayo-ui-site build"
+    "build": "pnpm --filter trayo-ui-site build",
+    "postinstall": "pnpm --filter trayo-ui-site build"
   },
   "dependencies": {
     "clsx": "^2.1.1",
