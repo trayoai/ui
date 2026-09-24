@@ -1,8 +1,14 @@
 /**
- * @trayo/gtm-ui — Trayo's UI kit for go-to-market applications.
+ * Trayo GTM UI — Trayo's UI kit for go-to-market applications.
  *
- * Import the stylesheet once (`@trayo/gtm-ui/styles`), then use these
- * components. See README.md for the short version of when to reach for what.
+ * This directory is vendored into your project. Import the stylesheet once
+ * from your CSS entry (`@import "./trayo-ui/styles/trayo-ui.css";`), then
+ * import components from here:
+ *
+ *   import { Person, CompanyCard, Button } from './trayo-ui'
+ *
+ * README.md (beside this file) is the full surface; AGENTS.md is the short
+ * directive version of the house rules.
  */
 
 /* ---------------------------------------------------------------- entities */

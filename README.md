@@ -1,4 +1,4 @@
-# @trayo/gtm-ui
+# Trayo GTM UI
 
 Trayo's UI component library for go-to-market applications built on the
 [Trayo API](https://api.trayo.ai). Drop it into an app and the result looks like
@@ -13,11 +13,39 @@ not fetch, authenticate, or know anything about your data layer.
 
 ---
 
-## Install
+## Copy these files into your project
+
+This library is **vendored, not installed.** You copy the source into your
+application and it becomes yours — yours to read, yours to edit, and with no
+dependency on wherever you got it from.
+
+If you were handed a temporary URL to fetch it from, that URL is a delivery
+mechanism and nothing more. **Never `npm install` from it**: that writes a
+disappearing host into your `package.json` as a dependency spec, and every
+future install, CI run and fresh clone breaks the day it goes away.
+
+### 1. Drop in the source
+
+From your project root:
 
 ```bash
-pnpm add @trayo/gtm-ui
-pnpm add react react-dom tailwindcss lucide-react class-variance-authority \
+mkdir -p src/trayo-ui
+curl -L <BASE_URL>/trayo-ui.tar.gz | tar xz -C src
+```
+
+You get `src/trayo-ui/` holding `index.ts`, `components/`, `lib/` and `styles/`
+(Polymath woff2 included), plus a copy of this README and AGENTS.md.
+
+`src/trayo-ui/` is the location assumed throughout; put it anywhere your project
+keeps source and adjust the import paths to match.
+
+### 2. Install the real dependencies
+
+Ordinary public npm packages — these are permanent:
+
+```bash
+npm install react react-dom clsx tailwind-merge lucide-react \
+  class-variance-authority tailwindcss @tailwindcss/vite \
   @radix-ui/react-avatar @radix-ui/react-checkbox @radix-ui/react-dialog \
   @radix-ui/react-dropdown-menu @radix-ui/react-label @radix-ui/react-popover \
   @radix-ui/react-progress @radix-ui/react-scroll-area @radix-ui/react-select \
@@ -27,18 +55,21 @@ pnpm add react react-dom tailwindcss lucide-react class-variance-authority \
 
 Requires **Tailwind CSS v4** and **React 18 or 19**.
 
-In your CSS entry — order matters:
+### 3. Wire up the CSS
+
+In your CSS entry, in this order:
 
 ```css
 @import 'tailwindcss';
-@import '@trayo/gtm-ui/styles';
-
-/* Tailwind v4 must scan the library so its utility classes get generated. */
-@source '../node_modules/@trayo/gtm-ui/src';
+@import './trayo-ui/styles/trayo-ui.css';
 ```
 
 That single stylesheet brings the design tokens, the type roles, the Polymath
-heading font and the animations. Nothing else to configure.
+heading font and the animations. Tailwind must come first — the stylesheet
+extends its theme.
+
+No `@source` directive is needed: the components sit inside your own source
+tree, which Tailwind v4 already scans.
 
 Light is the default. Add `class="dark"` to `<html>` for the dark palette — the
 whole token set flips; no component needs changing.
@@ -48,7 +79,7 @@ whole token set flips; no component needs changing.
 ## The 30-second version
 
 ```tsx
-import { AppShell, PageContainer, PageHeader, Person, CompanyCard, Button } from '@trayo/gtm-ui'
+import { AppShell, PageContainer, PageHeader, Person, CompanyCard, Button } from './trayo-ui'
 
 export default function App() {
   return (
@@ -131,6 +162,23 @@ works too, but `domain` alone is the common and better case.
 ```
 
 Sizes: `xs sm md lg xl 2xl`.
+
+### What resolves over the network
+
+Both image paths point at **Trayo production**, not at whatever host you
+downloaded this from, so they keep working indefinitely:
+
+| | |
+|---|---|
+| company logos | `https://api.trayo.ai/api/brand-image?domain=…` (public, no key, rate-limited per caller) |
+| fallback faces | `https://app.trayo.ai/images/placeholder/NN.png` |
+
+To self-host the faces, copy the 50 PNGs into your static directory and point
+the library at them:
+
+```tsx
+<TrayoUIProvider placeholderFaceBase="/images/placeholder">
+```
 
 ---
 
@@ -227,6 +275,10 @@ Follow these and the result stays on-brand. Break them and it drifts.
 5. **Use `cn()`** (exported) to merge classes — it knows about the role classes,
    which plain `clsx` does not.
 
+You own these files now, so editing them is fair game. Prefer extending a
+variant over forking a component, and keep the token vocabulary intact — that
+is what holds the aesthetic together.
+
 ---
 
 ## Configuration
@@ -241,21 +293,19 @@ Everything works with no provider. Wrap only to override:
 >
 ```
 
-The placeholder faces are served from Trayo's CDN by default, which keeps the
-library bundler-agnostic (Vite, Next, Remix, plain `<script>` — no asset
-pipeline needed). To self-host, copy `assets/placeholder/*.png` out of this
-package into your static directory and set `placeholderFaceBase`.
-
 ---
 
-## Running the showcase
+## Developing the library itself
+
+(Only relevant in the library's own repository, not in a consuming app.)
 
 ```bash
 pnpm install
-pnpm demo        # http://127.0.0.1:5177
-pnpm demo:build  # static site in demo/dist
+pnpm demo        # showcase at http://127.0.0.1:5177
+pnpm demo:build  # static showcase in demo/dist
 pnpm typecheck
+./publish.sh     # build + publish the public kit, stamping the live base URL
 ```
 
-`demo/src/Showcase.tsx` renders every component in both themes. It is the
-fastest way to see what is available and is worth reading as a usage reference.
+`demo/src/Showcase.tsx` renders every component in both themes and is the
+fastest usage reference.

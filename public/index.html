@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>@trayo/gtm-ui — Trayo's component library for GTM apps</title>
+<title>Trayo GTM UI — component library for GTM apps</title>
 <style>
   @font-face { font-family:'Polymath'; src:url('./fonts/polymath-regular.woff2') format('woff2'); font-weight:400; font-display:swap; }
   @font-face { font-family:'Polymath'; src:url('./fonts/polymath-semibold.woff2') format('woff2'); font-weight:600; font-display:swap; }
@@ -63,34 +63,40 @@
     <a class="card" href="./showcase/"><b>Live showcase →</b><span>Every component, light and dark</span></a>
     <a class="card" href="./README.md"><b>README.md →</b><span>Full surface, props, house rules</span></a>
     <a class="card" href="./llms.txt"><b>llms.txt →</b><span>Point your coding agent here</span></a>
-    <a class="card" href="./src/"><b>Browse src/ →</b><span>Read any component's source</span></a>
+    <a class="card" href="./trayo-ui.tar.gz"><b>Download source →</b><span>Copy it into your project</span></a>
   </div>
 
   <h2>Point your coding agent at this</h2>
-  <p>Paste this into your agent. It is everything it needs to get going.</p>
-  <pre class="wrap"><code>Read https://REPLACE_BASE/llms.txt and follow it. Use @trayo/gtm-ui
-for all UI in this app.</code></pre>
+  <p>Paste this into your agent. It is everything it needs.</p>
+  <pre class="wrap"><code>Read https://REPLACE_BASE/llms.txt and follow it. Copy the component
+library into this project and use it for all UI.</code></pre>
 
-  <h2>Install</h2>
-  <pre class="wrap"><code>npm install https://REPLACE_BASE/trayo-gtm-ui-0.1.0.tgz
+  <h2>Copy the files in — don't install from this URL</h2>
+  <div class="note"><strong>This URL is a delivery mechanism and will stop working.</strong> Copy the source into your application so the app stays self-contained. Do <em>not</em> <code>npm install</code> from this host: that records a disappearing URL in your <code>package.json</code> as a dependency spec, and every later install, CI run and fresh clone breaks the day it goes away.</div>
+  <p>From your project root:</p>
+  <pre class="wrap"><code>mkdir -p src/trayo-ui
+curl -L https://REPLACE_BASE/trayo-ui.tar.gz | tar xz -C src</code></pre>
+  <p>You get <code>src/trayo-ui/</code> with <code>index.ts</code>, <code>components/</code>, <code>lib/</code> and <code>styles/</code> (Polymath woff2 included), plus the README and AGENTS.md so the house rules live in your repo. No tar? Every file is readable on its own under <a href="./src/">./src/</a>, and <a href="./files.txt">files.txt</a> lists every path.</p>
 
-npm install react react-dom tailwindcss lucide-react class-variance-authority \
+  <h2>Install the real dependencies</h2>
+  <p>Ordinary public npm packages — these are permanent.</p>
+  <pre class="wrap"><code>npm install react react-dom clsx tailwind-merge lucide-react \
+  class-variance-authority tailwindcss @tailwindcss/vite \
   @radix-ui/react-avatar @radix-ui/react-checkbox @radix-ui/react-dialog \
   @radix-ui/react-dropdown-menu @radix-ui/react-label @radix-ui/react-popover \
   @radix-ui/react-progress @radix-ui/react-scroll-area @radix-ui/react-select \
   @radix-ui/react-separator @radix-ui/react-slot @radix-ui/react-switch \
   @radix-ui/react-tabs @radix-ui/react-tooltip</code></pre>
-  <p>Requires <strong>Tailwind CSS v4</strong> and React 18 or 19. Prefer to vendor the source instead? <code>curl -L https://REPLACE_BASE/trayo-gtm-ui-src.tar.gz | tar xz</code></p>
+  <p>Requires <strong>Tailwind CSS v4</strong> and React 18 or 19.</p>
 
   <h2>Wire up the CSS</h2>
   <p>In your CSS entry, in this order:</p>
   <pre><code>@import "tailwindcss";
-@import "@trayo/gtm-ui/styles";
-@source "../node_modules/@trayo/gtm-ui/src";</code></pre>
-  <div class="note"><strong>The <code>@source</code> line is not optional.</strong> Without it Tailwind v4 never scans the library, generates none of its utility classes, and every component renders unstyled. This is the one setup mistake worth checking first.</div>
+@import "./trayo-ui/styles/trayo-ui.css";</code></pre>
+  <p>Tailwind must come first — the stylesheet extends its theme. No <code>@source</code> directive is needed: the components now sit in your own source tree, which Tailwind v4 already scans.</p>
 
   <h2>A whole app</h2>
-  <pre><code>import { AppShell, PageContainer, PageHeader, Person, CompanyCard, Button } from '@trayo/gtm-ui'
+  <pre><code>import { AppShell, PageContainer, PageHeader, Person, CompanyCard, Button } from './trayo-ui'
 
 export default function App() {
   return (
@@ -122,7 +128,10 @@ return data.map(p =&gt; &lt;Person key={p.id} person={p} showContact /&gt;)</cod
     <li><code>&lt;Button loading&gt;</code> — don't swap in your own spinner.</li>
   </ol>
 
-  <footer>@trayo/gtm-ui v0.1 · light and dark from one token set · Polymath headings, system body</footer>
+  <h2>What still touches the network</h2>
+  <p>Two image paths resolve from <strong>Trayo production</strong>, not from this temporary host, so they keep working: company logos via <code>api.trayo.ai/api/brand-image</code> (public, no key) and the 50 fallback faces via <code>app.trayo.ai/images/placeholder/</code>. Prefer to self-host the faces? Grab <a href="./placeholder-faces.tar.gz">placeholder-faces.tar.gz</a> and set <code>&lt;TrayoUIProvider placeholderFaceBase="/images/placeholder"&gt;</code>.</p>
+
+  <footer>Trayo GTM UI v0.1 · light and dark from one token set · Polymath headings, system body</footer>
 </div>
 </body>
 </html>

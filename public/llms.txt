@@ -1,26 +1,45 @@
-# @trayo/gtm-ui — Trayo's UI component library for GTM apps
+# Trayo GTM UI — copy these files into your project
 
 You are likely a coding agent building a go-to-market application on the Trayo
 API. Use this library for the UI. It makes the app look like Trayo, and it
 handles the two things a GTM app renders constantly — people and companies —
 including their avatars and logos.
 
-There is no server-side logic here. Presentational React components only.
+Presentational React components only. No server-side logic, no data fetching.
 
-## Read these
+## IMPORTANT: copy the files in. Do not install from this URL.
 
-- ./README.md    — full component surface, props, house rules. Read this first.
-- ./AGENTS.md    — the short directive version of the rules.
-- ./showcase/    — a live page rendering every component in light and dark.
-- ./src/         — the raw source, browsable file by file.
+This URL is a **temporary delivery mechanism** and will stop working. Your job
+is to copy the source into the application you are building so the app keeps
+working forever with no dependency on this host.
 
-## Install (preferred)
+Do NOT run `npm install <this-url>/something.tgz`. That writes this temporary
+URL into package.json as a dependency spec, and every future install, every CI
+run, and every fresh clone breaks the moment this host goes away.
 
-    npm install <BASE_URL>/trayo-gtm-ui-0.1.0.tgz
+## Step 1 — vendor the source
 
-Then the peers:
+From your project root:
 
-    npm install react react-dom tailwindcss lucide-react class-variance-authority \
+    mkdir -p src/trayo-ui
+    curl -L <BASE_URL>/trayo-ui.tar.gz | tar xz -C src --strip-components=0
+
+That gives you `src/trayo-ui/` containing `index.ts`, `components/`, `lib/`,
+`styles/` (with the Polymath woff2 files) and a copy of README.md + AGENTS.md.
+
+Put it wherever your project keeps source. `src/trayo-ui/` is the assumed
+location below; adjust the import paths if you choose another.
+
+Can't run curl? Fetch `<BASE_URL>/src/` and walk the tree — every file is
+readable individually, e.g. `<BASE_URL>/src/components/person.tsx`. The
+manifest at `<BASE_URL>/files.txt` lists every path.
+
+## Step 2 — install the real npm dependencies
+
+These are ordinary public packages and are permanent:
+
+    npm install react react-dom clsx tailwind-merge lucide-react \
+      class-variance-authority tailwindcss @tailwindcss/vite \
       @radix-ui/react-avatar @radix-ui/react-checkbox @radix-ui/react-dialog \
       @radix-ui/react-dropdown-menu @radix-ui/react-label @radix-ui/react-popover \
       @radix-ui/react-progress @radix-ui/react-scroll-area @radix-ui/react-select \
@@ -29,25 +48,20 @@ Then the peers:
 
 Requires Tailwind CSS v4 and React 18 or 19.
 
+## Step 3 — wire up the CSS
+
 In your CSS entry, in this order:
 
     @import "tailwindcss";
-    @import "@trayo/gtm-ui/styles";
-    @source "../node_modules/@trayo/gtm-ui/src";
+    @import "./trayo-ui/styles/trayo-ui.css";
 
-The `@source` line is required — without it Tailwind v4 never generates the
-library's utility classes and everything renders unstyled.
+No `@source` line is needed — the components now live inside your own source
+tree, which Tailwind v4 already scans. If your CSS entry is not a sibling of
+`trayo-ui/`, fix the relative path accordingly.
 
-## Or vendor the source
+## Step 4 — use it
 
-    curl -L <BASE_URL>/trayo-gtm-ui-src.tar.gz | tar xz
-
-Gives you `src/` to drop into your project. Adjust imports and install the same
-peers. Use this if you want to edit the components.
-
-## Minimal app
-
-    import { AppShell, PageContainer, PageHeader, Person, CompanyCard, Button } from '@trayo/gtm-ui'
+    import { AppShell, PageContainer, PageHeader, Person, CompanyCard, Button } from './trayo-ui'
 
     export default function App() {
       return (
@@ -62,6 +76,21 @@ peers. Use this if you want to edit the components.
       )
     }
 
+Read `src/trayo-ui/README.md` (now in your repo) for the full component surface.
+
+## What still points at the network, and why that is fine
+
+Two things resolve images from Trayo production — NOT from this temporary host,
+so they keep working:
+
+- company logos → `https://api.trayo.ai/api/brand-image?domain=…` (public, no key)
+- the 50 fallback faces → `https://app.trayo.ai/images/placeholder/NN.png`
+
+To self-host the faces instead, grab `<BASE_URL>/placeholder-faces.tar.gz`,
+drop the PNGs in your static directory, and set the base:
+
+    <TrayoUIProvider placeholderFaceBase="/images/placeholder">
+
 ## The rules that matter
 
 1. Rendering a person? Use <Person> or <PersonCard>. Never hand-assemble an
@@ -70,7 +99,7 @@ peers. Use this if you want to edit the components.
 2. Rendering a company? Use <Company> or <CompanyCard>. Pass `domain` and the
    logo resolves itself. Never hand-write a logo <img> or an initials tile.
 3. Wrap the app in <AppShell>. Without it the page reads as generic Tailwind.
-4. Use the exported components before writing your own.
+4. Use the provided components before writing your own.
 5. No raw colours. Not #hex, not rgb(), not bg-slate-800 or text-blue-400.
    Use bg-surface-card, text-text-secondary, border-border-subtle,
    bg-accent-brand, text-success-text. They handle light and dark themselves.
@@ -78,7 +107,7 @@ peers. Use this if you want to edit the components.
    text-eyebrow). Controls use the Tailwind scale (text-sm font-medium).
    Never text-[15px].
 7. <Button loading> — do not swap in your own spinner.
-8. Use cn() from this package, not bare clsx.
+8. Use cn() from ./trayo-ui, not bare clsx.
 
 ## API shapes map straight through
 
@@ -88,3 +117,11 @@ optional and missing fields simply do not render.
 
     const { data } = await fetch('/v1/people?limit=25').then(r => r.json())
     return data.map(p => <Person key={p.id} person={p} showContact />)
+
+## Also here
+
+- <BASE_URL>/README.md    — full component surface, props, house rules
+- <BASE_URL>/AGENTS.md    — the short directive version
+- <BASE_URL>/showcase/    — a live page rendering every component, light and dark
+- <BASE_URL>/src/         — the raw source, browsable file by file
+- <BASE_URL>/files.txt    — manifest of every source path

@@ -1,14 +1,18 @@
-/* @trayo/gtm-ui — the one stylesheet to import.
+/* Trayo GTM UI — the one stylesheet to import.
  *
- * In your app's CSS entry:
+ * These files are meant to be COPIED INTO your project (typically at
+ * `src/trayo-ui/`), not installed as a package. Once they live in your source
+ * tree, your CSS entry is just:
  *
  *   @import "tailwindcss";
- *   @import "@trayo/gtm-ui/styles";
- *   @source "../node_modules/@trayo/gtm-ui/src";
+ *   @import "./trayo-ui/styles/trayo-ui.css";
  *
- * Order matters. Tailwind must come first (this file extends its theme via
- * `@theme inline`), and the `@source` line tells Tailwind v4 to scan the
- * library's components so their utility classes get generated.
+ * Order matters: Tailwind must come first, because this file extends its theme
+ * via `@theme inline`. No `@source` line is needed — the components sit inside
+ * your own source tree, which Tailwind v4 already scans.
+ *
+ * The Polymath woff2 files sit in ./fonts and are referenced relatively, so
+ * they travel with this directory and need no configuration.
  *
  * Light is the default. Put `class="dark"` on <html> for the dark palette.
  */
