@@ -74,13 +74,17 @@ CF_BASE="${URL%/}"
 # serves no robots.txt (404) and sets no x-robots-tag. Same bytes, same server,
 # reachable by agents. So we publish through muxpad as usual but STAMP the
 # Funnel base into the docs.
+# PREFER PORT 443. Funnel can also sit on 8443/10000, but plenty of corporate
+# and guest networks allow only 80/443 outbound, so a :8443 link works on our
+# machine and fails on a participant's. `sort` puts the portless origin first
+# (":" sorts after the end of the string), so a 443 Funnel always wins.
 TS_BIN=/Applications/Tailscale.app/Contents/MacOS/Tailscale
 FUNNEL_BASE=""
 if [ -x "$TS_BIN" ]; then
-  # `funnel status` prints the public origin on a commented "#  - https://..."
+  # `funnel status` lists each public origin on a commented "#  - https://..."
   # line under "# Funnel on:".
   FUNNEL_BASE=$("$TS_BIN" funnel status 2>/dev/null \
-    | grep -oE 'https://[a-z0-9.-]+\.ts\.net(:[0-9]+)?' | head -1)
+    | grep -oE 'https://[a-z0-9.-]+\.ts\.net(:[0-9]+)?' | sort -u | head -1)
 fi
 
 if [ -n "$FUNNEL_BASE" ]; then
