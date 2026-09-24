@@ -1,10 +1,17 @@
 /**
- * SINGLE SOURCE OF TRUTH for the install instructions.
+ * Shared content for the site.
  *
- * Both the human page (`pages/index.astro`) and the agent-facing plain-text
- * doc (`pages/llms.txt.ts`) render from this file, so the two can never drift.
- * The site rebuilds on every push to the repo, which means what an agent reads
- * is always what the current source does.
+ * Split by AUDIENCE, deliberately:
+ *   - INSTALL_STEPS / INVENTORY  — rendered by BOTH the human page and
+ *     /llms.txt. These must never drift, which is why they live here once.
+ *   - RULES                      — /llms.txt ONLY. Imperative do-this-not-that
+ *     guidance is for a coding agent; on a page people read it just sounds like
+ *     someone shouting rules at them.
+ *   - VALUE / DOCS               — the human page ONLY. An agent does not need
+ *     to be sold anything.
+ *
+ * The site rebuilds on every push, so what an agent reads is always what the
+ * current source does.
  */
 
 export const REPO = 'trayoai/ui'
@@ -65,6 +72,36 @@ export default function App() {
   },
 ] as const
 
+/** Page-only: why this exists, in the reader's terms. */
+export const VALUE = [
+  {
+    title: 'Speaks Trayo natively',
+    body:
+      'The components take the shapes the Trayo API already returns — accounts, people, ' +
+      'signals, job changes. Hand a response straight to a component and it renders; ' +
+      'there is no mapping layer to write and none to keep in sync.',
+  },
+  {
+    title: 'People and companies, solved',
+    body:
+      'The two things every GTM screen is full of. Faces and logos resolve on their own, ' +
+      'with built-in fallbacks that still look designed — so a list of 200 prospects never ' +
+      'degrades into a grid of grey initials.',
+  },
+  {
+    title: 'Tables that carry dense screens',
+    body:
+      'Sorting, selection, per-row actions, skeleton loading and empty states, with entity ' +
+      'cells that stay legible at speed. Most GTM work is a table, and this one is built for it.',
+  },
+  {
+    title: 'One token set, light and dark',
+    body:
+      'Colour, type, surfaces and shadows come from the same tokens the Trayo app uses. ' +
+      'Flip a class and the whole palette follows — nothing to restyle, nothing to maintain.',
+  },
+] as const
+
 export const RULES = [
   'Rendering a person? Use `<Person>` or `<PersonCard>`. Never hand-assemble an avatar and a name — a person always gets a face, never initials.',
   'Rendering a company? Use `<Company>` or `<CompanyCard>`. Pass `domain` and the logo resolves itself; never hand-write a logo `<img>`.',
@@ -89,9 +126,8 @@ export const INVENTORY = [
 ] as const
 
 /**
- * The two field-name asymmetries in the Trayo API that silently break UIs.
- * Worth stating on the page: reading only one spelling is the usual reason
- * every avatar falls back to the placeholder face.
+ * Field-name asymmetries in the Trayo API that silently break UIs. Documented
+ * because reading only one spelling is the usual reason avatars fall back.
  */
 export const API_NOTES = [
   {
@@ -105,12 +141,5 @@ export const API_NOTES = [
     title: 'So does their LinkedIn',
     body:
       '`linkedinUsername` on read, `linkedinUrl` on write and in find results. Both are accepted.',
-  },
-  {
-    title: 'Images resolve from Trayo production',
-    body:
-      'Company logos come from `api.trayo.ai/api/brand-image` (public, no key) and the 50 illustrated fallback faces ' +
-      'from `app.trayo.ai/images/placeholder/`. A raw `media.licdn.com` photo URL refuses cross-origin hotlinks and ' +
-      'will land on the fallback face — that is what the `personImageProxy` hook is for.',
   },
 ] as const

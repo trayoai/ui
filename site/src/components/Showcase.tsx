@@ -369,6 +369,88 @@ export function Showcase() {
             }
           />
 
+          {/* -------------------------------------------------- table */}
+          <Section
+            title='Tables'
+            caption='DataTable is the workhorse — most GTM screens are a table. It is presentational: you own sorting, paging and selection, and it renders and reflects them. Put a Company or Person in the identity column and the whole table reads as Trayo.'
+          >
+            <SectionLabel>Account table — sortable, with a fit score, signal counts and owners</SectionLabel>
+            <Surface padded={false} className='mb-6 overflow-hidden p-1'>
+              <DataTable
+                columns={ACCOUNT_COLUMNS}
+                rows={ACCOUNTS}
+                getRowKey={(r) => r.id}
+                count={ACCOUNTS.length}
+                sort={sort}
+                onSortChange={setSort}
+                layout='fixed'
+                tableClassName='min-w-[1040px]'
+              />
+            </Surface>
+
+            <SectionLabel>People table — row selection, contact status, per-row actions</SectionLabel>
+            <Surface padded={false} className='mb-6 overflow-hidden p-1'>
+              <DataTable
+                columns={PEOPLE_COLUMNS}
+                rows={PEOPLE}
+                getRowKey={(p) => p.id!}
+                count={PEOPLE.length}
+                layout='fixed'
+                tableClassName='min-w-[860px]'
+                selection={{
+                  selectedKeys: selected,
+                  onToggleRow: (key, on) =>
+                    setSelected((prev) => {
+                      const next = new Set(prev)
+                      if (on) next.add(key)
+                      else next.delete(key)
+                      return next
+                    }),
+                  onToggleAllPage: (on: boolean) =>
+                    setSelected(on ? new Set(PEOPLE.map((p) => p.id!)) : new Set()),
+                }}
+              />
+            </Surface>
+
+            <div className='grid gap-4 lg:grid-cols-2'>
+              <div>
+                <SectionLabel>Loading — skeleton rows, never a false "empty"</SectionLabel>
+                <Surface padded={false} className='overflow-hidden p-1'>
+                  <DataTable
+                    columns={PEOPLE_COLUMNS.slice(0, 2)}
+                    rows={[]}
+                    getRowKey={(p) => p.id!}
+                    loading
+                    skeletonRows={4}
+                    layout='fixed'
+                    tableClassName='min-w-[420px]'
+                  />
+                </Surface>
+              </div>
+              <div>
+                <SectionLabel>Empty — your own message and call to action</SectionLabel>
+                <Surface padded={false} className='overflow-hidden p-1'>
+                  <DataTable
+                    columns={PEOPLE_COLUMNS.slice(0, 2)}
+                    rows={[]}
+                    getRowKey={(p) => p.id!}
+                    empty={
+                      <EmptyState
+                        icon={<Search />}
+                        title='No people match'
+                        description='Widen the filters, or import a list to get started.'
+                        action={<Button size='sm'><Plus /> Import people</Button>}
+                        className='border-0'
+                      />
+                    }
+                    layout='fixed'
+                    tableClassName='min-w-[420px]'
+                  />
+                </Surface>
+              </div>
+            </div>
+          </Section>
+
           {/* ------------------------------------------------ people */}
           <Section
             title='People'
@@ -520,88 +602,6 @@ export function Showcase() {
                   </span>
                 </div>
               </Surface>
-            </div>
-          </Section>
-
-          {/* -------------------------------------------------- table */}
-          <Section
-            title='Tables'
-            caption='DataTable is the workhorse — most GTM screens are a table. It is presentational: you own sorting, paging and selection, and it renders and reflects them. Put a Company or Person in the identity column and the whole table reads as Trayo.'
-          >
-            <SectionLabel>Account table — sortable, with a fit score, signal counts and owners</SectionLabel>
-            <Surface padded={false} className='mb-6 overflow-hidden p-1'>
-              <DataTable
-                columns={ACCOUNT_COLUMNS}
-                rows={ACCOUNTS}
-                getRowKey={(r) => r.id}
-                count={ACCOUNTS.length}
-                sort={sort}
-                onSortChange={setSort}
-                layout='fixed'
-                tableClassName='min-w-[1040px]'
-              />
-            </Surface>
-
-            <SectionLabel>People table — row selection, contact status, per-row actions</SectionLabel>
-            <Surface padded={false} className='mb-6 overflow-hidden p-1'>
-              <DataTable
-                columns={PEOPLE_COLUMNS}
-                rows={PEOPLE}
-                getRowKey={(p) => p.id!}
-                count={PEOPLE.length}
-                layout='fixed'
-                tableClassName='min-w-[860px]'
-                selection={{
-                  selectedKeys: selected,
-                  onToggleRow: (key, on) =>
-                    setSelected((prev) => {
-                      const next = new Set(prev)
-                      if (on) next.add(key)
-                      else next.delete(key)
-                      return next
-                    }),
-                  onToggleAllPage: (on: boolean) =>
-                    setSelected(on ? new Set(PEOPLE.map((p) => p.id!)) : new Set()),
-                }}
-              />
-            </Surface>
-
-            <div className='grid gap-4 lg:grid-cols-2'>
-              <div>
-                <SectionLabel>Loading — skeleton rows, never a false "empty"</SectionLabel>
-                <Surface padded={false} className='overflow-hidden p-1'>
-                  <DataTable
-                    columns={PEOPLE_COLUMNS.slice(0, 2)}
-                    rows={[]}
-                    getRowKey={(p) => p.id!}
-                    loading
-                    skeletonRows={4}
-                    layout='fixed'
-                    tableClassName='min-w-[420px]'
-                  />
-                </Surface>
-              </div>
-              <div>
-                <SectionLabel>Empty — your own message and call to action</SectionLabel>
-                <Surface padded={false} className='overflow-hidden p-1'>
-                  <DataTable
-                    columns={PEOPLE_COLUMNS.slice(0, 2)}
-                    rows={[]}
-                    getRowKey={(p) => p.id!}
-                    empty={
-                      <EmptyState
-                        icon={<Search />}
-                        title='No people match'
-                        description='Widen the filters, or import a list to get started.'
-                        action={<Button size='sm'><Plus /> Import people</Button>}
-                        className='border-0'
-                      />
-                    }
-                    layout='fixed'
-                    tableClassName='min-w-[420px]'
-                  />
-                </Surface>
-              </div>
             </div>
           </Section>
 
