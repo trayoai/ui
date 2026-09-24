@@ -1,0 +1,18 @@
+/* Stylesheet for /demo only.
+ *
+ * Two things a consuming app does NOT need, both because of where the library
+ * sits relative to this Astro project:
+ *
+ *   - `@import "tailwindcss"` — the library's stylesheet deliberately does not
+ *     pull Tailwind in (the consumer owns that import). This page is the
+ *     consumer, so it does it here.
+ *   - `@source "../../../src"` — Tailwind v4 scans the project root, and the
+ *     library lives one level ABOVE this Astro root, so it would otherwise be
+ *     invisible and every component would render unstyled. A real consumer
+ *     vendors the files INTO their own src tree, which Tailwind already scans,
+ *     which is why the install instructions correctly say no @source is needed.
+ */
+@import 'tailwindcss';
+@import '../../../src/styles/trayo-ui.css';
+@source '../../../src';
+@source '../components';

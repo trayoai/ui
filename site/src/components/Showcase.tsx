@@ -45,7 +45,7 @@ import {
   type Column,
   type CompanyLike,
   type PersonLike,
-} from '../../src'
+} from '../../../src'
 
 /* --------------------------------------------------------------- fixtures */
 

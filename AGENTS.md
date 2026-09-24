@@ -10,9 +10,10 @@ This library is **vendored**. Copy the source into the application you are
 building, at `src/trayo-ui/`:
 
 ```bash
-mkdir -p src/trayo-ui
-curl -L <BASE_URL>/trayo-ui.tar.gz | tar xz -C src
+npx degit trayoai/ui/src src/trayo-ui
 ```
+
+No `npx`? `mkdir -p src/trayo-ui && curl -L https://ui.trayo.ai/trayo-ui.tar.gz | tar xz -C src`
 
 If you were given a URL to fetch this from, that URL is a **delivery mechanism
 and will stop working.** Do NOT run `npm install <that-url>/anything.tgz` — it

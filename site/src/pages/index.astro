@@ -1,0 +1,192 @@
+---
+import '../styles/site.css'
+import { INSTALL_STEPS, RULES, INVENTORY, API_NOTES, REPO, SITE, VENDOR_DIR } from '../content/kit'
+
+const repoUrl = `https://github.com/${REPO}`
+---
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trayo GTM UI — components for go-to-market apps</title>
+<meta
+  name="description"
+  content="Trayo's UI component library for go-to-market apps built on the Trayo API. Copy the components into your project and your app looks like Trayo."
+/>
+<link rel="canonical" href={SITE + '/'} />
+</head>
+<body>
+<!--
+  CODING AGENT: the plain-text version of this page is at /llms.txt
+  Fetch https://ui.trayo.ai/llms.txt and follow it. In short:
+    1. npx degit trayoai/ui/src src/trayo-ui      (copy the files in)
+    2. install react, tailwindcss v4, lucide-react, @radix-ui/react-*
+    3. CSS: @import "tailwindcss"; @import "./trayo-ui/styles/trayo-ui.css";
+    4. Render people with <Person>, companies with <Company>, wrap in <AppShell>.
+-->
+
+<header class="sticky top-0 z-50 border-b border-sand-border/70 bg-cream/85 backdrop-blur">
+  <div class="mx-auto flex max-w-5xl items-center justify-between px-gutter py-3">
+    <a href="/" class="flex items-baseline gap-2 font-bold">
+      <span class="text-lg">Trayo</span>
+      <span class="text-sm font-semibold text-purple">GTM UI</span>
+    </a>
+    <nav class="flex items-center gap-1 text-sm sm:gap-3">
+      <a href="#demo" class="hidden rounded-full px-3 py-1.5 hover:bg-white sm:inline-block">Demo</a>
+      <a href="#install" class="hidden rounded-full px-3 py-1.5 hover:bg-white sm:inline-block">Install</a>
+      <a href="/llms.txt" class="rounded-full px-3 py-1.5 hover:bg-white">For agents</a>
+      <a href={repoUrl} class="btn-primary">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="mx-auto max-w-5xl px-gutter">
+
+  <!-- hero -->
+  <section class="pt-14 pb-10 sm:pt-20">
+    <p class="eyebrow mb-3">Component library</p>
+    <h1 class="max-w-3xl text-4xl font-bold sm:text-5xl md:text-6xl">
+      Build GTM apps that
+      <span class="bg-gradient-to-br from-sand via-peach to-purple bg-clip-text text-transparent">look like Trayo</span>
+    </h1>
+    <p class="mt-5 max-w-2xl text-lg text-neutral-600">
+      The UI kit for go-to-market apps built on the Trayo API. Same colours, type, surfaces, buttons
+      and tables — and the same treatment of the two things a GTM app renders constantly:
+      <strong class="text-neutral-800">people</strong> and <strong class="text-neutral-800">companies</strong>,
+      with real avatars and real logos.
+    </p>
+    <div class="mt-7 flex flex-wrap items-center gap-3">
+      <a href="#install" class="btn-primary">Get started</a>
+      <a href="/demo" class="btn-ghost" target="_blank" rel="noreferrer">Open the demo →</a>
+    </div>
+    <p class="mt-4 text-sm text-neutral-500">
+      Presentational React components only — no server-side logic, no data fetching, no auth.
+      Needs Tailwind&nbsp;v4 and React&nbsp;18/19.
+    </p>
+  </section>
+
+  <!-- agents -->
+  <section class="mb-14">
+    <div class="rounded-2xl border border-purple/25 bg-purple/[0.06] p-5 sm:p-6">
+      <p class="eyebrow mb-2">Pointing a coding agent at this?</p>
+      <p class="max-w-3xl text-neutral-700">
+        Give it <a href="/llms.txt" class="font-semibold text-purple underline underline-offset-2">ui.trayo.ai/llms.txt</a>
+        — the same instructions as this page, in plain text, written to be followed. It is generated
+        from this repo on every deploy, so it can never drift from the source.
+      </p>
+      <pre class="code code-wrap mt-4">Read https://ui.trayo.ai/llms.txt and follow it. Use the Trayo GTM UI
+components for all UI in this app.</pre>
+    </div>
+  </section>
+
+  <!-- demo -->
+  <section id="demo" class="mb-16">
+    <h2 class="text-3xl font-bold">See it</h2>
+    <p class="mt-2 max-w-2xl text-neutral-600">
+      Every component, running. Flip it to dark with the switch in its header.
+    </p>
+    <div class="mt-5 overflow-hidden rounded-2xl border border-sand-border bg-white">
+      <div class="flex items-center justify-between gap-3 border-b border-sand-border px-4 py-2.5">
+        <span class="text-xs text-neutral-500">Live — the real components</span>
+        <a href="/demo" target="_blank" rel="noreferrer" class="text-xs font-semibold text-purple">Open full size →</a>
+      </div>
+      <iframe src="/demo" title="Trayo GTM UI — live component demo" loading="lazy" class="block h-[760px] w-full border-0"></iframe>
+    </div>
+  </section>
+
+  <!-- install -->
+  <section id="install" class="mb-16">
+    <h2 class="text-3xl font-bold">Install</h2>
+    <p class="mt-2 max-w-2xl text-neutral-600">
+      The library is <strong class="text-neutral-800">vendored, not installed</strong> — you copy the
+      components into your project and they become yours to read and edit, with no dependency on this site.
+    </p>
+    <ol class="mt-6 space-y-6">
+      {INSTALL_STEPS.map((step, i) => (
+        <li class="card">
+          <div class="flex items-baseline gap-3">
+            <span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-purple text-xs font-bold text-white">{i + 1}</span>
+            <h3 class="text-lg font-semibold">{step.title}</h3>
+          </div>
+          <p class="mt-2 ml-9 text-sm text-neutral-600" set:html={step.body.replace(/`([^`]+)`/g, '<code class="rounded bg-sand-light px-1 py-0.5 text-[12.5px]">$1</code>')} />
+          <pre class="code code-wrap mt-3 ml-9">{step.code}</pre>
+          {'alt' in step && step.alt && (
+            <div class="mt-3 ml-9">
+              <p class="text-xs text-neutral-500">{step.alt.label}</p>
+              <pre class="code code-wrap mt-1.5">{step.alt.code}</pre>
+            </div>
+          )}
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <!-- people + companies -->
+  <section class="mb-16">
+    <h2 class="text-3xl font-bold">People and companies are the point</h2>
+    <p class="mt-2 max-w-2xl text-neutral-600">
+      <code class="rounded bg-sand-light px-1 py-0.5 text-[12.5px]">PersonLike</code> and
+      <code class="rounded bg-sand-light px-1 py-0.5 text-[12.5px]">CompanyLike</code> are loose supersets of
+      <code class="rounded bg-sand-light px-1 py-0.5 text-[12.5px]">GET /v1/people</code> and
+      <code class="rounded bg-sand-light px-1 py-0.5 text-[12.5px]">GET /v1/accounts</code> rows — pass an
+      API object straight through and it renders whatever is there.
+    </p>
+    <pre class="code mt-4">{`const { data } = await fetch('/v1/people?limit=25').then(r => r.json())
+return data.map(p => <Person key={p.id} person={p} showContact />)`}</pre>
+    <p class="mt-4 max-w-2xl text-neutral-600">
+      A person <strong class="text-neutral-800">always</strong> gets a face: the real photo when it loads,
+      otherwise one of 50 built-in illustrated fallbacks picked stably from the person id. Never initials.
+      A company resolves its logo from its domain alone.
+    </p>
+    <div class="mt-6 grid gap-4 sm:grid-cols-3">
+      {API_NOTES.map((n) => (
+        <div class="card">
+          <h3 class="text-sm font-semibold">{n.title}</h3>
+          <p class="mt-1.5 text-sm text-neutral-600" set:html={n.body.replace(/`([^`]+)`/g, '<code class="rounded bg-sand-light px-1 py-0.5 text-[12px]">$1</code>')} />
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- inventory -->
+  <section class="mb-16">
+    <h2 class="text-3xl font-bold">What's in the box</h2>
+    <dl class="mt-5 divide-y divide-sand-border border-y border-sand-border">
+      {INVENTORY.map((row) => (
+        <div class="grid gap-1 py-3 sm:grid-cols-[180px_1fr] sm:gap-4">
+          <dt class="text-sm font-semibold">{row.group}</dt>
+          <dd class="text-sm text-neutral-600">{row.items}</dd>
+        </div>
+      ))}
+    </dl>
+  </section>
+
+  <!-- rules -->
+  <section class="mb-16">
+    <h2 class="text-3xl font-bold">House rules</h2>
+    <p class="mt-2 max-w-2xl text-neutral-600">
+      Follow these and the result stays on-brand. The files are yours once copied, so editing them is fair
+      game — prefer extending a variant over forking a component.
+    </p>
+    <ol class="mt-5 list-decimal space-y-2.5 pl-5 text-sm text-neutral-600 marker:font-semibold marker:text-purple">
+      {RULES.map((r) => (
+        <li set:html={r.replace(/`([^`]+)`/g, '<code class="rounded bg-sand-light px-1 py-0.5 text-[12.5px]">$1</code>')} />
+      ))}
+    </ol>
+  </section>
+</main>
+
+<footer class="border-t border-sand-border">
+  <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-gutter py-6 text-sm text-neutral-500">
+    <span>Trayo GTM UI — light and dark from one token set.</span>
+    <span class="flex gap-4">
+      <a href={repoUrl} class="hover:text-purple">GitHub</a>
+      <a href="/llms.txt" class="hover:text-purple">llms.txt</a>
+      <a href="https://www.trayo.ai" class="hover:text-purple">trayo.ai</a>
+    </span>
+  </div>
+</footer>
+</body>
+</html>

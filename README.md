@@ -31,9 +31,10 @@ future install, CI run and fresh clone breaks the day it goes away.
 From your project root:
 
 ```bash
-mkdir -p src/trayo-ui
-curl -L <BASE_URL>/trayo-ui.tar.gz | tar xz -C src
+npx degit trayoai/ui/src src/trayo-ui
 ```
+
+No `npx`? `mkdir -p src/trayo-ui && curl -L https://ui.trayo.ai/trayo-ui.tar.gz | tar xz -C src`
 
 You get `src/trayo-ui/` holding `index.ts`, `components/`, `lib/` and `styles/`
 (Polymath woff2 included), plus a copy of this README and AGENTS.md.

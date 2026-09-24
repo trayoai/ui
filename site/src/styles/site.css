@@ -1,0 +1,116 @@
+/* ui.trayo.ai page styling.
+ *
+ * The token set is lifted from www.trayo.ai (`src/styles/global.css`) so this
+ * page reads as part of the marketing site: Polymath throughout, the purple /
+ * cream / peach / sand palette, and the same tightened display type scale.
+ *
+ * This is deliberately NOT the library's own stylesheet. The library's tokens
+ * (surface ladder, type roles, dark palette) live on /demo, which loads
+ * `trayo-ui.css` instead — the two never share a document.
+ */
+
+@font-face {
+  font-family: 'Polymath';
+  src: url(/fonts/polymath-regular.woff2) format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Polymath';
+  src: url(/fonts/polymath-semibold.woff2) format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Polymath';
+  src: url(/fonts/polymath-bold.woff2) format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Polymath', system-ui, sans-serif;
+
+  --breakpoint-xs: 30rem;
+
+  /* www.trayo.ai palette, verbatim. */
+  --color-purple: #845cff;
+  --color-purple-deep: #6f00ff;
+  --color-violet: #cd81ff;
+  --color-peach: #ffa182;
+  --color-peach-deep: #ff7b31;
+  --color-sand: #fddc98;
+  --color-sand-light: #fee9be;
+  --color-sand-border: #ede2ca;
+  --color-green: #21c073;
+  --color-cream: #fefbf4;
+  --color-cream-light: #fffdf8;
+
+  --spacing-gutter: min(4vw, 2rem);
+
+  /* The marketing display ramp — tighter leading and negative tracking. */
+  --text-2xl: 1.625rem;
+  --text-2xl--line-height: 1.15;
+  --text-2xl--letter-spacing: -0.02em;
+  --text-3xl: 2rem;
+  --text-3xl--line-height: 1.15;
+  --text-3xl--letter-spacing: -0.02em;
+  --text-4xl: 2.5rem;
+  --text-4xl--line-height: 1;
+  --text-4xl--letter-spacing: -0.02em;
+  --text-5xl: 3rem;
+  --text-5xl--line-height: 1;
+  --text-6xl: 3.5rem;
+  --text-6xl--line-height: 1;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background-color: var(--color-cream);
+    color: #1c1a17;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Anchored sections shouldn't hide under the sticky header. */
+  :target {
+    scroll-margin-top: 6rem;
+  }
+}
+
+@layer components {
+  /* The site's pill CTA (www.trayo.ai uses this exact shape).
+     Tailwind v4's `@apply` only accepts real utilities, so the shared shape is
+     repeated rather than composed from a `.btn` base. */
+  .btn-primary {
+    @apply inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-full bg-purple px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-purple-deep;
+  }
+  .btn-ghost {
+    @apply inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-full border border-sand-border bg-transparent px-5 py-2.5 text-sm font-semibold text-neutral-700 transition hover:bg-white;
+  }
+
+  .card {
+    @apply rounded-2xl border border-sand-border bg-cream-light p-5;
+  }
+
+  .eyebrow {
+    @apply text-xs font-semibold tracking-widest text-purple uppercase;
+  }
+
+  /* Code blocks. Commands are meant to be copied whole, so they wrap rather
+     than scrolling off the right edge. */
+  .code {
+    @apply overflow-x-auto rounded-xl border border-sand-border bg-white p-4 text-[12.5px] leading-relaxed;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .code-wrap {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}

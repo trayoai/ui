@@ -5,3 +5,7 @@ demo/dist
 .DS_Store
 .publish
 .publish-demo
+site/dist
+site/node_modules
+site/public/trayo-ui.tar.gz
+site/.astro

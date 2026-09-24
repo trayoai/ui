@@ -1,0 +1,21 @@
+---
+// The live component showcase.
+//
+// This page loads the LIBRARY's stylesheet, not the marketing one — Astro
+// scopes an imported stylesheet to the importing page, so the two token sets
+// never share a document. The home page embeds this in an iframe.
+import '../styles/demo.css'
+import { Showcase } from '../components/Showcase'
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trayo GTM UI — live component demo</title>
+<meta name="description" content="Every Trayo GTM UI component, rendered in light and dark." />
+</head>
+<body>
+  <Showcase client:load />
+</body>
+</html>
