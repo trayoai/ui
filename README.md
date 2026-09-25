@@ -87,7 +87,7 @@ keeps source and adjust the import paths to match.
 Ordinary public npm packages — these are permanent:
 
 ```bash
-npm install react react-dom clsx tailwind-merge lucide-react \
+npm install react@^19 react-dom@^19 clsx tailwind-merge lucide-react \
   class-variance-authority tailwindcss @tailwindcss/vite \
   @radix-ui/react-avatar @radix-ui/react-checkbox @radix-ui/react-dialog \
   @radix-ui/react-dropdown-menu @radix-ui/react-label @radix-ui/react-popover \
@@ -96,7 +96,11 @@ npm install react react-dom clsx tailwind-merge lucide-react \
   @radix-ui/react-tabs @radix-ui/react-tooltip
 ```
 
-Requires **Tailwind CSS v4** and **React 18 or 19**.
+Requires **Tailwind CSS v4** and **React 19**. React 18 is not supported: the
+components take `ref` as an ordinary prop (a React 19 feature), so on React 18
+refs are silently dropped and Radix `asChild` triggers — `<TooltipTrigger
+asChild><Button/>`, popovers, dropdown menus — lose their anchor. If your app is
+on React 18, upgrade it before adding the kit.
 
 ### 3. Wire up the CSS
 
