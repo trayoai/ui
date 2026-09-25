@@ -43,7 +43,7 @@ Tailwind v4 already scans. Import from `./trayo-ui`.
 
 Two image paths stay on the network and that is fine: company logos come from
 `api.trayo.ai/api/brand-image` and the fallback faces from
-`app.trayo.ai/images/placeholder/` — both Trayo production, both permanent.
+`ui.trayo.ai/faces/v1/` — both Trayo production, both permanent.
 
 ## React 19 only
 

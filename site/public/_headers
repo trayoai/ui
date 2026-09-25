@@ -3,3 +3,11 @@
 # every non-ASCII byte as mojibake. Say utf-8 explicitly.
 /llms.txt
   Content-Type: text/plain; charset=utf-8
+
+# The fallback faces the library loads by default (see src/lib/placeholder-faces.ts).
+# A versioned path whose files never change, so browsers may keep them for a year;
+# a new set ships as /faces/v2/ instead of overwriting these. CORS is open so an
+# app can also draw a face onto a canvas.
+/faces/v1/*
+  Cache-Control: public, max-age=31536000, immutable
+  Access-Control-Allow-Origin: *
