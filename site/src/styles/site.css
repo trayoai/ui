@@ -269,8 +269,8 @@
   }
 }
 
-/* Uppercase text has no descenders and Polymath sets capitals high in the line
-   box, so plain padding leaves more space under the letters than above.
+/* Uppercase text has no descenders, so plain padding leaves more space under
+   the letters than above.
    Trimming the box to the cap height makes the padding the only space. */
 .hero-eyebrow {
   padding-block: 4px;
