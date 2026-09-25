@@ -75,6 +75,7 @@ export default function App() {
 /** Page-only: why this matters, in the builder's terms — not the developer's. */
 export const VALUE = [
   {
+    icon: 'palette',
     title: 'It looks like it came from Trayo',
     body:
       'The same design system the Trayo app is built from — the colours, the type, the surfaces, ' +
@@ -82,6 +83,7 @@ export const VALUE = [
       'separate thing bolted on beside it.',
   },
   {
+    icon: 'eye',
     title: 'Credible before anyone clicks',
     body:
       'Most internal tools are judged on the first screenshot, in a thread, by people who will ' +
@@ -89,6 +91,7 @@ export const VALUE = [
       'that gets politely ignored.',
   },
   {
+    icon: 'shield',
     title: 'The hard parts are already right',
     body:
       'People and companies are what a GTM screen is full of, and they are fiddly: faces, logos, ' +
@@ -96,6 +99,7 @@ export const VALUE = [
       'depend on how much time you had.',
   },
   {
+    icon: 'layers',
     title: 'Consistent across everything you build',
     body:
       'The second tool matches the first, and the fifth matches both — without anyone maintaining ' +
