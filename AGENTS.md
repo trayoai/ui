@@ -29,7 +29,7 @@ writes a disappearing host into `package.json` as a dependency spec, and every
 later install, CI run and fresh clone fails once it is gone. Copying the files
 in leaves the app self-contained.
 
-Then install the real npm packages (`react react-dom clsx tailwind-merge
+Then install the real npm packages (`react@^19 react-dom@^19 clsx tailwind-merge
 lucide-react class-variance-authority tailwindcss` and the `@radix-ui/react-*`
 set — the full line is in README.md), and add to your CSS entry:
 
@@ -44,6 +44,20 @@ Tailwind v4 already scans. Import from `./trayo-ui`.
 Two image paths stay on the network and that is fine: company logos come from
 `api.trayo.ai/api/brand-image` and the fallback faces from
 `app.trayo.ai/images/placeholder/` — both Trayo production, both permanent.
+
+## React 19 only
+
+The app must be on **React 19** (`react@^19`, `react-dom@^19`, and
+`@types/react@^19` if it uses TypeScript). React 18 is not supported. The
+components take `ref` as an ordinary prop, a React 19 feature. On React 18 the
+ref is silently dropped, so `<TooltipTrigger asChild><Button/>` and the
+equivalent popover and dropdown-menu triggers lose their anchor and render in
+the wrong place or not at all. Nothing errors at build time.
+
+- New app: install React 19 from the start.
+- Existing app on React 18: upgrade it to 19 before copying the kit in.
+- Never "fix" a version conflict by downgrading React, and never add
+  `forwardRef` wrappers to make the kit run on 18.
 
 ## The rules that matter most
 
@@ -99,7 +113,7 @@ return data.map(p => <Person key={p.id} person={p} showContact />)
 ## Setup checklist
 
 - [ ] Source copied to `src/trayo-ui/` (NOT installed from a URL)
-- [ ] npm dependencies installed; Tailwind v4; React 18 or 19
+- [ ] npm dependencies installed; Tailwind v4; React 19 (not 18)
 - [ ] `@import 'tailwindcss';` then `@import './trayo-ui/styles/trayo-ui.css';`
 - [ ] The app wrapped in `<AppShell>`, content in a `<PageContainer>`
 - [ ] `class="dark"` on `<html>` only if you want the dark palette; light is the default

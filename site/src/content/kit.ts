@@ -34,8 +34,8 @@ export const INSTALL_STEPS = [
   },
   {
     title: 'Install the real dependencies',
-    body: 'Ordinary public npm packages. Requires Tailwind CSS v4 and React 18 or 19.',
-    code: `npm install react react-dom clsx tailwind-merge lucide-react \\
+    body: 'Ordinary public npm packages. Requires Tailwind CSS v4 and React 19 (React 18 is not supported).',
+    code: `npm install react@^19 react-dom@^19 clsx tailwind-merge lucide-react \\
   class-variance-authority tailwindcss @tailwindcss/vite \\
   @radix-ui/react-avatar @radix-ui/react-checkbox @radix-ui/react-dialog \\
   @radix-ui/react-dropdown-menu @radix-ui/react-label @radix-ui/react-popover \\

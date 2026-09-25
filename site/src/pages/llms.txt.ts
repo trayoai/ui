@@ -59,7 +59,9 @@ So: do not hand-roll UI, and do not restyle these components toward some other
 look. Compose what is here. That is what makes the output look finished.
 
 Presentational React components only. No server-side logic, no data fetching.
-Requires Tailwind CSS v4 and React 18 or 19.
+Requires Tailwind CSS v4 and React 19. React 18 is NOT supported: refs are
+silently dropped there and Radix asChild triggers (tooltips, popovers, menus)
+break. If the app is on React 18, upgrade it to 19 first; never downgrade.
 
 Source: https://github.com/${REPO}
 Demo:   ${SITE}/demo
@@ -68,7 +70,7 @@ Demo:   ${SITE}/demo
 
     npx degit ${REPO}/src ${VENDOR_DIR}
 
-    npm install react react-dom clsx tailwind-merge lucide-react \\
+    npm install react@^19 react-dom@^19 clsx tailwind-merge lucide-react \\
       class-variance-authority tailwindcss @tailwindcss/vite \\
       @radix-ui/react-{avatar,checkbox,dialog,dropdown-menu,label,popover,progress,scroll-area,select,separator,slot,switch,tabs,tooltip}
 
