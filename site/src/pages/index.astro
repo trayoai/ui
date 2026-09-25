@@ -1,9 +1,24 @@
 ---
 import '../styles/site.css'
 import { INSTALL_STEPS, VALUE, INVENTORY, API_NOTES, REPO, SITE } from '../content/kit'
-import heroLines from '../../public/hero-lines.svg?raw'
+import Logo from '../assets/trayo-logo.svg'
 
 const repoUrl = `https://github.com/${REPO}`
+
+// Markup for the Copy button on a code box. Place it inside a `relative`
+// wrapper beside a <pre><code>; the script at the end of the page copies that
+// <code>'s text. Give the <pre> `pr-24` so long lines wrap before the button.
+const copyButton = `<button type="button" class="absolute top-3 right-3 flex cursor-pointer items-center gap-1.5 rounded-lg border border-sand-border bg-cream-light px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:border-purple hover:text-neutral-900" aria-label="Copy code to clipboard" data-copy-btn><svg data-copy-icon class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><svg data-check-icon class="hidden size-3.5 text-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span data-copy-label>Copy</span></button>`
+
+// Inner SVG markup for the VALUE cards, keyed by each entry's `icon` in kit.ts.
+const VALUE_ICONS: Record<string, string> = {
+  palette:
+    '<circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.84-.44-1.13-.29-.29-.44-.65-.44-1.13a1.64 1.64 0 0 1 1.67-1.67h2c3.05 0 5.56-2.5 5.56-5.55C21.97 6.01 17.46 2 12 2z"/>',
+  eye: '<path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/>',
+  shield: '<path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z"/><path d="M9.5 12l2 2 3.5-4"/>',
+  layers:
+    '<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
+}
 
 /**
  * Render our light markdown (backticks -> <code>) for `set:html`.
@@ -18,7 +33,7 @@ const md = (s: string, size = '12.5px') =>
     .replace(/>/g, '&gt;')
     .replace(
       /`([^`]+)`/g,
-      `<code class="rounded bg-sand-light px-1 py-0.5 text-[${size}]">$1</code>`
+      `<code class="rounded bg-sand-light/50 px-1 py-0.5 text-[${size}] text-neutral-800">$1</code>`
     )
 ---
 
@@ -40,113 +55,105 @@ const md = (s: string, size = '12.5px') =>
   the human-facing one. Fetch https://ui.trayo.ai/llms.txt and follow that.
 -->
 
-<!-- Floating rounded bar, as on www.trayo.ai -->
-<header class="sticky top-0 z-50 px-gutter pt-3 pb-2">
-  <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 rounded-full border border-sand-border bg-cream-light/90 py-2 pr-2 pl-5 backdrop-blur">
-    <a href="/" class="flex items-baseline gap-2 text-lg font-bold">
-      Trayo <span class="text-sm font-semibold text-purple">GTM UI</span>
-    </a>
-    <nav class="flex items-center gap-1 text-sm font-medium sm:gap-2">
-      <a href="#demo" class="hidden rounded-full px-3 py-1.5 hover:bg-white sm:inline-block">Demo</a>
-      <a href="#install" class="hidden rounded-full px-3 py-1.5 hover:bg-white sm:inline-block">Install</a>
-      <a href="#docs" class="hidden rounded-full px-3 py-1.5 hover:bg-white sm:inline-block">Docs</a>
-      <a href="/llms.txt" class="btn-sand">For agents</a>
-      <a href={repoUrl} class="btn-black"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-4"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>GitHub</a>
-    </nav>
+<header class="site-header fixed inset-x-0 top-0 z-50 lg:px-8 lg:py-2" data-header>
+  <div class="mx-auto max-w-6xl">
+    <div class="site-header-bar flex items-center gap-8 bg-cream px-gutter py-3 text-neutral-900 lg:rounded-full lg:px-6 lg:py-4">
+      <div class="mr-auto flex shrink-0 items-center gap-3">
+        <a href="/" class="text-neutral-900 transition hover:text-purple" aria-label="Trayo GTM UI — home">
+          <Logo class="h-7 w-auto" aria-hidden="true" />
+        </a>
+        <span class="hidden h-4 w-px bg-sand-border sm:block" aria-hidden="true"></span>
+        <span class="hidden text-sm font-semibold tracking-[1px] whitespace-nowrap text-neutral-900 sm:block">GTM UI</span>
+      </div>
+      <nav class="flex items-center gap-8" aria-label="Main">
+        <ul class="hidden items-center gap-8 lg:flex">
+          <li><a href="#demo" class="transition-colors hover:text-purple">Demo</a></li>
+          <li><a href="#install" class="transition-colors hover:text-purple">Install</a></li>
+          <li><a href="#docs" class="transition-colors hover:text-purple">Docs</a></li>
+        </ul>
+        <div class="flex items-center gap-2">
+          <a href="/llms.txt" class="btn-sand whitespace-nowrap">For agents</a>
+          <a href={repoUrl} class="btn-black" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-4"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg><span class="hidden sm:inline">GitHub</span></a>
+        </div>
+      </nav>
+    </div>
   </div>
 </header>
 
-<main class="px-gutter">
+<script is:inline>
+  // Adds a shadow once the page scrolls. Below lg, also hides the header on
+  // scroll-down and brings it back on scroll-up; desktop keeps it pinned.
+  (function () {
+    var header = document.querySelector('[data-header]')
+    if (!header) return
+    var desktop = matchMedia('(min-width: 1024px)')
+    var DEADZONE = 8
+    var lastY = scrollY
+    var ticking = false
+
+    function update() {
+      ticking = false
+      var y = scrollY
+      header.classList.toggle('is-scrolled', y > 2)
+      if (desktop.matches || y <= header.offsetHeight) {
+        header.classList.remove('is-hidden')
+        lastY = y
+        return
+      }
+      if (Math.abs(y - lastY) >= DEADZONE) {
+        header.classList.toggle('is-hidden', y > lastY)
+        lastY = y
+      }
+    }
+    addEventListener('scroll', function () {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(update)
+    }, { passive: true })
+    update()
+  })()
+</script>
+
+<main class="px-gutter pt-(--header-offset)">
 
   <!-- hero -->
-  <section id="hero" class="hero panel mx-auto mt-2 flex max-w-6xl flex-col items-center justify-center px-6 pt-20 pb-20 text-center text-white md:pt-24 md:pb-24">
-    <div
-      class="hero-lines pointer-events-none absolute top-1/2 left-1/2 w-full -translate-x-1/2 -translate-y-1/2"
-      aria-hidden="true"
-      set:html={heroLines}
-    />
-    <div class="relative z-10 flex max-w-4xl flex-col items-center">
-      <p class="mb-5 text-xs font-semibold tracking-widest text-white/75 uppercase">By Trayo</p>
-      <h1 class="text-4xl font-bold sm:text-5xl md:text-6xl">
+  <section id="hero" class="hero panel mx-auto mt-2 flex max-w-6xl flex-col items-center justify-center py-10 text-white">
+    <img src="/Ellipse1.svg" alt="" aria-hidden="true" class="hero-ellipse pointer-events-none absolute top-[-30%] left-1/2 z-0 w-[90%] max-w-none -translate-x-1/2 sm:w-[70%]" />
+    <img src="/Ellipse2.svg" alt="" aria-hidden="true" class="hero-ellipse hero-ellipse--2 pointer-events-none absolute top-[-16%] left-[42%] z-0 w-[70%] max-w-none -translate-x-1/2 sm:w-[55%]" />
+    <img src="/Ellipse3.svg" alt="" aria-hidden="true" class="hero-ellipse hero-ellipse--3 pointer-events-none absolute top-[-23%] left-[58%] z-0 w-[95%] max-w-none -translate-x-1/2 sm:w-[75%]" />
+    <div class="hero-noise" aria-hidden="true"></div>
+    <div class="hero-lines" aria-hidden="true"></div>
+    <div class="relative z-10 flex max-w-240 flex-col items-start px-gutter sm:items-center sm:text-center">
+      <p class="hero-eyebrow hero-in relative mb-5 inline-block rounded-full bg-cream px-3 text-xs font-semibold tracking-[1px] text-neutral-900 uppercase">
+        By Trayo
+      </p>
+      <h1 class="hero-in relative mb-5 text-4xl font-bold text-balance sm:text-6xl md:text-7xl">
         GTM apps worth showing the team
       </h1>
-      <p class="mt-6 max-w-2xl text-lg text-white/85">
+      <p class="hero-in hero-in-2 relative max-w-2xl text-lg">
         The design system behind Trayo, for the tools you build on top of it. Accounts, people
         and signals render with real faces, real logos and tables that hold up under dense
         pipeline work — so what you ship looks like part of the product, not a side project.
       </p>
-      <div class="mt-9 flex flex-wrap items-center justify-center gap-3">
-        <a href="#install" class="btn-sand px-6 py-3 text-base">Get started</a>
-        <a href="#demo" class="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-full border border-white/35 px-6 py-3 text-base leading-none font-semibold text-white transition hover:bg-white/10">See it running</a>
+      <div class="hero-in hero-in-3 relative mt-7 flex flex-wrap items-center gap-3 sm:justify-center">
+        <a href="#install" class="hero-cta group">
+          <span class="relative inline-flex items-center justify-center overflow-hidden">
+            <span class="hero-cta-text relative inline-flex group-hover:-translate-y-full group-focus-visible:-translate-y-full">Get started</span>
+            <span class="hero-cta-text absolute inset-0 inline-flex translate-y-full items-center justify-center group-hover:translate-y-0 group-focus-visible:translate-y-0" aria-hidden="true">Get started</span>
+          </span>
+        </a>
+        <a href="#demo" class="hero-cta-outline group">
+          <span class="relative inline-flex items-center justify-center overflow-hidden">
+            <span class="hero-cta-text hero-cta-text--outline relative inline-flex group-hover:-translate-y-full group-focus-visible:-translate-y-full">See it running</span>
+            <span class="hero-cta-text hero-cta-text--outline absolute inset-0 inline-flex translate-y-full items-center justify-center group-hover:translate-y-0 group-focus-visible:translate-y-0" aria-hidden="true">See it running</span>
+          </span>
+        </a>
       </div>
-      <p class="mt-5 text-sm text-white/65">
+      <p class="hero-in hero-in-3 relative mt-5 text-sm text-white/70">
         React&nbsp;18/19 · Tailwind&nbsp;v4 · light and dark · free and open source
       </p>
     </div>
 
-  <script is:inline>
-    // Stagger the line sweep. Paths come in pairs (bar + hairline), and the
-    // wave runs from the far side back, matching the marketing site's order.
-    (function () {
-      var paths = document.querySelectorAll('.hero-lines path')
-      if (!paths.length) return
-      var pairs = Math.ceil(paths.length / 2)
-      var STAGGER = 0.07
-      document.querySelector('.hero-lines').style.setProperty(
-        '--sweep-duration', (pairs * STAGGER).toFixed(2) + 's'
-      )
-      for (var i = 0; i < paths.length; i++) {
-        var pair = Math.floor(i / 2)
-        paths[i].style.animationDelay = ((pairs - 1 - pair) * STAGGER).toFixed(2) + 's'
-      }
-    })();
-
-    // Peach glow follows the pointer across the hero.
-    //
-    // Eased in rAF rather than with a CSS transition: interpolating a custom
-    // property needs @property to work at all, and this way the easing is
-    // identical everywhere. Only writes while the values are still moving, so
-    // it idles at zero cost once the pointer stops.
-    (function () {
-      var hero = document.getElementById('hero')
-      if (!hero) return
-      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
-
-      var REST_X = 12, REST_Y = 72
-      var curX = REST_X, curY = REST_Y
-      var tgtX = REST_X, tgtY = REST_Y
-      var raf = 0
-
-      function frame() {
-        // Lerp — the lag is what makes it feel like a light source rather than
-        // a cursor attachment.
-        curX += (tgtX - curX) * 0.08
-        curY += (tgtY - curY) * 0.08
-        hero.style.setProperty('--glow-x', curX.toFixed(2) + '%')
-        hero.style.setProperty('--glow-y', curY.toFixed(2) + '%')
-        if (Math.abs(tgtX - curX) > 0.05 || Math.abs(tgtY - curY) > 0.05) {
-          raf = requestAnimationFrame(frame)
-        } else {
-          raf = 0
-        }
-      }
-      function kick() { if (!raf) raf = requestAnimationFrame(frame) }
-
-      hero.addEventListener('pointermove', function (e) {
-        // Ignore touch: there is no hover, and a tap would jump the glow.
-        if (e.pointerType === 'touch') return
-        var r = hero.getBoundingClientRect()
-        tgtX = ((e.clientX - r.left) / r.width) * 100
-        tgtY = ((e.clientY - r.top) / r.height) * 100
-        kick()
-      })
-      hero.addEventListener('pointerleave', function () {
-        tgtX = REST_X
-        tgtY = REST_Y
-        kick()
-      })
-    })()
-  </script>
   </section>
 
   <div class="mx-auto max-w-5xl">
@@ -155,21 +162,24 @@ const md = (s: string, size = '12.5px') =>
     <section class="py-16">
       <p class="eyebrow mb-3 text-center">Why it matters</p>
       <h2 class="text-center text-3xl font-bold md:text-4xl">Looks finished, because it is</h2>
-      <div class="mt-9 grid gap-4 sm:grid-cols-2">
-        {VALUE.map((v) => (
-          <div class="card">
-            <h3 class="text-lg font-semibold">{v.title}</h3>
-            <p class="mt-2 text-sm text-neutral-600">{v.body}</p>
+      <div class="mt-9 grid grid-cols-1 divide-y divide-sand-border rounded-2xl border border-sand-border bg-white sm:grid-cols-2 sm:divide-y-0">
+        {/* Hairlines between cells: stacked rows use divide-y; in the 2-column grid the
+            second row gets a top border and the right column a left border. */}
+        {VALUE.map((v, i) => (
+          <div class:list={['p-5', i >= 2 && 'sm:border-t sm:border-sand-border', i % 2 === 1 && 'sm:border-l sm:border-sand-border']}>
+            <span class="inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-sand-border p-2 text-purple" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" set:html={VALUE_ICONS[v.icon]} />
+            </span>
+            <h3 class="mt-4 font-semibold text-neutral-900">{v.title}</h3>
+            <p class="mt-1.5 text-sm leading-relaxed text-neutral-500">{v.body}</p>
           </div>
         ))}
       </div>
     </section>
-
-    <div class="dashed"></div>
   </div>
 
   <!-- demo, in a sand panel like the site's feature blocks -->
-  <section id="demo" class="panel-sand striped mx-auto my-16 max-w-6xl px-6 py-12 md:px-10 md:py-14">
+  <section id="demo" class="panel-sand sand-texture mx-auto my-16 max-w-6xl px-6 py-12 md:px-10 md:py-14">
     <div class="relative z-10">
       <p class="eyebrow mb-3">Live demo</p>
       <h2 class="max-w-2xl text-3xl font-bold md:text-4xl">See it running, right here</h2>
@@ -205,10 +215,14 @@ const md = (s: string, size = '12.5px') =>
     </div>
   </section>
 
-  <div class="mx-auto max-w-5xl">
-
-    <!-- install -->
-    <section id="install" class="py-4 pb-16">
+  <!-- install -->
+  <!-- The dashed outline is an SVG rect, not a CSS border: CSS can't set the
+       dash length, and this matches the 2px-dash / 8px-gap rhythm of .dashed. -->
+    <section id="install" class="relative mx-auto mt-4 mb-16 max-w-6xl overflow-hidden rounded-3xl px-6 py-12 md:px-10 md:py-14">
+      <svg class="pointer-events-none absolute inset-0 h-full w-full overflow-visible" aria-hidden="true">
+        <rect x="0.5" y="0.5" width="calc(100% - 1px)" height="calc(100% - 1px)" rx="23.5" ry="23.5" fill="none" stroke="rgb(138 138 138)" stroke-width="1" stroke-dasharray="2 8" />
+      </svg>
+      <div class="relative z-10">
       <p class="eyebrow mb-3">Install</p>
       <h2 class="max-w-2xl text-3xl font-bold md:text-4xl">Copied in, not installed</h2>
       <p class="mt-3 max-w-2xl text-neutral-600">
@@ -217,28 +231,36 @@ const md = (s: string, size = '12.5px') =>
       </p>
       <ol class="mt-8 space-y-5">
         {INSTALL_STEPS.map((step, i) => (
-          <li class="card">
-            <div class="flex items-baseline gap-3">
-              <span class="text-sm font-bold text-neutral-400">{i + 1}.</span>
-              <h3 class="text-lg font-semibold">{step.title}</h3>
+          <li class="rounded-2xl bg-cream-light p-5">
+            <h3 class="flex items-baseline gap-2 text-lg font-semibold">
+              <span class="text-neutral-400">{i + 1}.</span>
+              {step.title}
+            </h3>
+            <p class="mt-2 text-sm text-neutral-600" set:html={md(step.body)} />
+            <div class="relative mt-3" data-copy-block>
+              <Fragment set:html={copyButton} />
+              <pre class="code code-wrap pr-24"><code>{step.code}</code></pre>
             </div>
-            <p class="mt-2 ml-7 text-sm text-neutral-600" set:html={md(step.body)} />
-            <pre class="code code-wrap mt-3 ml-7">{step.code}</pre>
             {'alt' in step && step.alt && (
-              <div class="mt-3 ml-7">
-                <p class="text-xs text-neutral-500">{step.alt.label}</p>
-                <pre class="code code-wrap mt-1.5">{step.alt.code}</pre>
+              <div class="mt-4">
+                <p class="text-sm text-neutral-600">{step.alt.label}</p>
+                <div class="relative mt-3" data-copy-block>
+                  <Fragment set:html={copyButton} />
+                  <pre class="code code-wrap pr-24"><code>{step.alt.code}</code></pre>
+                </div>
               </div>
             )}
           </li>
         ))}
       </ol>
+      </div>
     </section>
 
-    <div class="dashed"></div>
-
-    <!-- docs -->
-    <section id="docs" class="py-16">
+  <section id="docs" class="relative mx-auto mb-16 max-w-6xl overflow-hidden rounded-3xl px-6 py-12 md:px-10 md:py-14">
+    <svg class="pointer-events-none absolute inset-0 h-full w-full overflow-visible" aria-hidden="true">
+      <rect x="0.5" y="0.5" width="calc(100% - 1px)" height="calc(100% - 1px)" rx="23.5" ry="23.5" fill="none" stroke="rgb(138 138 138)" stroke-width="1" stroke-dasharray="2 8" />
+    </svg>
+    <div class="relative z-10">
       <p class="eyebrow mb-3">Documentation</p>
       <h2 class="max-w-2xl text-3xl font-bold md:text-4xl">Everything, documented beside the code</h2>
       <p class="mt-3 max-w-2xl text-neutral-600">
@@ -262,9 +284,12 @@ const md = (s: string, size = '12.5px') =>
         Pass an API response straight to a component — it reads what is there and leaves out
         what isn't.
       </p>
-      <pre class="code mt-3">{`const { data } = await fetch('/v1/people?limit=25').then(r => r.json())
-return data.map(p => <Person key={p.id} person={p} showContact />)`}</pre>
-      <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      <div class="relative mt-3" data-copy-block>
+        <Fragment set:html={copyButton} />
+        <pre class="code pr-24"><code>{`const { data } = await fetch('/v1/people?limit=25').then(r => r.json())
+return data.map(p => <Person key={p.id} person={p} showContact />)`}</code></pre>
+      </div>
+      <div class="mt-4 grid gap-4">
         {API_NOTES.map((n) => (
           <div class="card">
             <h4 class="text-sm font-semibold">{n.title}</h4>
@@ -272,36 +297,73 @@ return data.map(p => <Person key={p.id} person={p} showContact />)`}</pre>
           </div>
         ))}
       </div>
+    </div>
     </section>
-  </div>
 
-  <!-- agents -->
-  <section class="panel mx-auto mb-16 max-w-6xl bg-neutral-900 px-6 py-12 text-white md:px-10">
-    <p class="mb-3 text-xs font-semibold tracking-widest text-violet uppercase">For coding agents</p>
-    <h2 class="max-w-2xl text-3xl font-bold md:text-4xl">Building this with an agent?</h2>
-    <p class="mt-3 max-w-2xl text-white/75">
-      Point it at <a href="/llms.txt" class="font-semibold text-violet underline underline-offset-2">ui.trayo.ai/llms.txt</a>
-      — the same library, written as instructions it can follow. Generated from the repo on every
-      deploy, so it never drifts from the code.
-    </p>
-    <pre class="code code-wrap mt-6 border-white/10 bg-white/5 text-white/90">Read https://ui.trayo.ai/llms.txt and follow it. Use the Trayo GTM UI
-components for all UI in this app.</pre>
+  <section class="panel-sand sand-texture mx-auto mb-16 max-w-5xl px-6 py-12 md:px-10 md:py-14">
+    <div class="relative z-10">
+      <p class="eyebrow mb-3">For coding agents</p>
+      <h2 class="max-w-2xl text-3xl font-bold md:text-4xl">Building this with an agent?</h2>
+      <p class="mt-3 max-w-2xl text-neutral-700">
+        Point it at <a href="/llms.txt" class="font-semibold text-purple">ui.trayo.ai/llms.txt</a>
+        — the same library, written as instructions it can follow. Generated from the repo on every
+        deploy, so it never drifts from the code.
+      </p>
+      <div class="relative mt-6" data-copy-block>
+        <Fragment set:html={copyButton} />
+        <pre class="code code-wrap pr-24"><code>Read https://ui.trayo.ai/llms.txt and follow it. Use the Trayo GTM UI
+components for all UI in this app.</code></pre>
+      </div>
+    </div>
   </section>
 </main>
 
-<footer class="px-gutter pb-10">
-  <div class="mx-auto max-w-5xl">
-    <div class="dashed"></div>
-    <div class="flex flex-wrap items-center justify-between gap-3 pt-6 text-sm text-neutral-500">
-      <span>Trayo GTM UI — light and dark from one token set.</span>
-      <span class="flex gap-4">
-        <a href={repoUrl} class="inline-flex items-center gap-1.5 hover:text-purple"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-4"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>GitHub</a>
-        <a href="/demo" class="hover:text-purple">Demo</a>
-        <a href="/llms.txt" class="hover:text-purple">llms.txt</a>
-        <a href="https://www.trayo.ai" class="hover:text-purple">trayo.ai</a>
-      </span>
+<footer class="px-gutter pb-gutter">
+  <div class="mx-auto max-w-6xl rounded-3xl bg-neutral-900 px-6 py-12 lg:px-16">
+    <div class="flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
+      <p class="text-base text-neutral-200">Trayo · GTM UI — light and dark from one token set.</p>
+      <nav aria-label="Footer">
+        <ul class="flex flex-wrap items-center gap-x-6 gap-y-2 text-base text-neutral-200">
+          <li><a href={repoUrl} class="inline-flex items-center gap-1.5 hover:text-white"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-4"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>GitHub</a></li>
+          <li><a href="/demo" class="hover:text-white">Demo</a></li>
+          <li><a href="/llms.txt" class="hover:text-white">llms.txt</a></li>
+          <li><a href="https://www.trayo.ai" class="hover:text-white">trayo.ai</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="dashed mt-10"></div>
+    <div class="flex items-center justify-between gap-4 pt-8 text-sm text-neutral-400">
+      <p>&copy; Trayo</p>
+      <a href="#" class="inline-flex items-center gap-1.5 hover:text-neutral-200">
+        Back to top
+        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+      </a>
     </div>
   </div>
 </footer>
+  <script is:inline>
+    // Wires up every Copy button (see copyButton above). It sits at the end of
+    // the page so all code boxes exist when it runs.
+    document.querySelectorAll('[data-copy-btn]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var code = btn.parentElement.querySelector('code')
+        if (!code || !navigator.clipboard) return
+        navigator.clipboard.writeText(code.textContent).then(function () {
+          var icon = btn.querySelector('[data-copy-icon]')
+          var check = btn.querySelector('[data-check-icon]')
+          var label = btn.querySelector('[data-copy-label]')
+          icon.classList.add('hidden')
+          check.classList.remove('hidden')
+          label.textContent = 'Copied'
+          clearTimeout(btn._reset)
+          btn._reset = setTimeout(function () {
+            icon.classList.remove('hidden')
+            check.classList.add('hidden')
+            label.textContent = 'Copy'
+          }, 2000)
+        })
+      })
+    })
+  </script>
 </body>
 </html>
