@@ -1,10 +1,10 @@
 /**
  * The toolbar control pill — single source of truth for the rounded trigger
- * shell shared by the filter popovers (SearchableFilterPopover and everything
- * built on it) and the Select dropdown trigger. Both compose these classes, so
- * restyling the pill here restyles every dropdown and filter together.
+ * shell shared by filter popovers and the Select dropdown trigger. Both compose
+ * these classes, so restyling the pill here restyles every dropdown and filter
+ * together.
  *
- * Prototype `FilterDropdown`: 32px pill, 12px semibold label, surface-card on
+ * 32px pill, 12px semibold label, surface-card on
  * a subtle border; hover raises the border + fills with surface-well.
  */
 export const controlPillShell =

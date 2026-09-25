@@ -42,7 +42,7 @@ export interface DataTableSelection {
   onToggleAllPage: (selected: boolean) => void;
   /** Optional per-row gate. When it returns false, that row renders no checkbox
    *  and is excluded from the header select-all / its "all selected" state — for
-   *  rows that can't be acted on (e.g. Find's unmatched / already-added rows).
+   *  rows that can't be acted on (e.g. results with no match, or already added).
    *  Defaults to all-selectable when omitted. */
   isRowSelectable?: (key: string) => boolean;
 }
@@ -61,7 +61,7 @@ export interface DataTableProps<T> {
    *  highlighted. Omit it entirely for non-selectable tables. */
   selection?: DataTableSelection;
   /** Optional per-row class on the body <tr> — e.g. to mute a row that can't be
-   *  acted on (Find's unmatched results render pale). */
+   *  acted on. */
   rowClassName?: (row: T) => string | undefined;
   /** Optional compositional wrapper for a body <tr>. Use a non-DOM wrapper
    *  (for example, a Tooltip with an `asChild` trigger) so table semantics stay
@@ -71,8 +71,7 @@ export interface DataTableProps<T> {
     rowElement: React.ReactElement<React.ComponentPropsWithoutRef<'tr'>>,
   ) => React.ReactNode;
   /** Optional full-width detail row rendered directly beneath each row (spanning
-   *  every column). Return null to skip it for a given row. Used for the events
-   *  table's signal sub-row. */
+   *  every column). Return null to skip it for a given row. */
   renderSubRow?: (row: T) => React.ReactNode;
   /** Table sizing algorithm. The default `auto` layout sizes columns by content,
    *  so content-heavy columns silently soak up surplus width regardless of the
@@ -92,8 +91,8 @@ export interface DataTableProps<T> {
   /** Number of skeleton rows to render while `loading`. Defaults to 8. */
   skeletonRows?: number;
   /** When set (and > 0), renders a result-count pill next to the FIRST column's
-   *  header — used by the bar-less table variant (see TableChrome `bare`), which
-   *  drops the toolbar/footer and surfaces the count on the identity column. */
+   *  header, so a table with no toolbar or footer still shows its result count on
+   *  the identity column. */
   count?: number;
 }
 
@@ -117,8 +116,8 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   if (!loading && rows.length === 0 && empty) return <>{empty}</>;
   // Only render skeleton placeholders when there is nothing to show yet.
-  // A background refetch/poll (Apollo `loading` flips true with data still
-  // populated) must NOT blank out the visible rows — gating on `rows.length`
+  // A background refetch or poll (most data libraries flip `loading` to true
+  // while the previous data is still populated) must NOT blank out the visible rows — gating on `rows.length`
   // keeps loaded rows on screen and confines skeletons to the initial fetch,
   // making every caller robust without hand-rolled "first load" flags.
   const showSkeletons = loading && rows.length === 0;
@@ -169,8 +168,7 @@ export function DataTable<T>({
           // `uppercase` is repeated here (the parent <th> already sets it)
           // because the browser UA stylesheet resets `text-transform: none` on
           // <button>, which would otherwise leave sortable headers title-cased
-          // while non-sortable ones stay uppercase. Mirrors the prototype's
-          // `.th-btn { text-transform: inherit }`.
+          // while non-sortable ones stay uppercase.
           // `cursor-pointer` because the UA stylesheet gives <button> a default
           // arrow cursor; sortable headers are clickable, so signal it.
           // `max-w-full` + the truncating title span: a header title never
@@ -179,8 +177,7 @@ export function DataTable<T>({
           'group inline-flex max-w-full cursor-pointer items-center gap-1 uppercase outline-none transition-colors hover:text-accent-text focus-visible:text-accent-text',
           c.align === 'right' && 'flex-row-reverse',
           // Active sort uses the readable accent (`accent-text`), NOT the brand
-          // FILL (`accent-brand`) — matches the prototype's `var(--accent-text)`
-          // and the design-system rule for accent text/links.
+          // FILL (`accent-brand`), per the design-system rule for accent text/links.
           active ? 'text-accent-text' : 'text-text-muted',
         )}
       >
@@ -189,7 +186,7 @@ export function DataTable<T>({
             reserved space then sits harmlessly at the end. The flex `gap-1` owns
             the spacing (the pill carries no margin of its own). */}
         {countNode}
-        {/* Prototype `.th-sort`: a single chevron-down, hidden until hover,
+        {/* A single chevron-down, hidden until hover,
             full + brand when this column is the active sort, rotated 180° for
             ascending. */}
         <ChevronDown
@@ -212,7 +209,7 @@ export function DataTable<T>({
   };
 
   return (
-    // Prototype `.td-l { padding-left: var(--sp-4) }`: the leading cell of every
+    // The leading cell of every
     // row (header + body) gets a larger left inset (16px) than the default cell
     // padding, so identity/checkbox columns breathe against the card edge.
     <Table
@@ -231,7 +228,7 @@ export function DataTable<T>({
                 checked={headerCheckedState}
                 onCheckedChange={(value) => selection.onToggleAllPage(value === true)}
                 // While skeletons are showing there are no visible rows to act
-                // on, so bulk-select must be inert — otherwise an admin could
+                // on, so bulk-select must be inert — otherwise a user could
                 // toggle "select all" against stale, off-screen rows and fire
                 // bulk actions on data they cannot currently see.
                 disabled={showSkeletons}
@@ -242,12 +239,12 @@ export function DataTable<T>({
           {columns.map((c, colIndex) => (
             <TableHead
               key={c.id}
-              // Prototype `.tbl thead th`: a small, bold, uppercase, tracked
+              // A small, bold, uppercase, tracked
               // muted caption. Headers are controls (the sortable ones are
               // buttons), so they use the Tailwind control scale — not a
               // content typography role — per the design-system rules.
-              // text-caption (11px) + tracking-wider match the prototype's
-              // 11px/0.06em caption exactly (text-xs at 12px read too chunky,
+              // text-caption (11px) + tracking-wider give an 11px/0.06em
+              // caption (text-xs at 12px read too chunky,
               // text-2xs at 10px too small). Non-sortable headers inherit these
               // directly; the sortable button inherits the type + sets its color.
               // `bg-surface-well` gives the header a subtle distinct band — a
@@ -257,8 +254,7 @@ export function DataTable<T>({
               // (not on <thead>) so it stays opaque over the shared TableRow's
               // hover background.
               className={cn(
-                // Prototype `.tbl thead th { height: 38px }` + `.th-btn {
-                // padding: 0 10px }` — 38px tall, 10px horizontal (px-2.5).
+                // 38px tall, 10px horizontal (px-2.5).
                 'h-[38px] bg-surface-well px-2.5 text-caption font-bold uppercase tracking-wider text-text-muted',
                 alignClass(c.align),
                 c.className,
@@ -326,8 +322,7 @@ export function DataTable<T>({
               }
               tabIndex={onRowClick ? 0 : undefined}
               className={cn(
-                // Prototype `.tbl tbody tr:hover { background: var(--bg-well) }`:
-                // hover every row to the full `surface-well` band (the base
+                // Hover every row to the full `surface-well` band (the base
                 // TableRow's shadcn `hover:bg-muted/50` is surface-well at 50%,
                 // so it read lighter and inconsistent). `surface-row` is nearly
                 // invisible vs the card in light, so `well` is the right band.
@@ -370,13 +365,12 @@ export function DataTable<T>({
                 </TableCell>
               )}
               {columns.map((c, colIndex) => (
-                // `.text-body-sm` role = the prototype's compact table density
+                // `.text-body-sm` role = the compact table density
                 // (system / 400 / 13px). Entity-name cells override with
                 // `.text-name-sm` (Figtree / 600 / 13px) to stay the focal
                 // element; the header keeps its 11px caption.
                 //
-                // Text tier (prototype `.idn .nm` = --fg-1 vs `.tbl tbody td` =
-                // muted): the first/leading column is the focal entity, so it
+                // Text tier: the first/leading column is the focal entity, so it
                 // reads at `text-text-primary`; every other column is
                 // de-emphasized to `text-text-muted`. A column can still
                 // override via its own `className` (applied last) — and cells
@@ -385,8 +379,7 @@ export function DataTable<T>({
                 <TableCell
                   key={c.id}
                   className={cn(
-                    // Prototype compact `.tbl tbody td { height: 44px; padding:
-                    // 0 10px }`: pin the row height (h-11) and use horizontal-
+                    // Compact rows: pin the row height (h-11) and use horizontal-
                     // only padding so rows are a fixed 44px regardless of cell
                     // content (avatars/controls) or the body line-height —
                     // rather than the base TableCell's `p-2`, which let rows

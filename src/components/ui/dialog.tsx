@@ -87,8 +87,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot='dialog-content'
         className={cn(
-          // Padding steps with the shell gutter (TRA-1498: `<main>` runs
-          // `p-4 md:p-6`), so a dialog is not the one surface that keeps its
+          // Padding steps with the page gutter (`p-4 md:p-6`), so a dialog is not the one surface that keeps its
           // desktop inset on a phone.
           //
           // CAVEAT for callers: this is a RESPONSIVE pair, and tailwind-merge
