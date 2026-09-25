@@ -3,9 +3,11 @@ import {
   ArrowRight,
   Building2,
   Check,
+  Moon,
   Plus,
   Search,
   Sparkles,
+  Sun,
   Users,
 } from 'lucide-react'
 import {
@@ -16,16 +18,18 @@ import {
   Company,
   CompanyCard,
   CompanyLogo,
+  Code,
   DataTable,
   EmptyState,
   Eyebrow,
+  Hero,
   Input,
+  Meta,
   PageContainer,
-  PageHeader,
+  PageTitle,
   Person,
   PersonAvatar,
   PersonCard,
-  SectionLabel,
   SectionTitle,
   Select,
   SelectContent,
@@ -45,6 +49,7 @@ import {
   type SortState,
   type CompanyLike,
   type PersonLike,
+  cn,
 } from '../../../src'
 
 /* --------------------------------------------------------------- fixtures */
@@ -333,6 +338,188 @@ function Section({
 }
 
 /**
+ * The showcase's own masthead. Not `<PageHeader>`: that one sets the subtitle
+ * inline after an in-app title, which is right for a product screen but reads
+ * as one run-on sentence at the top of a specimen page. Here the name leads at
+ * hero size, the version is a badge beside it, the tagline sits underneath,
+ * and a hairline separates the masthead from the first section.
+ */
+function DemoHeader({
+  compact,
+  actions,
+}: {
+  compact?: boolean
+  actions?: React.ReactNode
+}) {
+  const Title = compact ? PageTitle : Hero
+  return (
+    <header
+      className={cn(
+        'flex flex-wrap items-center justify-between gap-4 border-b border-border-subtle',
+        compact ? 'mb-6 pb-5' : 'mb-10 pb-8'
+      )}
+    >
+      <div className='min-w-0'>
+        <div className='flex flex-wrap items-center gap-3'>
+          {/* 32px — the hero role's own narrow-viewport step, used at every
+              width: the 40px hero dwarfed the specimens beneath it. Marked
+              important because the role's own minted `text-hero` utility
+              sets font-size later in the same layer. */}
+          <Title className={compact ? undefined : '[font-size:var(--text-hero-sm)]!'}>
+            Trayo <span className='text-accent-brand'>GTM UI</span>
+          </Title>
+          <Badge variant='accent'>v0.1</Badge>
+        </div>
+        <Body className='mt-2'>The component kit for apps built on the Trayo API.</Body>
+      </div>
+      {actions && <div className='flex shrink-0 items-center gap-2'>{actions}</div>}
+    </header>
+  )
+}
+
+/**
+ * Light/dark toggle for the demo: a sun and a moon either side of the switch,
+ * so both ends are named and the current one is lit. The icons are shortcuts
+ * straight to their theme; the switch stays the single keyboard stop.
+ */
+function ThemeSwitch({
+  dark,
+  onChange,
+}: {
+  dark: boolean
+  onChange: (dark: boolean) => void
+}) {
+  const icon = (active: boolean) =>
+    cn(
+      'grid size-6 cursor-pointer place-items-center rounded-full transition-colors [&>svg]:size-4',
+      active ? 'text-accent-text' : 'text-text-muted hover:text-text-secondary'
+    )
+  return (
+    <div className='flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface-card px-1.5 py-1'>
+      <button
+        type='button'
+        tabIndex={-1}
+        aria-label='Light theme'
+        className={icon(!dark)}
+        onClick={() => onChange(false)}
+      >
+        <Sun />
+      </button>
+      <Switch
+        checked={dark}
+        onCheckedChange={onChange}
+        aria-label='Dark theme'
+        // The library's off-state track is --input (the 14% hairline), which
+        // all but vanishes on a card; the strong border tone and a lifted
+        // thumb keep the control visible before it has ever been pressed.
+        className='data-[state=unchecked]:bg-border-strong dark:data-[state=unchecked]:bg-border-strong [&>span]:shadow-sm'
+      />
+      <button
+        type='button'
+        tabIndex={-1}
+        aria-label='Dark theme'
+        className={icon(dark)}
+        onClick={() => onChange(true)}
+      >
+        <Moon />
+      </button>
+    </div>
+  )
+}
+
+/**
+ * Names the specimen that follows it. The old single uppercase-violet line did
+ * two jobs at once; here the component name is the short eyebrow and what it
+ * demonstrates is plain sentence-case copy beside it. The only accent is the
+ * dot, so violet stays for things you can press.
+ */
+function SpecimenLabel({
+  name,
+  children,
+  className,
+}: {
+  name: string
+  children?: React.ReactNode
+  className?: string
+}) {
+  return (
+    <div className={cn('mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-0.5', className)}>
+      <span className='flex items-center gap-2 self-center'>
+        <span aria-hidden className='size-1.5 rounded-full bg-accent-brand' />
+        <Eyebrow className='font-medium text-text-primary'>{name}</Eyebrow>
+      </span>
+      {children && <Meta className='text-text-secondary'>{children}</Meta>}
+    </div>
+  )
+}
+
+/**
+ * The stage a specimen sits on: a dashed, unfilled frame whose header row names what
+ * is shown and which component to import, so the thing inside reads as an
+ * exhibit rather than a live product screen. `min-w-0` lets a wide table
+ * inside scroll within its own card instead of widening the grid column.
+ *
+ * What goes inside: a component that is already a card or table sits on the
+ * stage directly; loose items (sizes, variants, badges) go on a `<Panel>` so
+ * there is exactly one card between the frame and the specimen.
+ */
+function Specimen({
+  name,
+  note,
+  component,
+  className,
+  children,
+}: {
+  name: string
+  note?: React.ReactNode
+  component: string
+  className?: string
+  children: React.ReactNode
+}) {
+  return (
+    <figure
+      className={cn(
+        'relative flex min-w-0 flex-col rounded-[calc(var(--radius)+6px)] p-2',
+        className
+      )}
+    >
+      {/* The dashed outline is an SVG rect, not a CSS border, for the same
+          reason as the site's Install block: CSS can't set the dash length.
+          This matches its 2px-dash / 8px-gap rhythm, in a themed stroke. */}
+      <svg
+        aria-hidden
+        className='pointer-events-none absolute inset-0 size-full overflow-visible'
+      >
+        <rect
+          x='0.5'
+          y='0.5'
+          width='calc(100% - 1px)'
+          height='calc(100% - 1px)'
+          rx='17.5'
+          fill='none'
+          stroke='var(--text-muted)'
+          strokeDasharray='2 8'
+        />
+      </svg>
+      <figcaption className='relative flex flex-wrap items-center justify-between gap-2 px-2 pt-1 pb-2.5'>
+        <SpecimenLabel name={name} className='mb-0'>
+          {note}
+        </SpecimenLabel>
+        <Code className='rounded-md bg-surface-card px-1.5 py-0.5'>
+          {component}
+        </Code>
+      </figcaption>
+      {children}
+    </figure>
+  )
+}
+
+/** The card a set of loose specimens sits on, filling its stage. */
+function Panel({ className, ...props }: React.ComponentProps<typeof Surface>) {
+  return <Surface className={cn('flex-1', className)} {...props} />
+}
+
+/**
  * Where the library itself (docs + source download) is published.
  *
  * `publish.sh` rewrites this literal in the built bundle once it knows the live
@@ -351,18 +538,10 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
     <div className={dark ? 'dark' : undefined}>
       <AppShell className={compact ? 'min-h-0' : undefined}>
         <PageContainer width='wide' className={compact ? 'py-6' : undefined}>
-          <PageHeader
-            title={
-              <>
-                Trayo <span className='text-accent-brand'>GTM UI</span>
-              </>
-            }
-            subtitle='v0.1 — the component kit for apps built on the Trayo API'
+          <DemoHeader
+            compact={compact}
             actions={
-              <label className='flex cursor-pointer items-center gap-2 text-meta'>
-                Dark
-                <Switch checked={dark} onCheckedChange={setDark} />
-              </label>
+              <ThemeSwitch dark={dark} onChange={setDark} />
             }
           />
 
@@ -371,48 +550,63 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
             title='Tables'
             caption='DataTable is the workhorse — most GTM screens are a table. It is presentational: you own sorting, paging and selection, and it renders and reflects them. Put a Company or Person in the identity column and the whole table reads as Trayo.'
           >
-            <SectionLabel>Account table — sortable, with a fit score, signal counts and owners</SectionLabel>
-            <Surface padded={false} className='mb-6 overflow-hidden p-1'>
-              <DataTable
-                columns={ACCOUNT_COLUMNS}
-                rows={ACCOUNTS}
-                getRowKey={(r) => r.id}
-                count={ACCOUNTS.length}
-                sort={sort}
-                onSortChange={setSort}
-                layout='fixed'
-                tableClassName='min-w-[1040px]'
-              />
-            </Surface>
+            <Specimen
+              name='Account table'
+              note='Sortable, with a fit score, signal counts and owners.'
+              component='<DataTable>'
+              className='mb-8'
+            >
+              <Surface padded={false} className='overflow-hidden p-1'>
+                <DataTable
+                  columns={ACCOUNT_COLUMNS}
+                  rows={ACCOUNTS}
+                  getRowKey={(r) => r.id}
+                  count={ACCOUNTS.length}
+                  sort={sort}
+                  onSortChange={setSort}
+                  layout='fixed'
+                  tableClassName='min-w-[1040px]'
+                />
+              </Surface>
+            </Specimen>
 
-            <SectionLabel>People table — row selection, contact status, per-row actions</SectionLabel>
-            <Surface padded={false} className='mb-6 overflow-hidden p-1'>
-              <DataTable
-                columns={PEOPLE_COLUMNS}
-                rows={PEOPLE}
-                getRowKey={(p) => p.id!}
-                count={PEOPLE.length}
-                layout='fixed'
-                tableClassName='min-w-[860px]'
-                selection={{
-                  selectedKeys: selected,
-                  onToggleRow: (key, on) =>
-                    setSelected((prev) => {
-                      const next = new Set(prev)
-                      if (on) next.add(key)
-                      else next.delete(key)
-                      return next
-                    }),
-                  onToggleAllPage: (on: boolean) =>
-                    setSelected(on ? new Set(PEOPLE.map((p) => p.id!)) : new Set()),
-                }}
-              />
-            </Surface>
+            <Specimen
+              name='People table'
+              note='Row selection, contact status and per-row actions.'
+              component='<DataTable>'
+              className='mb-8'
+            >
+              <Surface padded={false} className='overflow-hidden p-1'>
+                <DataTable
+                  columns={PEOPLE_COLUMNS}
+                  rows={PEOPLE}
+                  getRowKey={(p) => p.id!}
+                  count={PEOPLE.length}
+                  layout='fixed'
+                  tableClassName='min-w-[860px]'
+                  selection={{
+                    selectedKeys: selected,
+                    onToggleRow: (key, on) =>
+                      setSelected((prev) => {
+                        const next = new Set(prev)
+                        if (on) next.add(key)
+                        else next.delete(key)
+                        return next
+                      }),
+                    onToggleAllPage: (on: boolean) =>
+                      setSelected(on ? new Set(PEOPLE.map((p) => p.id!)) : new Set()),
+                  }}
+                />
+              </Surface>
+            </Specimen>
 
             <div className='grid gap-4 lg:grid-cols-2'>
-              <div>
-                <SectionLabel>Loading — skeleton rows, never a false "empty"</SectionLabel>
-                <Surface padded={false} className='overflow-hidden p-1'>
+              <Specimen
+                name='Loading'
+                note='Skeleton rows, never a false “empty”.'
+                component='<DataTable loading>'
+              >
+                <Surface padded={false} className='flex-1 overflow-hidden p-1'>
                   <DataTable
                     columns={PEOPLE_COLUMNS.slice(0, 2)}
                     rows={[]}
@@ -423,9 +617,12 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                     tableClassName='min-w-[420px]'
                   />
                 </Surface>
-              </div>
-              <div>
-                <SectionLabel>Empty — your own message and call to action</SectionLabel>
+              </Specimen>
+              <Specimen
+                name='Empty'
+                note='Your own message and call to action.'
+                component='<EmptyState>'
+              >
                 <Surface padded={false} className='overflow-hidden p-1'>
                   <DataTable
                     columns={PEOPLE_COLUMNS.slice(0, 2)}
@@ -444,7 +641,7 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                     tableClassName='min-w-[420px]'
                   />
                 </Surface>
-              </div>
+              </Specimen>
             </div>
           </Section>
 
@@ -453,91 +650,118 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
             title='People'
             caption='The headline component. A person always gets a face: the real photo when it loads, otherwise one of the 50 built-in illustrated fallbacks, picked stably from the person id — never initials. The photo is read from profileImageUrl OR photoUrl, because the Trayo API returns the first and find results carry the second.'
           >
-            <div className='mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
-              <PersonCard
-                person={PEOPLE[0]}
-                tags={['RevOps', 'Decision maker', 'Series D']}
-                summary='Owns the revenue tooling budget. Three ops roles posted in the last fortnight — she is building the team that would run this.'
-                footer={
-                  <Button size='sm'>
-                    Draft outreach <ArrowRight />
-                  </Button>
-                }
-              />
-              <PersonCard
-                person={PEOPLE[1]}
-                contacted
-                tags={['Security', 'New in role']}
-                summary='Six weeks into a new mandate. Already replied once — keep the follow-up short and concrete.'
-                footer={
-                  <Button size='sm' variant='secondary'>
-                    View thread
-                  </Button>
-                }
-              />
-              <PersonCard
-                person={PEOPLE[2]}
-                tags={['CISO', 'No photo on file']}
-                summary='No photo resolved for this profile, so the built-in fallback face carries the card. It never falls back to initials.'
-                footer={
-                  <Button size='sm' variant='tertiary'>
-                    Enrich contact
-                  </Button>
-                }
-              />
-            </div>
-
-            <Surface className='mb-6'>
-              <SectionLabel>Row variant — for lists and tables</SectionLabel>
-              <div className='divide-y divide-border-subtle'>
-                {PEOPLE.slice(0, 3).map((p) => (
-                  <div key={p.id} className='py-2.5'>
-                    <Person
-                      person={p}
-                      showContact
-                      contacted={p.id === 'p-2'}
-                    />
-                  </div>
-                ))}
+            <Specimen
+              name='Person card'
+              note='Photo, company, summary, tags and one footer action.'
+              component='<PersonCard>'
+              className='mb-8'
+            >
+              <div className='grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3'>
+                <PersonCard
+                  person={PEOPLE[0]}
+                  tags={['RevOps', 'Decision maker', 'Series D']}
+                  summary='Owns the revenue tooling budget. Three ops roles posted in the last fortnight — she is building the team that would run this.'
+                  footer={
+                    <Button size='sm'>
+                      Draft outreach <ArrowRight />
+                    </Button>
+                  }
+                />
+                <PersonCard
+                  person={PEOPLE[1]}
+                  contacted
+                  tags={['Security', 'New in role']}
+                  summary='Six weeks into a new mandate. Already replied once — keep the follow-up short and concrete.'
+                  footer={
+                    <Button size='sm' variant='secondary'>
+                      View thread
+                    </Button>
+                  }
+                />
+                <PersonCard
+                  person={PEOPLE[2]}
+                  tags={['CISO', 'No photo on file']}
+                  summary='No photo resolved for this profile, so the built-in fallback face carries the card. It never falls back to initials.'
+                  footer={
+                    <Button size='sm' variant='tertiary'>
+                      Enrich contact
+                    </Button>
+                  }
+                />
               </div>
-            </Surface>
+            </Specimen>
 
-            <div className='grid gap-4 md:grid-cols-2'>
-              <Surface>
-                <SectionLabel>Avatar sizes</SectionLabel>
-                <div className='flex items-end gap-3'>
-                  {(['xs', 'sm', 'md', 'lg', 'xl', '2xl'] as const).map((s) => (
-                    <div key={s} className='flex flex-col items-center gap-1.5'>
-                      <PersonAvatar name='Dana Whitfield' personId='p-1' size={s} />
-                      <span className='text-meta'>{s}</span>
+            <Specimen
+              name='Person row'
+              note='For lists and tables, with contact actions.'
+              component='<Person>'
+              className='mb-8'
+            >
+              <Panel className='py-1.5'>
+                <div className='divide-y divide-border-subtle'>
+                  {PEOPLE.slice(0, 3).map((p) => (
+                    <div key={p.id} className='py-2.5'>
+                      <Person person={p} showContact contacted={p.id === 'p-2'} />
                     </div>
                   ))}
                 </div>
-                <div className='mt-5'>
-                  <SectionLabel>Fallback faces are stable per person</SectionLabel>
-                  <div className='flex flex-wrap gap-1.5'>
-                    {Array.from({ length: 16 }, (_, i) => (
-                      <PersonAvatar key={i} name={`Person ${i}`} personId={`seed-${i}`} size='lg' />
+              </Panel>
+            </Specimen>
+
+            <div className='grid gap-4 md:grid-cols-2'>
+              <Specimen name='Avatar sizes' note='xs to 2xl.' component='<PersonAvatar>'>
+                <Panel>
+                  <div className='flex items-end gap-3'>
+                    {(['xs', 'sm', 'md', 'lg', 'xl', '2xl'] as const).map((s) => (
+                      <div key={s} className='flex flex-col items-center gap-1.5'>
+                        <PersonAvatar name='Dana Whitfield' personId='p-1' size={s} />
+                        <span className='text-meta'>{s}</span>
+                      </div>
                     ))}
                   </div>
-                </div>
-              </Surface>
+                </Panel>
+              </Specimen>
 
-              <Surface>
-                <SectionLabel>Stacked variant</SectionLabel>
-                <div className='grid grid-cols-2 gap-6 pt-2'>
-                  <Person person={PEOPLE[3]} variant='stacked' showContact />
-                  <Person person={PEOPLE[4]} variant='stacked' showContact />
-                </div>
-                <div className='mt-6'>
-                  <SectionLabel>Tone avatars — for non-person identities</SectionLabel>
+              <Specimen
+                name='Tone avatars'
+                note='For non-person identities.'
+                component='<ToneAvatar>'
+              >
+                <Panel className='flex items-center'>
                   <div className='flex gap-2'>
                     {(['neutral', 'violet', 'teal', 'amber', 'rose', 'brand'] as const).map((t) => (
                       <ToneAvatar key={t} name='Ada Lovelace' tone={t} />
                     ))}
                   </div>
-                </div>
-              </Surface>
+                </Panel>
+              </Specimen>
+
+              <Specimen
+                name='Fallback faces'
+                note='Stable per person, never initials.'
+                component='<PersonAvatar>'
+              >
+                <Panel>
+                  <div className='flex flex-wrap gap-1.5'>
+                    {Array.from({ length: 26 }, (_, i) => (
+                      <PersonAvatar key={i} name={`Person ${i}`} personId={`seed-${i}`} size='lg' />
+                    ))}
+                  </div>
+                </Panel>
+              </Specimen>
+
+              <Specimen
+                name='Stacked person'
+                note='For grids and profile headers.'
+                component="<Person variant='stacked'>"
+              >
+                <Panel>
+                  <div className='grid gap-6 sm:grid-cols-2'>
+                    <Person person={PEOPLE[3]} variant='stacked' showContact />
+                    <Person person={PEOPLE[4]} variant='stacked' showContact />
+                  </div>
+                </Panel>
+              </Specimen>
             </div>
           </Section>
 
@@ -546,59 +770,80 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
             title='Companies'
             caption='Pass a domain and nothing else — the logo resolves through Trayo’s public logo proxy, with a warm initials tile for companies that have no mark.'
           >
-            <div className='mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
-              {COMPANIES.map((c) => (
-                <CompanyCard
-                  key={c.id}
-                  company={c}
-                  summary={c.description}
-                  tags={c.id === 'c-1' ? ['Series D', 'Hiring RevOps'] : undefined}
-                  footer={
-                    <Button size='sm' variant='secondary'>
-                      Research <Sparkles />
-                    </Button>
-                  }
-                />
-              ))}
-            </div>
+            <Specimen
+              name='Company card'
+              note='Logo, firmographics, summary and one footer action.'
+              component='<CompanyCard>'
+              className='mb-8'
+            >
+              <div className='grid gap-1.5 sm:grid-cols-2 xl:grid-cols-4'>
+                {COMPANIES.map((c) => (
+                  <CompanyCard
+                    key={c.id}
+                    company={c}
+                    summary={c.description}
+                    tags={c.id === 'c-1' ? ['Series D', 'Hiring RevOps'] : undefined}
+                    footer={
+                      <Button size='sm' variant='secondary'>
+                        Research <Sparkles />
+                      </Button>
+                    }
+                  />
+                ))}
+              </div>
+            </Specimen>
 
             <div className='grid gap-4 md:grid-cols-2'>
-              <Surface>
-                <SectionLabel>Row variant</SectionLabel>
-                <div className='divide-y divide-border-subtle'>
-                  {COMPANIES.map((c) => (
-                    <div key={c.id} className='py-2.5'>
-                      <Company
-                        company={c}
-                        showWebsite
-                        actions={
-                          <Button size='xs' variant='tertiary'>
-                            <Plus /> Track
-                          </Button>
-                        }
-                      />
+              <Specimen
+                name='Company row'
+                note='With a website link and a row action.'
+                component='<Company>'
+              >
+                <Panel className='py-1.5'>
+                  <div className='divide-y divide-border-subtle'>
+                    {COMPANIES.map((c) => (
+                      <div key={c.id} className='py-2.5'>
+                        <Company
+                          company={c}
+                          showWebsite
+                          actions={
+                            <Button size='xs' variant='tertiary'>
+                              <Plus /> Track
+                            </Button>
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </Panel>
+              </Specimen>
+
+              <Specimen
+                name='Logo sizes and shapes'
+                note='Square, circle, or an initials tile.'
+                component='<CompanyLogo>'
+              >
+                <Panel>
+                  <div className='flex items-end gap-3'>
+                    {(['xs', 'sm', 'md', 'lg', 'xl', '2xl'] as const).map((s) => (
+                      <div key={s} className='flex flex-col items-center gap-1.5'>
+                        <CompanyLogo name='Stripe' domain='stripe.com' size={s} />
+                        <span className='text-meta'>{s}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className='mt-5 flex items-end gap-3'>
+                    <div className='flex flex-col items-center gap-1.5'>
+                      <CompanyLogo name='Linear' domain='linear.app' size='xl' shape='circle' />
+                      <span className='text-meta'>circle</span>
                     </div>
-                  ))}
-                </div>
-              </Surface>
-              <Surface>
-                <SectionLabel>Logo sizes and shapes</SectionLabel>
-                <div className='flex items-end gap-3'>
-                  {(['xs', 'sm', 'md', 'lg', 'xl', '2xl'] as const).map((s) => (
-                    <div key={s} className='flex flex-col items-center gap-1.5'>
-                      <CompanyLogo name='Stripe' domain='stripe.com' size={s} />
-                      <span className='text-meta'>{s}</span>
+                    <div className='flex flex-col items-center gap-1.5'>
+                      <CompanyLogo name='Acme Holdings' size='xl' />
+                      <span className='text-meta'>no logo</span>
                     </div>
-                  ))}
-                </div>
-                <div className='mt-5 flex items-center gap-3'>
-                  <CompanyLogo name='Linear' domain='linear.app' size='xl' shape='circle' />
-                  <CompanyLogo name='Acme Holdings' size='xl' />
-                  <span className='text-meta'>
-                    circle shape · and a company with no resolvable logo
-                  </span>
-                </div>
-              </Surface>
+                  </div>
+                </Panel>
+              </Specimen>
             </div>
           </Section>
 
@@ -606,56 +851,68 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
             <>
             {/* ---------------------------------------------- controls */}
             <Section title='Buttons' caption='Pills at every size. Primary is the solid brand violet; secondary outlines it; tertiary recedes.'>
-              <Surface>
-                <div className='flex flex-col gap-5'>
-                  {(['default', 'secondary', 'tertiary', 'destructive', 'destructive-outline', 'quiet'] as const).map(
-                    (v) => (
-                      <div key={v} className='flex flex-wrap items-center gap-3'>
-                        <span className='w-44 shrink-0 text-meta'>{v}</span>
-                        {(['xs', 'sm', 'default', 'lg'] as const).map((s) => (
-                          <Button key={s} variant={v} size={s}>
-                            {s === 'default' ? 'Reach out' : 'Reach out'}
+              <Specimen
+                name='Button'
+                note='Six variants at four sizes, plus loading, disabled and icon-only.'
+                component='<Button>'
+              >
+                <Panel>
+                  <div className='flex flex-col gap-5'>
+                    {(['default', 'secondary', 'tertiary', 'destructive', 'destructive-outline', 'quiet'] as const).map(
+                      (v) => (
+                        <div key={v} className='flex flex-wrap items-center gap-3'>
+                          <span className='w-44 shrink-0 text-meta'>{v}</span>
+                          {(['xs', 'sm', 'default', 'lg'] as const).map((s) => (
+                            <Button key={s} variant={v} size={s}>
+                              Reach out
+                            </Button>
+                          ))}
+                          <Button variant={v} loading>
+                            Saving…
                           </Button>
-                        ))}
-                        <Button variant={v} loading>
-                          Saving…
-                        </Button>
-                        <Button variant={v} disabled>
-                          Disabled
-                        </Button>
-                        <Button variant={v} size='icon'>
-                          <Plus />
-                        </Button>
-                      </div>
-                    )
-                  )}
-                </div>
-              </Surface>
+                          <Button variant={v} disabled>
+                            Disabled
+                          </Button>
+                          <Button variant={v} size='icon'>
+                            <Plus />
+                          </Button>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </Panel>
+              </Specimen>
             </Section>
 
+            {/* ------------------------------------ type, stats, states */}
+            {/* Masonry columns: each stage sizes to its own content, so a
+                short specimen never stretches to match a tall neighbour. */}
             <Section title='Type, stats and empty states'>
-              <div className='grid gap-4 lg:grid-cols-3'>
-                <Surface>
-                  <SectionLabel>Type roles</SectionLabel>
-                  <div className='flex flex-col gap-2'>
-                    <span className='text-page-title text-text-primary'>Page title · 24</span>
-                    <span className='text-section text-text-primary'>Section · 18</span>
-                    <span className='text-card-title text-text-primary'>Card title · 18</span>
-                    <span className='text-name text-text-primary'>Entity name · 14</span>
-                    <span className='text-body text-text-secondary'>Body copy · 14</span>
-                    <span className='text-meta'>Meta · 12</span>
-                    <Eyebrow>Eyebrow · 12 uppercase</Eyebrow>
-                    <span className='text-code text-text-secondary'>text-code · 13 mono</span>
-                  </div>
-                </Surface>
+              <div className='gap-4 md:columns-2 xl:columns-3 [&>*]:mb-4 [&>*]:break-inside-avoid'>
+                <Specimen name='Type roles' note='Content roles, one per job.' component='text-page-title …'>
+                  <Panel>
+                    <div className='flex flex-col gap-2'>
+                      <span className='text-page-title text-text-primary'>Page title · 24</span>
+                      <span className='text-section text-text-primary'>Section · 18</span>
+                      <span className='text-card-title text-text-primary'>Card title · 18</span>
+                      <span className='text-name text-text-primary'>Entity name · 14</span>
+                      <span className='text-body text-text-secondary'>Body copy · 14</span>
+                      <span className='text-meta'>Meta · 12</span>
+                      <Eyebrow>Eyebrow · 12 uppercase</Eyebrow>
+                      <span className='text-code text-text-secondary'>text-code · 13 mono</span>
+                    </div>
+                  </Panel>
+                </Specimen>
 
-                <div className='flex flex-col gap-4'>
-                  <div className='grid grid-cols-2 gap-4'>
+                <Specimen name='Stat tiles' note='A number and its change.' component='<StatTile>'>
+                  <div className='grid grid-cols-2 gap-1.5'>
                     <StatTile label='Accounts tracked' value='1,284' delta='+12%' />
                     <StatTile label='Signals this week' value='47' delta='-4%' />
                   </div>
-                  <Surface>
-                    <SectionLabel>Form controls</SectionLabel>
+                </Specimen>
+
+                <Specimen name='Form controls' note='Pill-shaped fields.' component='<Input> <Select>'>
+                  <Panel>
                     <div className='flex flex-col gap-3'>
                       <Input placeholder='Search accounts…' />
                       <Select defaultValue='ciso'>
@@ -668,30 +925,40 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                           <SelectItem value='hiring'>Hiring surge</SelectItem>
                         </SelectContent>
                       </Select>
-                      <div className='flex flex-wrap gap-1.5'>
-                        <Badge variant='accent'>Accent</Badge>
-                        <Badge variant='success'>Success</Badge>
-                        <Badge variant='warning'>Warning</Badge>
-                        <Badge variant='soft'>Soft tag</Badge>
-                        <Badge variant='count'>12</Badge>
-                      </div>
                     </div>
-                  </Surface>
-                </div>
+                  </Panel>
+                </Specimen>
 
-                <div className='flex flex-col gap-4'>
-                  <EmptyState
-                    icon={<Search />}
-                    title='No accounts match'
-                    description='Widen the industry filter, or import a list to start tracking.'
-                    action={
-                      <Button size='sm'>
-                        <Plus /> Import accounts
-                      </Button>
-                    }
-                  />
-                  <Surface>
-                    <SectionLabel>Tabs and wells</SectionLabel>
+                <Specimen name='Badges' note='Status, tags and counts.' component='<Badge>'>
+                  <Panel>
+                    <div className='flex flex-wrap gap-1.5'>
+                      <Badge variant='accent'>Accent</Badge>
+                      <Badge variant='success'>Success</Badge>
+                      <Badge variant='warning'>Warning</Badge>
+                      <Badge variant='soft'>Soft tag</Badge>
+                      <Badge variant='count'>12</Badge>
+                    </div>
+                  </Panel>
+                </Specimen>
+
+                <Specimen name='Empty state' note='A line of copy and one action.' component='<EmptyState>'>
+                  <Panel padded={false}>
+                    <EmptyState
+                      icon={<Search />}
+                      title='No accounts match'
+                      description='Widen the industry filter, or import a list to start tracking.'
+                      action={
+                        <Button size='sm'>
+                          <Plus /> Import accounts
+                        </Button>
+                      }
+                      className='border-0'
+                    />
+                  </Panel>
+                </Specimen>
+
+                <Specimen name='Tabs and wells' note='Switch a view; inset a detail.' component='<Tabs> <Well>'>
+                  <Panel>
                     <Tabs defaultValue='people'>
                       <TabsList>
                         <TabsTrigger value='people'>
@@ -712,8 +979,8 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                         </Well>
                       </TabsContent>
                     </Tabs>
-                  </Surface>
-                </div>
+                  </Panel>
+                </Specimen>
               </div>
             </Section>
 
