@@ -372,7 +372,7 @@ export function DataTable<T>({
               {columns.map((c, colIndex) => (
                 // `.text-body-sm` role = the prototype's compact table density
                 // (system / 400 / 13px). Entity-name cells override with
-                // `.text-name-sm` (Polymath / 600 / 13px) to stay the focal
+                // `.text-name-sm` (Figtree / 600 / 13px) to stay the focal
                 // element; the header keeps its 11px caption.
                 //
                 // Text tier (prototype `.idn .nm` = --fg-1 vs `.tbl tbody td` =

@@ -1,36 +1,77 @@
-/* Self-hosted Polymath — the prototype's heading typeface (@trayo/shared).
+/* Self-hosted Figtree — the library's heading typeface.
  *
- * Polymath is a licensed font (not on Google Fonts), so it ships as woff2
- * alongside this file and is declared here. The role-based heading classes in
- * typography.css reference it via `var(--font-heading)`.
+ * Figtree (https://github.com/erikdkennedy/figtree) is licensed under the SIL
+ * Open Font License 1.1; the license text ships beside the woff2 files in
+ * ./fonts/OFL.txt and must travel with them. It stands in for the licensed face
+ * the Trayo app uses: it was picked by rendering both side by side, and matches
+ * it on x-height and on the double-storey a / single-storey g / cut t shapes.
  *
- * Imported by every CSS entry that uses typography.css, BEFORE typography.css:
- *   - apps/web/src/styles/theme.css
- *   - apps/admin/src/styles/index.css
- *   - packages/storybook/.storybook/preview.css
+ * `size-adjust: 97.5%` is for layout parity, not taste: at 100% Figtree sets
+ * ~2.7% wider than the app's face, which pushes long names in fixed-width table
+ * cells into truncation sooner. 97.5% brings width and cap height back in line.
  *
- * url()s are relative to this file; the consumer's bundler (Vite) rebases and
- * emits the woff2 from packages/shared/src/styles/fonts/.
+ * Latin and Latin Extended are separate files split by unicode-range, so a
+ * page only downloads the extended set when a name actually needs it.
+ *
+ * Imported by trayo-ui.css BEFORE typography.css. The role-based heading
+ * classes in typography.css reference it via `var(--font-heading)`, so a team
+ * holding a license for another face can swap it by redefining that token.
+ *
+ * url()s are relative to this file; the consumer's bundler rebases and emits
+ * the woff2 files.
  */
 
 @font-face {
-  font-family: 'Polymath';
-  src: url('./fonts/polymath-regular.woff2') format('woff2');
+  font-family: 'Figtree';
+  src: url('./fonts/figtree-regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
+  size-adjust: 97.5%;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: 'Polymath';
-  src: url('./fonts/polymath-semibold.woff2') format('woff2');
+  font-family: 'Figtree';
+  src: url('./fonts/figtree-regular-ext.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  size-adjust: 97.5%;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Figtree';
+  src: url('./fonts/figtree-semibold.woff2') format('woff2');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
+  size-adjust: 97.5%;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: 'Polymath';
-  src: url('./fonts/polymath-bold.woff2') format('woff2');
+  font-family: 'Figtree';
+  src: url('./fonts/figtree-semibold-ext.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  size-adjust: 97.5%;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Figtree';
+  src: url('./fonts/figtree-bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
+  size-adjust: 97.5%;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Figtree';
+  src: url('./fonts/figtree-bold-ext.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  size-adjust: 97.5%;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }

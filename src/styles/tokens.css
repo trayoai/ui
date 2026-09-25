@@ -787,12 +787,12 @@
      Google Fonts <link> in each index.html. */
   --font-clash: 'Clash Display', sans-serif;
 
-  /* Prototype role fonts: Polymath for headings, system stack for body.
+  /* Prototype role fonts: Figtree for headings, system stack for body.
      The approved prototype renders body/UI text in the system stack (NOT
-     Inter); only headings are a webfont (Polymath). Heading roles in
-     typography.css reference --font-heading; @font-face for Polymath ships
-     in fonts.css. */
-  --font-heading: 'Polymath', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+     Inter); only headings are a webfont (Figtree, SIL OFL). Heading roles in
+     typography.css reference --font-heading; @font-face for Figtree ships
+     in fonts.css. Redefine this token to swap in another licensed face. */
+  --font-heading: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-body: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   /* Tailwind's `font-sans` and the document default (--default-font-family)

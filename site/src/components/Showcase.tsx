@@ -723,7 +723,7 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
 
           <footer className='flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-border-subtle pt-6 text-meta'>
             <span>
-              Trayo GTM UI v0.1 · light and dark from one token set · Polymath
+              Trayo GTM UI v0.1 · light and dark from one token set · Figtree
               headings, system body
             </span>
             {libraryHref && (
