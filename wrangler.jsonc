@@ -22,5 +22,9 @@
   },
   "observability": {
     "enabled": true
-  }
+  },
+  // Non-production branches deploy with `wrangler preview`, which refuses to
+  // run without this block. Empty is enough: assets and compatibility settings
+  // above are inherited.
+  "previews": {}
 }
