@@ -2,19 +2,16 @@ import * as React from 'react'
 import { cn } from '../../lib/cn'
 
 /**
- * Table-toolbar search preset (prototype `.search`): the base pill at toolbar
- * density — h-8, 13px type, fixed 210px width (the prototype's `min-width:
- * 210px`) that stays constant across breakpoints. Pair with
+ * Table-toolbar search preset: the base pill at toolbar density — h-8, 13px
+ * type, fixed 210px width that stays constant across breakpoints. Pair with
  * `icon={<Search />}`:
- * `<Input icon={<Search />} className={searchFieldClassName} … />`. Replaces
- * the former standalone TableSearchInput composable.
+ * `<Input icon={<Search />} className={searchFieldClassName} … />`.
  */
 export const searchFieldClassName =
-  // `text-body-sm` (13px) matches the prototype `.search input { font-size:
-  // 13px }`, overriding the base Input's `text-base md:text-sm` (16/14px) which
+  // `text-body-sm` (13px) overrides the base Input's `text-base md:text-sm` (16/14px) which
   // read a touch large in the toolbar. The `md:` variant is overridden too,
   // otherwise the base `md:text-sm` would win back to 14px on desktop.
-  // `w-[210px]` is fixed (no responsive shrinking) per the prototype.
+  // `w-[210px]` is fixed (no responsive shrinking) on purpose.
   'h-8 text-body-sm md:text-body-sm w-[210px]'
 
 export interface InputProps extends React.ComponentProps<'input'> {
@@ -34,7 +31,7 @@ function Input({ className, type, icon, ...props }: InputProps) {
       className={cn(
         // Every input is the search-field pill: rounded-full on the field
         // surface — app-raised in light, the well in dark, flipped by the
-        // --surface-field token rather than a `dark:` fork (TRA-1439): one
+        // --surface-field token rather than a `dark:` fork: one
         // class, so a consumer's `bg-transparent` wins in both themes. The
         // autofill override below fakes the same surface, so autofilled and
         // typed fields paint alike.
@@ -46,7 +43,7 @@ function Input({ className, type, icon, ...props }: InputProps) {
         // color, and -webkit-text-fill-color keeps the text on-theme (Chrome
         // forces near-black text otherwise — unreadable on the dark well fill).
         'autofill:shadow-[inset_0_0_0_1000px_var(--color-surface-field)] autofill:[--tw-text-opacity:1] autofill:[-webkit-text-fill-color:var(--text-primary)]',
-        // Prototype focus (`.search:focus-within`): soft accent-line border +
+        // Focus: soft accent-line border +
         // a 3px accent-soft halo, instead of the heavier shadcn brand ring.
         'focus-visible:border-accent-line focus-visible:ring-accent-soft focus-visible:ring-[3px]',
         'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive',

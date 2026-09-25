@@ -9,7 +9,7 @@ function Table({
 }: React.ComponentProps<'table'> & { hideOverflowBadge?: boolean }) {
   return (
     // The scroll container + overflow affordance live in TableScrollRegion so
-    // bespoke table markup can reuse them (TRA-1428). DOM shape is unchanged:
+    // bespoke table markup can reuse them. DOM shape is unchanged:
     // relative anchor > [data-slot=table-container] > [data-slot=table].
     <TableScrollRegion rootClassName='w-full' hideOverflowBadge={hideOverflowBadge}>
       <table

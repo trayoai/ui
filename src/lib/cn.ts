@@ -40,7 +40,7 @@ const twMerge = extendTailwindMerge({
 /**
  * Merge Tailwind class names while resolving conflicts.
  *
- * Used by every shadcn/Radix UI primitive in @trayo/shared/components/ui.
+ * Used by every shadcn/Radix UI primitive in components/ui.
  */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

@@ -13,8 +13,7 @@ export interface HiddenCounts {
 /**
  * Pure, DOM-free count of columns clipped by horizontal scroll. A column is
  * right-clipped when its right edge spills past the viewport's right edge, and
- * left-clipped when its left edge sits before the viewport's left edge (mirrors
- * `examples/Table 1 - Hidden-column counter.html`). Every clipped column counts,
+ * left-clipped when its left edge sits before the viewport's left edge. Every clipped column counts,
  * including label-less ones (checkbox / actions), so the badge number matches
  * the literal number of off-screen columns. `epsilon` absorbs sub-pixel rounding.
  */
@@ -74,8 +73,7 @@ export function useHiddenColumns(scrollRef: React.RefObject<HTMLElement | null>)
     setHeaderHeight(el.querySelector('thead')?.getBoundingClientRect().height ?? 0);
   }, [scrollRef]);
 
-  // The `.htbl` surfaces scroll BOTH axes on this element (TRA-1428), and
-  // vertical scroll cannot change which columns are clipped. Skip the per-cell
+  // A table may scroll BOTH axes on this element, and vertical scroll cannot change which columns are clipped. Skip the per-cell
   // layout reads unless the horizontal geometry actually moved. Only the scroll
   // listener is gated: resize and child mutations change column geometry
   // without touching `scrollLeft`, so those still recompute unconditionally.
@@ -98,8 +96,8 @@ export function useHiddenColumns(scrollRef: React.RefObject<HTMLElement | null>)
     const ro =
       typeof ResizeObserver !== 'undefined' ? new ResizeObserver(recompute) : null;
     ro?.observe(el);
-    // A consumer can mount a loader first and swap the <table> in later (the
-    // Home tabs do). The container's own box is unchanged by that swap, so the
+    // A consumer can mount a loader first and swap the <table> in later. The
+    // container's own box is unchanged by that swap, so the
     // ResizeObserver never fires and the single mount-time rAF measured zero
     // columns — watch child mutations so the first real header row gets
     // measured. `subtree: false` on purpose: lazy-loaded rows append inside

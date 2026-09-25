@@ -15,7 +15,7 @@ export interface TagChipProps
 }
 
 /**
- * Generic neutral tag chip (TRA-1082). A tag's color carries no meaning, so all
+ * Generic neutral tag chip. A tag's color carries no meaning, so all
  * tags share one calm neutral surface — close to the filter controls — rather
  * than a per-label color ramp. Composes the Badge primitive with an optional
  * inline remove button.

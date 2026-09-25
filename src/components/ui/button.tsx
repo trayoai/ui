@@ -12,29 +12,26 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Primary action — the prototype's solid-accent pill (`.cta`,
-        // next3.css:172). There is no rounded-md solid primary in the design.
-        // The compact newsfeed/table CTA ("Reach out") is just this variant at
+        // Primary action — the solid-accent pill. There is no rounded-md solid
+        // primary in the design. A compact in-row CTA is just this variant at
         // size="sm"; there is no separate `cta` variant.
         default:
           'rounded-full bg-accent-brand text-white shadow-sm hover:brightness-[1.07] border-none',
-        // Danger semantic — red pill. Not in the prototype's vocabulary but
-        // kept for delete/destructive affordance; pill-shaped for consistency.
+        // Danger semantic — red pill, for delete/destructive affordances;
+        // pill-shaped for consistency.
         destructive:
           'rounded-full bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
-        // Secondary action — prototype `.cta.dr` "Deep research" (next3.css:266):
-        // an outline-accent pill. Transparent fill + neutral hairline, readable
+        // Secondary action — an outline-accent pill. Transparent fill + neutral hairline, readable
         // `accent-text` label; hover settles into the brand tint + accent line.
-        // (The compact newsfeed sibling is just `secondary` at size="sm".)
+        // (The compact in-row sibling is just `secondary` at size="sm".)
         secondary:
           'rounded-full border border-border-strong bg-transparent text-accent-text hover:border-accent-line hover:bg-accent-soft',
-        // Tertiary action — the de-emphasized neutral pill. Inherits the
-        // former `ghost` look (prototype `.cta.ghost`, next3.css:262: transparent
-        // fill, hairline border, neutral well hover) but with regular-weight,
+        // Tertiary action — the de-emphasized neutral pill: transparent fill,
+        // hairline border, neutral well hover, with a regular-weight,
         // muted (`text-secondary`) label + icon so it reads clearly softer than
         // the medium-weight primary/secondary CTAs; it brightens to primary on
-        // hover. Replaces `ghost` across the system; doubles as the icon-button
-        // style and the `outline`/Cancel replacement.
+        // hover. Use it in place of a `ghost` or `outline` button; it doubles as
+        // the icon-button style and the Cancel button.
         tertiary:
           'rounded-full border border-border-strong bg-transparent font-normal text-text-secondary hover:bg-surface-well hover:text-text-primary',
         // Destructive action that must NOT pull the eye — row-level deletes and
@@ -77,7 +74,7 @@ const buttonVariants = cva(
         default: "h-9 px-4 py-2 has-[>svg]:px-3 [&_svg:not([class*='size-'])]:size-4",
         sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5 [&_svg:not([class*='size-'])]:size-3.5",
         // Dense rows where vertical space is tight (compose CTAs in list/table
-        // rows). Same scale the people/contacts "Reach out" pill renders at.
+        // rows).
         xs: "h-7 rounded-md gap-1 px-2.5 text-xs [&_svg:not([class*='size-'])]:size-3.5",
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4 [&_svg:not([class*='size-'])]:size-5",
         icon: "size-9 [&_svg:not([class*='size-'])]:size-4",

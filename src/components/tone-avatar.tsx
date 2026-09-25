@@ -2,10 +2,9 @@ import { useState } from 'react';
 import type { ComponentProps } from 'react';
 import { cn } from '../lib/cn';
 
-// Identity tones (prototype .opt-av-fb / .anchor-avatar). Each maps to a
+// Identity tones. Each maps to a
 // theme-invariant gradient token; white initials sit on top. `neutral` is the
-// generic identity gradient; `brand` reuses the amber→pink hero gradient used
-// by the newsfeed's default person avatar.
+// generic identity gradient; `brand` reuses the amber→pink hero gradient.
 export type AvatarTone = 'violet' | 'teal' | 'amber' | 'rose' | 'brand' | 'neutral';
 
 const TONE_GRADIENT: Record<AvatarTone, string> = {

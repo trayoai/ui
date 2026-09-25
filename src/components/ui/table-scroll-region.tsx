@@ -9,7 +9,7 @@ import { useHiddenColumns } from './use-hidden-columns'
  * (per-edge fade + clickable `N more` badge), around ANY table markup.
  *
  * `Table` uses this for the shared primitive; surfaces that render bespoke
- * table markup (the Home `.htbl` tables, TRA-1428) wrap that markup directly.
+ * table markup wrap that markup directly.
  * Give the child table a `min-width` floor, otherwise flexible columns collapse
  * instead of overflowing and the affordance has nothing to count.
  *
