@@ -11,8 +11,9 @@
  * via `@theme inline`. No `@source` line is needed — the components sit inside
  * your own source tree, which Tailwind v4 already scans.
  *
- * The Polymath woff2 files sit in ./fonts and are referenced relatively, so
- * they travel with this directory and need no configuration.
+ * The Figtree woff2 files (SIL OFL, license in ./fonts/OFL.txt) sit in ./fonts
+ * and are referenced relatively, so they travel with this directory and need
+ * no configuration.
  *
  * Light is the default. Put `class="dark"` on <html> for the dark palette.
  */

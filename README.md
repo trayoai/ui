@@ -77,7 +77,7 @@ npx degit trayoai/ui/src src/trayo-ui
 No `npx`? `mkdir -p src/trayo-ui && curl -L https://ui.trayo.ai/trayo-ui.tar.gz | tar xz -C src`
 
 You get `src/trayo-ui/` holding `index.ts`, `components/`, `lib/` and `styles/`
-(Polymath woff2 included), plus a copy of this README and AGENTS.md.
+(the Figtree heading font included), plus a copy of this README and AGENTS.md.
 
 `src/trayo-ui/` is the location assumed throughout; put it anywhere your project
 keeps source and adjust the import paths to match.
@@ -107,7 +107,7 @@ In your CSS entry, in this order:
 @import './trayo-ui/styles/trayo-ui.css';
 ```
 
-That single stylesheet brings the design tokens, the type roles, the Polymath
+That single stylesheet brings the design tokens, the type roles, the Figtree
 heading font and the animations. Tailwind must come first — the stylesheet
 extends its theme.
 
@@ -318,7 +318,7 @@ Follow these and the result stays on-brand. Break them and it drifts.
 2. **Two type vocabularies, never mixed.** *Content* (titles, names, body, meta,
    labels) uses a **role class**: `text-page-title` `text-section`
    `text-card-title` `text-name` `text-body` `text-meta` `text-label`
-   `text-eyebrow` `text-code`. Roles carry the Polymath heading font —
+   `text-eyebrow` `text-code`. Roles carry the heading font —
    `text-[16px] font-semibold` silently drops it. *Controls* (buttons, inputs,
    badges, tabs) use the plain Tailwind scale (`text-sm font-medium`).
 
@@ -350,6 +350,19 @@ Everything works with no provider. Wrap only to override:
 ```
 
 ---
+
+## Fonts and licenses
+
+Headings are set in [Figtree](https://github.com/erikdkennedy/figtree), which is
+licensed under the SIL Open Font License 1.1. Its woff2 files ship in
+`styles/fonts/` together with `OFL.txt`, and that license file has to stay with
+them wherever you copy them.
+
+The Trayo app itself uses a commercially licensed heading face, which this
+repository does not and cannot redistribute. Figtree was chosen to stand in for
+it: same x-height, same letter shapes where it counts, and `size-adjust` in
+`fonts.css` keeps table widths the same. If your team holds a license for a
+different face, redefine `--font-heading` after importing `trayo-ui.css`.
 
 ## Developing the library itself
 

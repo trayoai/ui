@@ -14,7 +14,7 @@
  * is a conscious edit there, not an accident.
  *
  * Family split matches the prototype: HEADING roles (display, hero, page-title,
- * section, card-title) use Polymath via --font-heading (see fonts.css); the
+ * section, card-title) use Figtree via --font-heading (see fonts.css); the
  * remaining body/UI roles use the system stack via --font-body (the approved
  * prototype renders body text in the system stack, not Inter).
  *
