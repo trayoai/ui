@@ -56,40 +56,6 @@
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
 
-  /* Self-serve funnel stages — a SEQUENTIAL violet ramp (deeper stage =
-   * more emphasis), not categorical: the stages nest, they don't compete.
-   * A step names a STAGE, so funnel-stages.tsx and trend-chart.tsx must both
-   * read them; changing one alone silently splits the page in two.
-   *
-   * Light defaults; `.dark` re-picks its own steps from the same ramp rather
-   * than flipping, because alpha over a surface cannot hold contrast at both
-   * ends. Two bounds fight here and both are load-bearing:
-   *   - Every step clears 3:1 against --color-app-card, since each can fill a
-   *     whole bar on a day the others are zero. That caps the ramp at the
-   *     surface end (light stops at 500; dark stops at 500 going the other
-   *     way, and at 300 before the violets lose chroma and read grey).
-   *   - Adjacent steps must stay apart, or the bands blur together. So spread
-   *     to the far end rather than bunching near the cap: light 500/800/950
-   *     scores CVD ΔE 20.9 where the tighter 500/600/800 managed only 12.3.
-   * Light 950/800/500 → 14.99 / 8.84 / 4.17 vs #fffdf8, CVD ΔE 20.9.
-   * Dark  300/400/500 → 7.95 / 5.40 / 3.47 vs #232837, CVD ΔE 22.5.
-   * (The chart's neutral "not tracked" band is held to the same bar: solid
-   * --muted-foreground = 3.07 light / 3.90 dark. At 0.25 alpha it was 1.27.) */
-  --funnel-sov: var(--color-violet-950);
-  --funnel-activated: var(--color-violet-800);
-  --funnel-started: var(--color-violet-500);
-
-  /* The two RATE lines on the trend chart. Deliberately NOT the --funnel-*
-   * ramp above: those bands are sequential (stages nest, darker = deeper),
-   * but two lines being compared are categorical — they need separate HUES,
-   * not two steps of one hue. Read as lines, violet-800 vs violet-950 is
-   * illegible however well it measures as filled bands.
-   * Light 600s / dark 400s, because a 2px line needs the contrast a big fill
-   * can do without: amber-500 is only 2.11:1 on #fffdf8, teal-500 2.45:1.
-   * Light → CVD ΔE 57.8, all >=3:1. Dark → ΔE 74.1, all >=3:1. */
-  --funnel-rate-activated: var(--color-amber-600);
-  --funnel-rate-sov: var(--color-teal-600);
-
   /* ================================================================== */
   /* Theme-invariant primitives — hold the SAME values in light + dark.  */
   /* `.dark` overrides only the surface / text / border / alias layers   */
@@ -139,20 +105,6 @@
      person changing roles. */
   --dot-people: #6f93d6;
 
-  /* Count and status chip palette — account / signal / event count pills,
-     plan tier badges and run status. Same hue/brightness family as the
-     signal-type palette. */
-  --pill-acct: #7399bb;
-  --pill-sgnl: #c4a25a;
-  --pill-evt: #c47d8d;
-  --pill-plan-free: #5aaebd;
-  --pill-plan-pro: #8b7ec8;
-  --pill-plan-ent: #b87ab0;
-  --pill-status-done: #5aab7a;
-  --pill-status-run: #7b9ed4;
-  --pill-status-fail: #c4706a;
-
-
   /* Brand hero gradient — CTA buttons + person avatars */
   --gradient-cta: linear-gradient(135deg, #FFB82B 0%, #FF4F9E 100%);
 
@@ -165,22 +117,6 @@
 
   /* Logo avatar fallback fill — solid warm orange; theme-invariant. */
   --color-avatar-fallback: #e8a371;
-
-  /* Owner-stack fallback fills — monochromatic steps derived from surface-well.
-     Position-indexed (0 = darkest); dark initials sit on top. Overridden in .dark. */
-  --avatar-fallback-0: #e7c8a9;
-  --avatar-fallback-1: #ecd3ba;
-  --avatar-fallback-2: #efdbc7;
-
-  /* Owner marks on an assign control: the owner count inside it and the
-     unassigned dot on its corner. The fill is the owner
-     avatar tone (--avatar-fallback-0) in BOTH themes, because the marks stand
-     in for the faces they replaced and must read as the same family as the
-     owner avatars in the picker; white numerals exactly as the avatars set
-     their initials. White on the light tan is 1.59 — a mark, not text; the
-     count is spoken in full by the pill's tooltip and its sr-only summary. */
-  --owner-mark: #e7c8a9;
-  --owner-mark-foreground: #ffffff;
 
   /* ================================================================== */
   /* LIGHT palette (DEFAULT). An un-classed surface renders this.        */
@@ -221,12 +157,6 @@
      cancels in both themes. A forked `bg-app-raised dark:bg-surface-well`
      would leave the dark half alive under an override. */
   --surface-field: var(--color-app-raised);
-  /* File drop target inside a dialog. Light: the card, a
-     step above the dialog shell, so the target reads as its own surface.
-     Dark: the row — the dialog is already the raised surface, so nothing can
-     step up, and the card there is two steps DOWN (a black pit). The row is
-     the same one-step recess the segmented-switch trough takes on a dialog. */
-  --surface-dropzone: var(--surface-card);
   /* Opaque hover fill for a clickable card or row on the shell.
      Light: the well — what the shadcn `--accent` alias already gives such a
      card. Dark: the row, the ladder's hover step. `--accent` in dark is a
@@ -271,7 +201,6 @@
   --accent-soft: rgba(132, 92, 255, 0.10);
   --accent-line: rgba(132, 92, 255, 0.38);
 
-
   /* Status — success (emerald) + warning (amber), built from the palette
      emerald/amber ramps. Mirrors the accent set: `-text` is readable on the
      surface, `-soft` a tint fill, `-line` a hairline border. Brightens in
@@ -291,75 +220,8 @@
   /* Card hover lift — ring + soft drop. */
   --shadow-card-hover: 0 8px 20px rgba(60, 40, 20, 0.045), 0 1px 4px rgba(60, 40, 20, 0.025), 0 0 0 1px rgba(60, 40, 20, 0.08);
 
-  /* Hero search-bar brand glow. Brand purple rgb(132 92 255) is the canonical
-     brand; the glow is theme-invariant. */
-  --shadow-search-glow: 0 1px 2px rgba(16, 17, 26, 0.04),
-    0 18px 50px -28px rgba(132, 92, 255, 0.45);
-  --shadow-search-glow-focus: 0 0 0 4px var(--accent-soft),
-    0 22px 60px -26px rgba(132, 92, 255, 0.55);
-
-  /* Floating bulk-actions bar drop shadow: a soft key + tight contact shadow so
-     the pill reads as floating above the table. Read via
-     `shadow-[var(--shadow-bulk-bar)]`. There is a single resting shadow. .dark overrides with black-based alphas. */
-  --shadow-bulk-bar: 0 18px 44px -12px rgba(16, 17, 26, 0.30), 0 3px 8px rgba(16, 17, 26, 0.08);
-
-  /* ---- Drawer / table elevation (light) --------------------------------
-   * Each value that needs a per-theme variant is a token with a `.dark` arm,
-   * rather than a raw rgba() with a hand-written `.dark` rule beside it.
-   */
-  --scrim-overlay: rgba(60, 50, 30, 0.18);
-  /* Soft edge for a viewport-height drawer: the panel runs the full
-     screen height, so a heavy shadow reads as a hard band down the page. */
-  --shadow-drawer-panel: -8px 0 32px -12px rgba(16, 17, 26, 0.16);
-  /* Hover lift for person / signal / account cards inside a drawer. */
-  --shadow-card-lift: 0 2px 10px -4px rgba(16, 17, 26, 0.18);
-  /* Active segment of a segmented control. */
-  --shadow-seg-active: 0 1px 2px rgba(16, 17, 26, 0.14);
-  /* Segmented switch: trough, its edge, the thumb and the idle label are
-     tokens so the primitive needs no per-theme rule. */
-  --seg-track: var(--surface-well);
-  --seg-track-line: var(--border-subtle);
-  --seg-thumb: var(--surface-card);
-  --seg-text-idle: var(--text-secondary);
-  /* Floating action bar. Layered on Josh Comeau's "Designing Beautiful
-     Shadows" method: HUE-MATCHED ink (the cream shell's own hue with the
-     lightness dropped — a grey shadow on a warm ground desaturates it and reads
-     as grime, a hue-matched one reads as shade), five layers with a NEGATIVE
-     spread growing down the stack so the ramp fades out instead of ending on
-     a band, and EQUAL alpha per layer (ramping it with the blur is what makes
-     a layered shadow look like several). No x offset: the UI lights from
-     directly overhead, like every --shadow-card*. */
-  --shadow-float-bar:
-    0 1px 1.2px hsl(43deg 52% 34% / 0.075),
-    0 2.9px 3.6px -0.6px hsl(43deg 52% 34% / 0.075),
-    0 6.6px 8.3px -1.2px hsl(43deg 52% 34% / 0.075),
-    0 14.2px 17.8px -1.9px hsl(43deg 52% 34% / 0.075),
-    0 28px 35px -2.5px hsl(43deg 52% 34% / 0.075);
-  /* A step BELOW the bar's, for everything that floats behind it: the added
-     notes, the pending row, the count panels. Same ink and the same fade-out,
-     but a shorter ramp at a lower alpha, so those cards read as sitting further
-     back while the bar stays the object in front. */
-  --shadow-float-behind:
-    0 1px 1.2px hsl(43deg 52% 34% / 0.05),
-    0 3.4px 4.2px -1.2px hsl(43deg 52% 34% / 0.05),
-    0 8px 10px -2.4px hsl(43deg 52% 34% / 0.05);
-  /* Logo tiles: a fixed white plate (logo art assumes white in BOTH themes)
-     plus an inner hairline that does flip. */
-  --logo-tile-backing: #fff;
-  --logo-tile-hairline: rgba(28, 26, 23, 0.08);
-  /* Overlapping tiles/faces in a stack: a solid card-colored band cuts each out
-     of its neighbour, plus a thin edge. NO drop/lift layer on purpose — a row
-     of small tiles with one reads as chips floating over the pill; these
-     separate by band, not elevation. */
-  --shadow-tile-overlap: 0 0 0 2px var(--surface-card), 0 0 0 2.5px rgba(28, 26, 23, 0.16),
-    inset 0 0 0 1px rgba(28, 26, 23, 0.08);
-  --shadow-face-overlap: 0 0 0 2px var(--surface-card);
   /* Pressed/hover state of the solid brand CTA. */
   --accent-brand-strong: color-mix(in oklab, var(--accent-brand) 88%, #000);
-  /* Warm-paper chip fill for name chips. A light-theme flourish: in dark the
-     warm plate reads as a pale pill with a washed-out name, so the token's
-     dark arm settles onto the neutral well. */
-  --surface-chip-warm: rgba(248, 241, 223, 0.61);
 
   /* Layer 3 — shadcn aliases (light) */
   --background: var(--surface-shell);
@@ -391,16 +253,10 @@
   --surface-dialog: var(--surface-shell);
   /* Field surface — same as :root */
   --surface-field: var(--color-app-raised);
-  /* Dropzone surface — same as :root */
-  --surface-dropzone: var(--surface-card);
   /* Hover surface — same as :root */
   --surface-hover: var(--surface-well);
 
   /* Segmented switch — same as :root */
-  --seg-track: var(--surface-well);
-  --seg-track-line: var(--border-subtle);
-  --seg-thumb: var(--surface-card);
-  --seg-text-idle: var(--text-secondary);
 
   --chart-1: oklch(0.69 0.19 61.3);
   --chart-2: oklch(0.64 0.224 348.32);
@@ -408,15 +264,7 @@
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
 
-  /* See :root. On the light card the ramp runs dark→light: the deepest
-   * funnel stage is the darkest mark. */
-  --funnel-sov: var(--color-violet-950);
-  --funnel-activated: var(--color-violet-800);
-  --funnel-started: var(--color-violet-500);
-
   /* See :root. */
-  --funnel-rate-activated: var(--color-amber-600);
-  --funnel-rate-sov: var(--color-teal-600);
 
   --sidebar: hsl(0 0% 98%);
   --sidebar-foreground: hsl(222 47% 11%);
@@ -506,19 +354,6 @@
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.645 0.246 16.439);
 
-  /* Not an inversion of light — its own steps from the same ramp, chosen
-   * against the dark card: on this ground the ramp runs light→dark, so the
-   * deepest stage is the brightest mark.
-   * Dark 300/400/500 → 7.95 / 5.40 / 3.47 vs #232837, CVD ΔE 22.5. */
-  --funnel-sov: var(--color-violet-300);
-  --funnel-activated: var(--color-violet-400);
-  --funnel-started: var(--color-violet-500);
-
-  /* Brighter steps than light: a 2px line on the dark card needs them, and
-   * amber-600/teal-600 fall to 4.61/3.92 here. Dark → CVD ΔE 74.1. */
-  --funnel-rate-activated: var(--color-amber-400);
-  --funnel-rate-sov: var(--color-teal-400);
-
   /* On the ladder: the sidebar is the card — the surface the table
      rows rest on — so the nav and the rows are one ground, a 1.35 panel on
      the shell. Hover/active are the row step (1.19 on it), the border is the
@@ -561,9 +396,6 @@
   --surface-dialog: var(--surface-popover);
   /* A field recesses on a dark ground: the well, one step under the card. */
   --surface-field: var(--surface-well);
-  /* The drop target recesses one step under the raised dialog:
-     the card would be two steps down and read as a black pit. */
-  --surface-dropzone: var(--surface-row);
   /* A hovered card lifts one step to the row; see :root. */
   --surface-hover: var(--surface-row);
 
@@ -607,7 +439,6 @@
   --accent-soft: rgba(132, 92, 255, 0.16);
   --accent-line: rgba(185, 166, 242, 0.55);
 
-
   /* Status (dark) — `-text` brightens to a light ramp step so it reads on the
      dark shell; tint/line alphas bump to match the dark accent set. */
   --success-text: #6ee7b7;
@@ -633,86 +464,12 @@
      person changing roles. */
   --dot-people: #86ACF0;
 
-  /* Count and status chip palette (dark). Same band as the signal-type palette. */
-  --pill-acct: #89AFD2;
-  --pill-sgnl: #C9A75F;
-  --pill-evt: #E097A7;
-  --pill-plan-free: #63B7C6;
-  --pill-plan-pro: #AEA1EE;
-  --pill-plan-ent: #D696CE;
-  --pill-status-done: #6BBC8A;
-  --pill-status-run: #89ADE4;
-  --pill-status-fail: #EC948D;
-
-
   /* Same object as --sidebar above: the card. */
   --surface-sidebar: var(--surface-card);
-
-  /* Owner-stack fallback fills — the light theme's tan, as warm stone on dark.
-     Light paints three tan steps (hue 30°, L 78–86). Cold blue-greys would sit
-     within 1.07–1.28 of the surfaces around them and all but vanish. Stone, not brown: hue 40° (toward
-     yellow, away from orange), S 13%, three steps dark → light. Fill vs card
-     3.01 / 3.52 / 4.10; white initials 4.9 / 4.2 / 3.6 (a mark, not text —
-     light runs them at 1.3–1.6). */
-  --avatar-fallback-0: #79705D;
-  --avatar-fallback-1: #857B66;
-  --avatar-fallback-2: #918670;
-  /* The owner marks follow step 0, so an owner count circle matches the owner
-     faces. */
-  --owner-mark: #79705D;
 
   --shadow-card: inset 0 0 0 1px rgba(255, 255, 255, 0.11);
   /* Card hover lift (dark). */
   --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.35), 0 1px 4px rgba(0, 0, 0, 0.18), inset 0 0 0 1px rgba(255, 255, 255, 0.10);
-
-  /* Hero search-bar brand glow — see :root note. */
-  --shadow-search-glow: 0 1px 2px rgba(16, 17, 26, 0.04),
-    0 18px 50px -28px rgba(132, 92, 255, 0.45);
-  --shadow-search-glow-focus: 0 0 0 4px var(--accent-soft),
-    0 22px 60px -26px rgba(132, 92, 255, 0.55);
-
-  /* Floating bulk-actions bar drop shadow (dark) — black-based alphas so the bar
-     separates from the dark shell. */
-  --shadow-bulk-bar: 0 22px 50px -12px rgba(0, 0, 0, 0.6), 0 3px 8px rgba(0, 0, 0, 0.3);
-
-  /* ---- Drawer / table elevation (dark) ---------------------------------
-   * The dark arms of the light values in `:root`. `--shadow-card-lift` is
-   * deliberately not re-declared — it inherits `:root`. (`--shadow-seg-active`
-   * is an inset hairline here, declared with the seg-* tokens below.)
-   */
-  --scrim-overlay: rgba(10, 12, 18, 0.32);
-  --shadow-drawer-panel: -10px 0 36px -12px rgba(0, 0, 0, 0.35);
-  /* Shadows stay DARK in a dark theme (no light glows) and the lighter raised
-     surface makes them visible. The light ramp at 22% darkened a dark card by
-     a 1.09 step — invisible. Two black layers, a tight contact and a wide
-     ambient, at the alpha --shadow-bulk-bar already uses (0.6 / 0.3), so the
-     bar and the bulk bar cast the same shadow; the same shape one step down
-     for the cards that float behind the bar. */
-  --shadow-float-bar: 0 2px 6px rgba(0, 0, 0, 0.35), 0 14px 36px -6px rgba(0, 0, 0, 0.55);
-  --shadow-float-behind: 0 1px 3px rgba(0, 0, 0, 0.3), 0 8px 22px -6px rgba(0, 0, 0, 0.45);
-  /* Backing stays white — logo art assumes a white plate in both themes. */
-  --logo-tile-hairline: rgba(255, 255, 255, 0.12);
-  --shadow-tile-overlap: 0 0 0 2px var(--surface-card), 0 0 0 2.5px rgba(255, 255, 255, 0.16),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.12);
-  /* --shadow-face-overlap has NO dark arm: with no drop layer both themes are
-     just the ring, and `--surface-card` flips itself. Same
-     reasoning as --shadow-card-lift / --shadow-seg-active above. */
-  --surface-chip-warm: var(--surface-well);
-
-  /* Segmented switch (dark): a card-coloured thumb on the well would be a 1.19
-     step, and on a raised surface it would vanish. Light's
-     device is a trough one step DOWN and a thumb one step UP; dark does the
-     same around the surface the switch sits on. The trough is the row step —
-     a 1.20 recess in the bar and the menu (a trough on the shell or the well
-     read as a black hole there) — and the thumb takes its own step above the
-     raised surface (1.22, 1.46 on the trough) with a white hairline for an
-     edge, since the shadow does not read here. The idle label lifts so it
-     does not read as disabled on the trough (7.7 there, 10.9 on the card). */
-  --seg-track: var(--surface-row);
-  --seg-track-line: var(--border-subtle);
-  --seg-thumb: #444D65;
-  --shadow-seg-active: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
-  --seg-text-idle: #C7CCDA;
 
   /* Layer 3 — shadcn aliases (dark) */
   --background: var(--surface-shell);
@@ -749,9 +506,6 @@
 }
 
 @theme inline {
-  /* Clash Display — optional display face for a wordmark. Not bundled: load it
-     yourself (e.g. a <link> in index.html) if you use `font-clash`. */
-  --font-clash: 'Clash Display', sans-serif;
 
   /* Role fonts: Figtree for headings, system stack for body. Body/UI text
      renders in the system stack (NOT Inter); only headings are a webfont (Figtree, SIL OFL). Heading roles in
@@ -847,12 +601,7 @@
   --color-surface-popover: var(--surface-popover);
   --color-surface-dialog: var(--surface-dialog);
   --color-surface-field: var(--surface-field);
-  --color-surface-dropzone: var(--surface-dropzone);
   --color-surface-hover: var(--surface-hover);
-  --color-seg-track: var(--seg-track);
-  --color-seg-track-line: var(--seg-track-line);
-  --color-seg-thumb: var(--seg-thumb);
-  --color-seg-text-idle: var(--seg-text-idle);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
@@ -898,15 +647,6 @@
   --color-dot-news: var(--dot-news);
   --color-dot-career: var(--dot-career);
   --color-dot-job: var(--dot-job);
-  --color-pill-acct: var(--pill-acct);
-  --color-pill-sgnl: var(--pill-sgnl);
-  --color-pill-evt: var(--pill-evt);
-  --color-pill-plan-free: var(--pill-plan-free);
-  --color-pill-plan-pro: var(--pill-plan-pro);
-  --color-pill-plan-ent: var(--pill-plan-ent);
-  --color-pill-status-done: var(--pill-status-done);
-  --color-pill-status-run: var(--pill-status-run);
-  --color-pill-status-fail: var(--pill-status-fail);
 }
 
 /* Base reset: make bare utilities (e.g. `border-b`, default `outline`)
