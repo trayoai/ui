@@ -67,6 +67,21 @@
   --text-5xl--line-height: 1;
   --text-6xl: 3.5rem;
   --text-6xl--line-height: 1;
+  --text-7xl: 4rem;
+  --text-7xl--line-height: 1;
+  --text-8xl: 4.5rem;
+  --text-8xl--line-height: 1;
+}
+
+/* Height of the fixed header. <main> is padded by it, and anchored sections
+   scroll to just below it — update both values if the header changes size. */
+:root {
+  --header-offset: 64px;
+}
+@media (min-width: 1024px) {
+  :root {
+    --header-offset: 94px;
+  }
 }
 
 @layer base {
@@ -82,7 +97,7 @@
      element with an id, not just `:target` — in-page nav links and
      scrollIntoView both need the offset, and `:target` only covers the former. */
   [id] {
-    scroll-margin-top: 5.5rem;
+    scroll-margin-top: calc(var(--header-offset) + 1rem);
   }
 }
 
@@ -109,14 +124,14 @@
   /* Not `@apply panel …` — Tailwind v4's @apply only accepts real utilities,
      so a class built from other custom classes fails the build. */
   .panel-sand {
-    @apply relative overflow-hidden rounded-3xl bg-sand-light;
+    @apply relative overflow-hidden rounded-3xl bg-linear-180 from-sand-light from-[1.6%] to-sand to-100%;
   }
   .card {
     @apply rounded-2xl border border-sand-border bg-cream-light p-5;
   }
 
   .eyebrow {
-    @apply text-xs font-semibold tracking-widest text-purple uppercase;
+    @apply text-sm font-semibold tracking-widest text-purple uppercase;
   }
 
   /* Dashed hairline — the site's section separator (2px dash, 8px gap). */
@@ -143,118 +158,142 @@
   }
 }
 
-/* ------------------------------------------------------------------ hero
-   Rebuilt from the live site: a solid purple panel, two big soft blobs
-   bleeding in from the left (peach and violet, heavily blurred), and a noise
-   overlay in `mix-blend-overlay` on top. The blobs are radial gradients here
-   rather than the site's SVG shapes — same read, nothing to ship. */
+/* .is-scrolled and .is-hidden are toggled by the header script in index.astro. */
+.site-header {
+  transition: transform 240ms ease;
+}
+.site-header.is-hidden {
+  transform: translateY(-140%);
+  pointer-events: none;
+}
+.site-header-bar {
+  transition: box-shadow 240ms ease;
+}
+.site-header.is-scrolled .site-header-bar {
+  box-shadow:
+    0 8px 20px rgb(60 40 20 / 0.045),
+    0 1px 4px rgb(60 40 20 / 0.025),
+    0 0 0 1px rgb(60 40 20 / 0.045);
+}
+
 .hero {
   background-color: var(--color-purple);
-  /* Position of the peach glow. Updated by the pointer handler on the page;
-     these are the resting values it eases back to. */
-  --glow-x: 12%;
-  --glow-y: 72%;
 }
-.hero::before,
-.hero::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+/* Hero background: three shapes (public/Ellipse1-3.svg) cross-fading 3s apart.
+   Their blur is baked into the SVGs, so there is no CSS blur. */
+.hero-ellipse {
+  opacity: 0;
+  animation: hero-shapes-fade 8s ease-in-out infinite both;
+  will-change: opacity;
 }
-.hero::before {
-  background:
-    /* The peach glow tracks the cursor; the violet and deep-purple fields stay
-       put so the panel keeps its shape as it moves. */
-    radial-gradient(
-      55% 65% at var(--glow-x) var(--glow-y),
-      rgba(255, 161, 130, 0.9) 0%,
-      rgba(255, 161, 130, 0) 62%
-    ),
-    radial-gradient(45% 55% at 2% 40%, rgba(205, 129, 255, 0.7) 0%, rgba(205, 129, 255, 0) 65%),
-    radial-gradient(50% 60% at 95% 15%, rgba(111, 0, 255, 0.55) 0%, rgba(111, 0, 255, 0) 70%);
-  filter: blur(40px);
-  /* The JS eases the values every frame, so nothing to transition here —
-     a CSS transition on a custom property would need @property to interpolate
-     at all, and would fight the easing where it is supported. */
-  will-change: background;
+.hero-ellipse--2 {
+  animation-delay: 3s;
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .hero {
-    --glow-x: 12%;
-    --glow-y: 72%;
-  }
+.hero-ellipse--3 {
+  animation-delay: 6s;
 }
-/* The grain. Same asset and same treatment as www.trayo.ai — repeat-tiled at
-   50% in `overlay`. This is most of what makes the panel read as gritty rather
-   than as a flat CSS gradient. */
-.hero::after {
+@keyframes hero-shapes-fade {
+  0%, 100% { opacity: 0; }
+  25%, 75% { opacity: 1; }
+}
+.hero-noise {
+  @apply pointer-events-none absolute inset-0 bg-repeat opacity-25 mix-blend-overlay;
   background-image: url('/noise.svg');
-  background-repeat: repeat;
-  mix-blend-mode: overlay;
-  opacity: 0.5;
 }
-
-/* ------------------------------------------------------------ hero lines
-   The vertical bars raining down the panel, lifted from the marketing site's
-   hero-lines.svg. Each bar is a pair of paths (the wide translucent column and
-   the hairline that runs on past it).
-
-   A wave of brightness sweeps across them: every pair animates the same
-   keyframe, offset by its index, so the highlight travels rather than pulsing
-   in unison. The site drives this with the `motion` library; here it is plain
-   CSS keyframes with a per-path animation-delay, which needs no runtime and
-   looks the same. */
 .hero-lines {
-  opacity: 0.4;
-}
-.hero-lines svg {
-  width: 100%;
-  height: auto;
-  min-width: 80rem;
-}
-.hero-lines path {
-  opacity: 0.18;
-  will-change: opacity, transform;
-  animation: hero-line-sweep var(--sweep-duration, 4.76s) ease-in-out infinite;
+  @apply pointer-events-none absolute inset-0 bg-[length:300%] bg-left bg-no-repeat opacity-10 sm:bg-[length:200%] md:bg-[length:150%] lg:bg-cover;
+  background-image: url('/lines-2.svg');
 }
 
-/* Percentages are the site's timings expressed against the full sweep:
-   0.5s fade in (10.5%), 0.8s hold (to 27.3%), 0.5s fade out (to 37.8%), then
-   the pair rests until the wave comes round again. */
-@keyframes hero-line-sweep {
-  0% { opacity: 0.18; transform: translateY(0); }
-  10.5% { opacity: 0.55; transform: translateY(-4px); }
-  27.3% { opacity: 0.55; transform: translateY(-4px); }
-  37.8% { opacity: 0.18; transform: translateY(0); }
-  100% { opacity: 0.18; transform: translateY(0); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-lines path {
-    animation: none;
-    opacity: 0.18;
-  }
-}
-
-/* Vertical hairlines over a sand panel — the site's feature-block texture. */
-.striped::before {
+/* Diagonal hatch (fading in toward the bottom right) plus grain, for sand
+   panels. Both are pseudo-elements, so content inside needs `relative z-10`. */
+.sand-texture::before,
+.sand-texture::after {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: repeating-linear-gradient(
-    to right,
-    rgba(180, 140, 70, 0.07) 0,
-    rgba(180, 140, 70, 0.07) 1px,
-    transparent 1px,
-    transparent 9px
-  );
+  background-repeat: repeat;
+}
+.sand-texture::before {
+  background-image: url('/diagonal-pattern.svg');
+  opacity: 0.6;
+  -webkit-mask-image: linear-gradient(115deg, transparent 45%, black);
+  mask-image: linear-gradient(115deg, transparent 45%, black);
+}
+.sand-texture::after {
+  background-image: url('/noise.svg');
+  opacity: 0.7;
+  mix-blend-mode: soft-light;
 }
 
 @media (max-width: 640px) {
   h1 {
     letter-spacing: -0.02em;
+  }
+}
+
+/* Uppercase text has no descenders and Polymath sets capitals high in the line
+   box, so plain padding leaves more space under the letters than above.
+   Trimming the box to the cap height makes the padding the only space. */
+.hero-eyebrow {
+  padding-block: 4px;
+}
+@supports (text-box: trim-both cap alphabetic) {
+  .hero-eyebrow {
+    line-height: 1;
+    text-box: trim-both cap alphabetic;
+    padding-block: 8px;
+  }
+}
+
+.hero-cta {
+  @apply relative inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full bg-neutral-900 text-lg leading-none font-semibold text-white inset-shadow-sm inset-shadow-white/20 transition-colors hover:bg-neutral-800 focus-visible:outline-none active:top-px;
+}
+/* The label is rendered twice; on hover the pair slides up one line. */
+.hero-cta-text {
+  @apply px-8 py-4 sm:px-10 sm:py-4.5;
+  transition: translate 0.5s cubic-bezier(0.175, 0.92, 0.32, 1.18);
+}
+.hero-cta-outline {
+  @apply relative inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-transparent text-lg leading-none font-semibold text-white focus-visible:outline-none active:top-px;
+}
+/* 2px less vertical padding than the filled CTA, to offset the border and keep
+   both pills the same height. */
+.hero-cta-text--outline {
+  @apply py-3.5 sm:py-4;
+}
+
+/* Load-in fade-up for the hero copy; -2 and -3 follow in a stagger. */
+.hero-in {
+  animation: hero-in 0.9s cubic-bezier(0.215, 0.61, 0.355, 1) 0.2s both;
+  --hero-in-y: 40px;
+}
+.hero-in-2 {
+  --hero-in-y: 28px;
+  animation-duration: 0.7s;
+  animation-delay: 0.6s;
+}
+.hero-in-3 {
+  --hero-in-y: 28px;
+  animation-duration: 0.7s;
+  animation-delay: 0.72s;
+}
+@keyframes hero-in {
+  from { opacity: 0; transform: translateY(var(--hero-in-y)); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-in {
+    animation: none;
+  }
+  .hero-ellipse {
+    animation: none;
+    opacity: 1;
+    will-change: auto;
+  }
+  .hero-cta-text {
+    transition: none;
   }
 }

@@ -19,7 +19,6 @@ import {
   DataTable,
   EmptyState,
   Eyebrow,
-  GradientText,
   Input,
   PageContainer,
   PageHeader,
@@ -355,7 +354,7 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
           <PageHeader
             title={
               <>
-                Trayo <GradientText>GTM UI</GradientText>
+                Trayo <span className='text-accent-brand'>GTM UI</span>
               </>
             }
             subtitle='v0.1 — the component kit for apps built on the Trayo API'
