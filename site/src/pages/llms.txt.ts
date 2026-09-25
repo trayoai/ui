@@ -72,7 +72,7 @@ Demo:   ${SITE}/demo
 
     npm install react@^19 react-dom@^19 clsx tailwind-merge lucide-react \\
       class-variance-authority tailwindcss @tailwindcss/vite \\
-      @radix-ui/react-{avatar,checkbox,dialog,dropdown-menu,label,popover,progress,scroll-area,select,separator,slot,switch,tabs,tooltip}
+      @radix-ui/react-{avatar,checkbox,dialog,dropdown-menu,label,popover,scroll-area,select,separator,slot,switch,tabs,tooltip}
 
     # CSS entry, in this order (no @source directive needed):
     #   @import "tailwindcss";
