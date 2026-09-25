@@ -4,17 +4,22 @@ import { fnv1a } from './hash'
  * The 50 illustrated placeholder faces — Trayo's built-in fallback for a person
  * with no usable photo. NOT initials: a person always gets a face.
  *
- * They are served from Trayo's CDN by default, which is deliberately
+ * They are served from ui.trayo.ai by default, which is deliberately
  * bundler-agnostic: the library works unchanged in Vite, Next, Remix or a plain
  * script tag with no asset pipeline, no `import.meta.glob`, no config.
  *
- * To self-host instead, copy `assets/placeholder/*.png` out of this package into
- * your own static directory and set the base:
+ * The path is versioned: the files under `/faces/v1/` never change, so they are
+ * cached for a year. A redesigned set ships as `/faces/v2/` beside it, and a
+ * copy of this library that points at v1 keeps rendering the faces it shipped
+ * with.
  *
+ * To self-host instead, copy the PNGs into your own static directory and set
+ * the base:
+ *
+ *   npx degit trayoai/ui/assets/placeholder public/images/placeholder
  *   <TrayoUIProvider placeholderFaceBase="/images/placeholder">
  */
-export const DEFAULT_PLACEHOLDER_FACE_BASE =
-  'https://app.trayo.ai/images/placeholder'
+export const DEFAULT_PLACEHOLDER_FACE_BASE = 'https://ui.trayo.ai/faces/v1'
 
 export const PLACEHOLDER_FACE_COUNT = 50
 

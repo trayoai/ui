@@ -29,10 +29,9 @@ export interface TrayoUIConfig {
    */
   isGenericPhoto?: (url: string) => boolean
   /**
-   * Where the 50 illustrated placeholder faces are served from. By default the
-   * bundled PNGs are imported through your bundler, which is what you want.
-   * Set this to a base URL (e.g. a CDN path ending in `/placeholder`) if you
-   * would rather host them yourself; files are named `01.png` … `50.png`.
+   * Where the 50 illustrated placeholder faces are served from. Defaults to
+   * `https://ui.trayo.ai/faces/v1`. Set this to your own base URL if you would
+   * rather host them yourself; files are named `01.png` … `50.png`.
    */
   placeholderFaceBase?: string
 }

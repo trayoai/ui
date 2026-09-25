@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "bash scripts/pack.sh && astro build",
+    "build": "bash scripts/pack.sh && bash scripts/faces.sh && astro build",
     "preview": "astro preview"
   },
   "dependencies": {
