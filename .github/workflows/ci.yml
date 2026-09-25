@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  library:
+    name: Library and site
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      # --ignore-scripts skips the postinstall site build; it runs as its own
+      # step below so a failure is reported as a build failure, not an install one.
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Typecheck the library
+        run: pnpm typecheck
+      - name: Build the site (packs the tarball, publishes the faces)
+        run: pnpm build
+      - name: Check the vendor tarball
+        run: |
+          contents="$(tar -tzf site/public/trayo-ui.tar.gz)"
+          for f in trayo-ui/index.ts trayo-ui/styles/trayo-ui.css trayo-ui/styles/fonts/OFL.txt trayo-ui/README.md trayo-ui/AGENTS.md; do
+            grep -qx "$f" <<<"$contents" || { echo "tarball is missing $f"; exit 1; }
+          done
+      - name: Check the published faces
+        run: test "$(ls site/dist/faces/v1/*.png | wc -l)" -eq 50
+
+  consumer:
+    name: Fresh app, installed per README
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: bash scripts/consumer-check.sh
