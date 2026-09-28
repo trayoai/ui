@@ -280,7 +280,7 @@ Sizes: `xs sm md lg xl 2xl`.
 |---|---|
 | Page scaffolding | `AppShell` `PageContainer` `PageHeader` `Surface` `Well` |
 | Decorative | `BrandMesh` (drifting brand gradient) `GradientText` |
-| States | `EmptyState` `StatTile` `Skeleton` `Progress` |
+| States | `EmptyState` `StatTile` `Callout` `Skeleton` `Progress` |
 | Type | `PageTitle` `SectionTitle` `CardTitle` `EntityName` `Body` `Meta` `Eyebrow` `SectionLabel` `Code` |
 | Controls | `Button` `Input` `Textarea` `Select` `Checkbox` `Switch` `Label` `Tabs` |
 | Display | `Badge` `TagChip` `Card` `Separator` `Tooltip` `ScrollArea` |
@@ -301,6 +301,25 @@ Never hand-roll a spinner swap inside a `<Button>` — pass `loading`.
 Action glyphs (`Plus`, `Check`) lead; directional ones (`ArrowRight`,
 `ExternalLink`) trail. Icons scale with the button size automatically — don't
 size them per instance.
+
+### Callouts
+
+The note box: "how this was built", a coverage caveat, a data limit, a result
+that cleared the bar. A short `title` as the eyebrow, one to three lines of
+body, at most one `action`. Tones `note` (default) `info` `success` `warning`
+`destructive`; `compact` puts title and body on one line.
+
+```tsx
+<Callout title="How this was built" action={<a href="/method">Full method</a>}>
+  Every row came back from the Trayo API; nothing here is hand-typed.
+</Callout>
+<Callout tone="warning" icon={<AlertTriangle />} title="Post coverage is incomplete">
+  Only public posts from the last 30 days were read.
+</Callout>
+```
+
+Do not build this from `Surface` + `SectionLabel` + `Body` — that is the drift
+this component exists to stop.
 
 ---
 

@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import {
+  AlertTriangle,
   ArrowRight,
   Building2,
   Check,
+  CheckCircle2,
   Moon,
   Plus,
   Search,
@@ -15,6 +17,7 @@ import {
   Badge,
   Body,
   Button,
+  Callout,
   Company,
   CompanyCard,
   CompanyLogo,
@@ -937,6 +940,29 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                       <Badge variant='warning'>Warning</Badge>
                       <Badge variant='soft'>Soft tag</Badge>
                       <Badge variant='count'>12</Badge>
+                    </div>
+                  </Panel>
+                </Specimen>
+
+                <Specimen name='Callouts' note='A note, a caveat, a result.' component='<Callout>'>
+                  <Panel>
+                    <div className='flex flex-col gap-2'>
+                      <Callout
+                        title='How this was built'
+                        action={
+                          <a href='#method' className='text-meta text-accent-text underline-offset-4 hover:underline'>
+                            Full method
+                          </a>
+                        }
+                      >
+                        Every row came back from the Trayo API; nothing here is hand-typed.
+                      </Callout>
+                      <Callout tone='warning' icon={<AlertTriangle />} title='Post coverage is incomplete'>
+                        Only public posts from the last 30 days were read.
+                      </Callout>
+                      <Callout tone='success' icon={<CheckCircle2 />} title='Target met' compact>
+                        81 accounts cleared the bar.
+                      </Callout>
                     </div>
                   </Panel>
                 </Specimen>

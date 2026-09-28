@@ -55,6 +55,8 @@ export {
   Surface,
   Well,
 } from './components/surfaces'
+export { Callout } from './components/callout'
+export type { CalloutProps, CalloutTone } from './components/callout'
 export {
   Body,
   CardTitle,
