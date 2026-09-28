@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import {
   AppShell,
+  AppShellNavLink,
   Badge,
   Body,
   Button,
@@ -31,11 +32,13 @@ import {
   PersonAvatar,
   PersonCard,
   SectionTitle,
+  SegmentedControl,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  StatGrid,
   StatTile,
   Surface,
   Switch,
@@ -529,21 +532,48 @@ function Panel({ className, ...props }: React.ComponentProps<typeof Surface>) {
 const LIBRARY_URL = 'REPLACE_LIB_URL'
 const libraryHref = LIBRARY_URL.startsWith('http') ? LIBRARY_URL : null
 
+/** The filter group demonstrated by the segmented control. */
+const BANDS = [
+  { value: 'all', label: 'All', count: 59 },
+  { value: 'red', label: 'Red', count: 3 },
+  { value: 'amber', label: 'Amber', count: 7 },
+  { value: 'green', label: 'Green', count: 49 },
+] as const
+type Band = (typeof BANDS)[number]['value']
+
 export function Showcase({ compact = false }: { compact?: boolean } = {}) {
   const [dark, setDark] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set(['p-2']))
   const [sort, setSort] = useState<SortState>({ key: 'score', dir: 'desc' })
+  const [band, setBand] = useState<Band>('all')
 
   return (
     <div className={dark ? 'dark' : undefined}>
-      <AppShell className={compact ? 'min-h-0' : undefined}>
+      {/* The demo runs inside the kit's own top bar: brand on the left, the
+          view links on the right, the theme switch as the bar's action. */}
+      <AppShell
+        className={compact ? 'min-h-0' : undefined}
+        width='wide'
+        brand={
+          <>
+            <span>
+              Trayo <span className='text-accent-brand'>GTM UI</span>
+            </span>
+            <Badge variant='soft'>demo</Badge>
+          </>
+        }
+        nav={
+          <>
+            <AppShellNavLink active>Components</AppShellNavLink>
+            <AppShellNavLink href={libraryHref ?? 'https://ui.trayo.ai'} target='_top'>
+              Get the library
+            </AppShellNavLink>
+          </>
+        }
+        actions={<ThemeSwitch dark={dark} onChange={setDark} />}
+      >
         <PageContainer width='wide' className={compact ? 'py-6' : undefined}>
-          <DemoHeader
-            compact={compact}
-            actions={
-              <ThemeSwitch dark={dark} onChange={setDark} />
-            }
-          />
+          <DemoHeader compact={compact} />
 
           {/* -------------------------------------------------- table */}
           <Section
@@ -888,6 +918,21 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
             {/* Masonry columns: each stage sizes to its own content, so a
                 short specimen never stretches to match a tall neighbour. */}
             <Section title='Type, stats and empty states'>
+              <Specimen
+                name='Stat strip'
+                note='Five tiles: one column each from md up, two on a phone with the odd last tile spanning both. A hint sits beside the number.'
+                component='<StatGrid> <StatTile hint>'
+                className='mb-4'
+              >
+                <StatGrid>
+                  <StatTile label='Accounts tracked' value='317' hint='283 with events' />
+                  <StatTile label='At risk' value='3' delta='+1' hint='$2.6M ARR' />
+                  <StatTile label='Signals this week' value='47' delta='-4%' />
+                  <StatTile label='Meetings booked' value='12' delta='+3' />
+                  <StatTile label='Reply rate' value='18%' delta='+2.1%' />
+                </StatGrid>
+              </Specimen>
+
               <div className='gap-4 md:columns-2 xl:columns-3 [&>*]:mb-4 [&>*]:break-inside-avoid'>
                 <Specimen name='Type roles' note='Content roles, one per job.' component='text-page-title …'>
                   <Panel>
@@ -904,11 +949,31 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                   </Panel>
                 </Specimen>
 
-                <Specimen name='Stat tiles' note='A number and its change.' component='<StatTile>'>
-                  <div className='grid grid-cols-2 gap-1.5'>
-                    <StatTile label='Accounts tracked' value='1,284' delta='+12%' />
-                    <StatTile label='Signals this week' value='47' delta='-4%' />
-                  </div>
+                <Specimen
+                  name='Segmented control'
+                  note='A filter group with counts; arrow keys move the selection.'
+                  component='<SegmentedControl>'
+                >
+                  <Panel>
+                    <div className='flex flex-col items-start gap-3'>
+                      <SegmentedControl
+                        aria-label='Health band'
+                        value={band}
+                        onValueChange={setBand}
+                        options={BANDS}
+                      />
+                      <SegmentedControl
+                        aria-label='Health band, small'
+                        size='sm'
+                        value={band}
+                        onValueChange={setBand}
+                        options={BANDS}
+                      />
+                      <Meta>
+                        Showing {BANDS.find((b) => b.value === band)?.count} accounts
+                      </Meta>
+                    </div>
+                  </Panel>
                 </Specimen>
 
                 <Specimen name='Form controls' note='Pill-shaped fields.' component='<Input> <Select>'>

@@ -46,11 +46,13 @@ export {
 /* -------------------------------------------------- layout, surfaces, type */
 export {
   AppShell,
+  AppShellNavLink,
   BrandMesh,
   EmptyState,
   GradientText,
   PageContainer,
   PageHeader,
+  StatGrid,
   StatTile,
   Surface,
   Well,
@@ -94,6 +96,8 @@ export { Separator } from './components/ui/separator'
 export { Skeleton } from './components/ui/skeleton'
 export { ScrollArea, ScrollBar } from './components/ui/scroll-area'
 export { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs'
+export { SegmentedControl } from './components/ui/segmented-control'
+export type { SegmentedControlOption, SegmentedControlProps } from './components/ui/segmented-control'
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './components/ui/tooltip'
 export {
   Select,

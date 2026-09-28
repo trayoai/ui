@@ -278,13 +278,61 @@ Sizes: `xs sm md lg xl 2xl`.
 
 | What | Components |
 |---|---|
-| Page scaffolding | `AppShell` `PageContainer` `PageHeader` `Surface` `Well` |
+| Page scaffolding | `AppShell` `AppShellNavLink` `PageContainer` `PageHeader` `Surface` `Well` `StatGrid` |
 | Decorative | `BrandMesh` (drifting brand gradient) `GradientText` |
 | States | `EmptyState` `StatTile` `Skeleton` `Progress` |
 | Type | `PageTitle` `SectionTitle` `CardTitle` `EntityName` `Body` `Meta` `Eyebrow` `SectionLabel` `Code` |
-| Controls | `Button` `Input` `Textarea` `Select` `Checkbox` `Switch` `Label` `Tabs` |
+| Controls | `Button` `Input` `Textarea` `Select` `Checkbox` `Switch` `Label` `Tabs` `SegmentedControl` |
 | Display | `Badge` `TagChip` `Card` `Separator` `Tooltip` `ScrollArea` |
 | Overlays | `Dialog` `Popover` `DropdownMenu` |
+
+### Page scaffolding
+
+Give `AppShell` a `brand`, `nav` or `actions` and it renders the app's top bar:
+sticky, blurred, on a hairline, its inner width aligned with `PageContainer`
+(pass the same `width`). View links are `AppShellNavLink`s — quiet pills that
+take the soft accent when `active`; use `asChild` to wrap your router's link.
+A filter group is a `SegmentedControl`; a row of `StatTile`s goes in a
+`StatGrid`, which is two columns on a phone and lets an odd last tile span both
+so nothing dangles.
+
+```tsx
+<AppShell
+  brand="Churn radar"
+  nav={
+    <>
+      <AppShellNavLink active>Board</AppShellNavLink>
+      <AppShellNavLink onClick={() => go('/runs')}>What ran</AppShellNavLink>
+    </>
+  }
+  actions={<Button size="sm">Run now</Button>}
+>
+  <PageContainer>
+    <StatGrid className="mb-6">
+      <StatTile label="Accounts" value="317" hint="283 with events" />
+      <StatTile label="At risk" value="3" hint="$2.6M ARR" delta="+1" />
+      <StatTile label="Signals this week" value="47" delta="-4%" />
+      <StatTile label="Meetings booked" value="12" />
+      <StatTile label="Reply rate" value="18%" delta="+2.1%" />
+    </StatGrid>
+
+    <SegmentedControl
+      value={band}
+      onValueChange={setBand}
+      options={[
+        { value: 'all', label: 'All', count: 59 },
+        { value: 'red', label: 'Red', count: 3 },
+        { value: 'amber', label: 'Amber', count: 7 },
+        { value: 'green', label: 'Green', count: 49 },
+      ]}
+    />
+  </PageContainer>
+</AppShell>
+```
+
+Bare `<AppShell>` still renders no bar. `SegmentedControl` is a radio group —
+arrow keys move the selection — for filtering what is on screen; view switching
+belongs in the top bar, and content panels belong to `Tabs`.
 
 ### Buttons
 
