@@ -30,8 +30,12 @@ export type {
   SortState,
   DataTableProps,
   DataTableSelection,
+  DataTablePagination,
 } from './components/data-table'
 export { DataTableSkeletonRow } from './components/skeleton-row'
+export { Pagination } from './components/ui/pagination'
+export type { PaginationProps } from './components/ui/pagination'
+export { usePagination } from './components/ui/use-pagination'
 export {
   Table,
   TableBody,

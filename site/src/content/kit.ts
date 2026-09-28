@@ -119,11 +119,12 @@ export const RULES = [
   'Use `cn()` from the library, not bare `clsx`.',
   'View switching goes in `<AppShell nav={…}>` as `<AppShellNavLink>`s; a filter group ("All 59 · Red 3 · Amber 7") is a `<SegmentedControl>` with `count`s; a row of `<StatTile>`s sits in a `<StatGrid>`. Do not hand-roll a top bar, a pill group or the stat grid classes.',
   'Stubbed or demo actions (Push to Salesforce, Send email, Post to Slack with no integration wired) confirm with `toast({ variant: \'preview\', title, description })` from a single `<Toaster />` mounted inside `<AppShell>`. It says "Preview - nothing was sent". Never a bespoke toast component, never a silent success.',
+  'Any list that can exceed ~50 rows is paged: pass DataTable\'s `pagination` prop (client-side without `total`, server-side with it), or render `<Pagination>` under a card grid. Never render a long list in full.',
 ] as const
 
 export const INVENTORY = [
   { group: 'Entities', items: 'Person, PersonCard, Company, CompanyCard, PersonAvatar, CompanyLogo, ToneAvatar' },
-  { group: 'Tables', items: 'DataTable (sortable, selectable, skeleton loading) and the raw Table primitives' },
+  { group: 'Tables', items: 'DataTable (sortable, selectable, paged via `pagination`, skeleton loading), Pagination + usePagination, and the raw Table primitives' },
   { group: 'Page scaffolding', items: 'AppShell (with brand / nav / actions top bar), AppShellNavLink, PageContainer, PageHeader, Surface, Well, StatGrid' },
   { group: 'Decorative', items: 'BrandMesh, GradientText' },
   { group: 'States', items: 'EmptyState, StatTile, Callout, Skeleton, Progress' },
