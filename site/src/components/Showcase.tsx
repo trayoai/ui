@@ -384,13 +384,7 @@ function Section({
  * hero size, the version is a badge beside it, the tagline sits underneath,
  * and a hairline separates the masthead from the first section.
  */
-function DemoHeader({
-  compact,
-  actions,
-}: {
-  compact?: boolean
-  actions?: React.ReactNode
-}) {
+function DemoHeader({ compact }: { compact?: boolean }) {
   const Title = compact ? PageTitle : Hero
   return (
     <header
@@ -412,7 +406,6 @@ function DemoHeader({
         </div>
         <Body className='mt-2'>The component kit for apps built on the Trayo API.</Body>
       </div>
-      {actions && <div className='flex shrink-0 items-center gap-2'>{actions}</div>}
     </header>
   )
 }
@@ -690,7 +683,7 @@ function SignalsBarChart() {
           <DataLabel>low</DataLabel>
           <span className='flex gap-px'>
             {CHART_SEQUENTIAL.map((c) => (
-              <span key={c} aria-hidden className='size-2.5 rounded-[2px]' style={{ background: c }} />
+              <span key={c} aria-hidden className='size-2.5 rounded-xs' style={{ background: c }} />
             ))}
           </span>
           <DataLabel>high momentum</DataLabel>
@@ -1201,9 +1194,9 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                   <Panel>
                     <div className='flex flex-col gap-4'>
                       <div>
-                        <DataLabel as='div' className='mb-1.5'>
+                        <Meta as='div' className='mb-1.5'>
                           Categorical · chart-1 … chart-5
-                        </DataLabel>
+                        </Meta>
                         <div className='flex gap-1.5'>
                           {CHART_SWATCHES.map((c) => (
                             <span key={c} className={cn('h-8 flex-1 rounded-sm', c)} />
@@ -1211,9 +1204,9 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                         </div>
                       </div>
                       <div>
-                        <DataLabel as='div' className='mb-1.5'>
+                        <Meta as='div' className='mb-1.5'>
                           Sequential · chart-seq-1 … chart-seq-5
-                        </DataLabel>
+                        </Meta>
                         <div className='flex gap-1.5'>
                           {SEQ_SWATCHES.map((c) => (
                             <span key={c} className={cn('h-8 flex-1 rounded-sm', c)} />
@@ -1221,9 +1214,9 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                         </div>
                       </div>
                       <div>
-                        <DataLabel as='div' className='mb-1.5'>
+                        <Meta as='div' className='mb-1.5'>
                           Muted · outside ICP, not tracked, other
-                        </DataLabel>
+                        </Meta>
                         <span className='block h-8 w-1/5 rounded-sm bg-chart-muted' />
                       </div>
                     </div>

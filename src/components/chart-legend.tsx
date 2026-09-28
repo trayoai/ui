@@ -27,7 +27,7 @@ export interface ChartLegendProps extends Omit<React.ComponentProps<'ul'>, 'chil
  * The key for a chart — a swatch and a label per series, in the palette order
  * the series were assigned. Present whenever a chart has two or more series
  * (a single series needs none; the title names it). The labels wear the
- * data-label role, muted; only the swatch carries the series colour.
+ * data-label role in secondary text; only the swatch carries the series colour.
  *
  *   <ChartLegend items={series.map((s, i) => ({ label: s.name, color: chartColor(i) }))} />
  */
@@ -55,7 +55,7 @@ export function ChartLegend({
             className={cn(
               'shrink-0',
               swatch === 'line' ? 'h-0.5 w-3 rounded-full' : 'size-2.5',
-              swatch === 'dot' ? 'rounded-full' : swatch === 'square' ? 'rounded-[2px]' : undefined,
+              swatch === 'dot' ? 'rounded-full' : swatch === 'square' ? 'rounded-xs' : undefined,
               item.swatchClassName
             )}
             style={item.color ? { background: item.color } : undefined}

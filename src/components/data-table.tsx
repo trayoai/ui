@@ -473,7 +473,7 @@ export function DataTable<T>({
         onPageChange={pagination.onPageChange}
         pageSizeOptions={pagination.pageSizeOptions}
         onPageSizeChange={pagination.onPageSizeChange}
-        className="border-t border-border px-4 py-2"
+        className="border-t border-border-subtle px-4 py-2"
       />
     )}
     </>

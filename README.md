@@ -98,7 +98,9 @@ npm install react@^19 react-dom@^19 clsx tailwind-merge lucide-react \
   @radix-ui/react-tabs @radix-ui/react-tooltip
 ```
 
-Requires **Tailwind CSS v4** and **React 19**. React 18 is not supported: the
+Requires **Tailwind CSS v4** and **React 19**. The bundler must define
+`process.env.NODE_ENV` (Vite, Astro, webpack, esbuild, Next and Bun all do);
+`Button` reads it to warn about alias variant names in development. React 18 is not supported: the
 components take `ref` as an ordinary prop (a React 19 feature), so on React 18
 refs are silently dropped and Radix `asChild` triggers — `<TooltipTrigger
 asChild><Button/>`, popovers, dropdown menus — lose their anchor. If your app is
@@ -378,6 +380,7 @@ so nothing dangles.
     </StatGrid>
 
     <SegmentedControl
+      aria-label="Risk band"
       value={band}
       onValueChange={setBand}
       options={[

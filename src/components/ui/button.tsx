@@ -153,8 +153,10 @@ const buttonVariants = cva(
 // `typeof process` guard or a try/catch: either one hides the constant from the
 // minifier and the warning text ships to production. (Every bundler that
 // resolves this file's bare `@radix-ui/*` imports also defines this value.)
+// It is read inside the alias branch, not at module load, so a runtime that
+// does not define it can only fail on a `variant="ghost"` render, never on
+// import.
 declare const process: { env: { NODE_ENV?: string } }
-const IS_DEVELOPMENT = process.env.NODE_ENV !== 'production'
 
 const warnedAliases = new Set<string>()
 
@@ -165,7 +167,7 @@ function resolveVariant(
   if (variant && variant in BUTTON_VARIANT_ALIASES) {
     const alias = variant as ButtonVariantAlias
     const canonical = BUTTON_VARIANT_ALIASES[alias]
-    if (IS_DEVELOPMENT && !warnedAliases.has(alias)) {
+    if (process.env.NODE_ENV !== 'production' && !warnedAliases.has(alias)) {
       warnedAliases.add(alias)
       console.warn(
         `[trayo-ui] <Button variant="${alias}"> is not a Trayo variant; rendering it as ` +

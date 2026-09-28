@@ -36,6 +36,9 @@ export type SegmentedControlProps<T extends string = string> = Omit<
  * Use it for filtering what is on the current screen. Switching between views
  * belongs in the `AppShell` top bar (`<AppShellNavLink>`); switching between
  * panels of content belongs to `<Tabs>`.
+ *
+ * It is a radio group, so give it an `aria-label` (or `aria-labelledby`)
+ * naming what is being filtered: "Risk band", "Stage".
  */
 export function SegmentedControl<T extends string = string>({
   value,

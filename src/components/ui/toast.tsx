@@ -43,7 +43,7 @@ export interface ToastOptions {
   eyebrow?: React.ReactNode
   /** Replace the variant's leading glyph. `null` hides it. */
   icon?: React.ReactNode
-  /** Milliseconds before auto-dismiss. Default 5000; `Infinity` keeps it until dismissed. */
+  /** Milliseconds before auto-dismiss. Default 5000, or 10000 when there is an `action` so the button is reachable; `Infinity` keeps it until dismissed. */
   duration?: number
   /** One optional action button. The toast dismisses after `onClick`. */
   action?: { label: React.ReactNode; onClick: () => void }
@@ -55,6 +55,8 @@ interface ToastItem extends ToastOptions {
 }
 
 const DEFAULT_DURATION = 5000
+/** With an action button the toast stays longer so the button is reachable (WCAG 2.2.1). */
+const DEFAULT_ACTION_DURATION = 10000
 /** Matches `toast-out` in styles/animations.css. */
 const EXIT_MS = 180
 /** A toast the pointer was just resting on gets at least this long once it leaves. */
@@ -152,7 +154,7 @@ function resumeAll() {
 
 function show(options: ToastOptions): string {
   const id = options.id ?? `toast-${++counter}`
-  const duration = options.duration ?? DEFAULT_DURATION
+  const duration = options.duration ?? (options.action ? DEFAULT_ACTION_DURATION : DEFAULT_DURATION)
   const item: ToastItem = { ...options, id, open: true }
   const existing = entries.get(id)
   if (existing) {
@@ -200,11 +202,11 @@ const VARIANT: Record<
   },
   success: {
     icon: <Check />,
-    tone: 'bg-[var(--success-soft)] text-success-text',
+    tone: 'bg-success-soft text-success-text',
   },
   warning: {
     icon: <AlertTriangle />,
-    tone: 'bg-[var(--warning-soft)] text-warning-text',
+    tone: 'bg-warning-soft text-warning-text',
   },
   destructive: {
     icon: <AlertCircle />,

@@ -35,14 +35,18 @@ export function paginationRange(page: number, pageCount: number, siblingCount = 
 
   // Keep the window the same width at the ends so the control never reflows
   // as the user walks from page 1 to page 2 to page 3.
-  const windowSize = siblingCount * 2 + 3
+  const windowSize = siblingCount * 2 + 2
   const left = Math.max(2, Math.min(page - siblingCount, pageCount - windowSize))
   const right = Math.min(pageCount - 1, Math.max(page + siblingCount, windowSize + 1))
 
+  // An ellipsis that hides exactly one page is replaced by that page: "1 … 3"
+  // would only be hiding page 2, and a number costs the same slot.
   const items: PaginationItem[] = [1]
-  if (left > 2) items.push('start-ellipsis')
+  if (left > 3) items.push('start-ellipsis')
+  else if (left === 3) items.push(2)
   for (let p = left; p <= right; p++) items.push(p)
-  if (right < pageCount - 1) items.push('end-ellipsis')
+  if (right < pageCount - 2) items.push('end-ellipsis')
+  else if (right === pageCount - 2) items.push(pageCount - 1)
   items.push(pageCount)
   return items
 }
@@ -95,7 +99,7 @@ function Pagination({
           <label className='flex items-center gap-2'>
             <span className='text-meta whitespace-nowrap'>Rows per page</span>
             <Select value={String(pageSize)} onValueChange={(v) => onPageSizeChange(Number(v))}>
-              <SelectTrigger size='sm' aria-label='Rows per page' className='min-w-[4.5rem] tabular-nums'>
+              <SelectTrigger size='sm' aria-label='Rows per page' className='min-w-18 tabular-nums'>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent align='end'>
