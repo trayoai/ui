@@ -116,11 +116,12 @@ export const RULES = [
   'Content uses type roles (`text-page-title`, `text-name`, `text-body`, `text-meta`). Controls use `text-sm font-medium`. Never `text-[15px]`.',
   '`<Button loading>` — do not swap in your own spinner.',
   'Use `cn()` from the library, not bare `clsx`.',
+  'Any list that can exceed ~50 rows is paged: pass DataTable\'s `pagination` prop (client-side without `total`, server-side with it), or render `<Pagination>` under a card grid. Never render a long list in full.',
 ] as const
 
 export const INVENTORY = [
   { group: 'Entities', items: 'Person, PersonCard, Company, CompanyCard, PersonAvatar, CompanyLogo, ToneAvatar' },
-  { group: 'Tables', items: 'DataTable (sortable, selectable, skeleton loading) and the raw Table primitives' },
+  { group: 'Tables', items: 'DataTable (sortable, selectable, paged via `pagination`, skeleton loading), Pagination + usePagination, and the raw Table primitives' },
   { group: 'Page scaffolding', items: 'AppShell, PageContainer, PageHeader, Surface, Well' },
   { group: 'Decorative', items: 'BrandMesh, GradientText' },
   { group: 'States', items: 'EmptyState, StatTile, Skeleton, Progress' },

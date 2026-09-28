@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   ArrowRight,
   Building2,
@@ -45,6 +45,7 @@ import {
   TabsTrigger,
   ToneAvatar,
   Well,
+  usePagination,
   type Column,
   type SortState,
   type CompanyLike,
@@ -241,6 +242,32 @@ const ACCOUNTS: AccountRow[] = [
   { id: 'a-4', company: COMPANIES[3], owner: PEOPLE[3], score: 61, signals: 2, stage: 'Prospect', lastActivity: '1w ago' },
   { id: 'a-5', company: { id: 'c-5', name: 'Figma', domain: 'figma.com', industry: 'Design', employeeCount: 1400, location: 'San Francisco, CA' }, owner: PEOPLE[4], score: 58, signals: 1, stage: 'Prospect', lastActivity: '2w ago' },
 ]
+
+// A realistic list is longer than one screen, so the table demo pages. The
+// five fixtures repeat with drifting scores so every page looks different.
+const STAGES: AccountRow['stage'][] = ['Prospect', 'Engaged', 'Meeting booked']
+const ACTIVITY = ['2h ago', 'Yesterday', '3d ago', '1w ago', '2w ago', '1mo ago']
+const MANY_ACCOUNTS: AccountRow[] = Array.from({ length: 62 }, (_, i) => {
+  const base = ACCOUNTS[i % ACCOUNTS.length]
+  return {
+    ...base,
+    id: `a-${i + 1}`,
+    owner: PEOPLE[(i * 3) % PEOPLE.length],
+    score: Math.max(12, base.score - ((i * 7) % 60)),
+    signals: (i * 5) % 9,
+    stage: STAGES[(i * 2) % STAGES.length],
+    lastActivity: ACTIVITY[i % ACTIVITY.length],
+  }
+})
+
+function sortAccounts(rows: AccountRow[], sort: SortState): AccountRow[] {
+  const dir = sort.dir === 'asc' ? 1 : -1
+  return [...rows].sort((a, b) => {
+    if (sort.key === 'account') return a.company.name.localeCompare(b.company.name) * dir
+    if (sort.key === 'signals') return (a.signals - b.signals) * dir
+    return (a.score - b.score) * dir
+  })
+}
 
 const STAGE_VARIANT = {
   'Meeting booked': 'success',
@@ -533,6 +560,9 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
   const [dark, setDark] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set(['p-2']))
   const [sort, setSort] = useState<SortState>({ key: 'score', dir: 'desc' })
+  // Sort the whole list, then let the table page it (client-side: no `total`).
+  const sortedAccounts = useMemo(() => sortAccounts(MANY_ACCOUNTS, sort), [sort])
+  const accountPaging = usePagination(sortedAccounts.length, { pageSize: 10 })
 
   return (
     <div className={dark ? 'dark' : undefined}>
@@ -548,22 +578,28 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
           {/* -------------------------------------------------- table */}
           <Section
             title='Tables'
-            caption='DataTable is the workhorse — most GTM screens are a table. It is presentational: you own sorting, paging and selection, and it renders and reflects them. Put a Company or Person in the identity column and the whole table reads as Trayo.'
+            caption='DataTable is the workhorse — most GTM screens are a table. It is presentational: you own sorting, selection and the page, and it renders and reflects them — including the paging control, so a long list is never rendered in full. Put a Company or Person in the identity column and the whole table reads as Trayo.'
           >
             <Specimen
               name='Account table'
-              note='Sortable, with a fit score, signal counts and owners.'
-              component='<DataTable>'
+              note='Sortable and paged — 62 accounts, ten to a page, with a fit score, signal counts and owners.'
+              component='<DataTable pagination>'
               className='mb-8'
             >
               <Surface padded={false} className='overflow-hidden p-1'>
                 <DataTable
                   columns={ACCOUNT_COLUMNS}
-                  rows={ACCOUNTS}
+                  rows={sortedAccounts}
                   getRowKey={(r) => r.id}
-                  count={ACCOUNTS.length}
                   sort={sort}
                   onSortChange={setSort}
+                  pagination={{
+                    page: accountPaging.page,
+                    pageSize: accountPaging.pageSize,
+                    onPageChange: accountPaging.setPage,
+                    pageSizeOptions: [10, 25, 50],
+                    onPageSizeChange: accountPaging.setPageSize,
+                  }}
                   layout='fixed'
                   tableClassName='min-w-[1040px]'
                 />
@@ -593,8 +629,17 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                         else next.delete(key)
                         return next
                       }),
-                    onToggleAllPage: (on: boolean) =>
-                      setSelected(on ? new Set(PEOPLE.map((p) => p.id!)) : new Set()),
+                    // The table hands over the keys on the current page, so
+                    // this stays correct if the list is ever paged.
+                    onToggleAllPage: (on, pageKeys) =>
+                      setSelected((prev) => {
+                        const next = new Set(prev)
+                        for (const key of pageKeys) {
+                          if (on) next.add(key)
+                          else next.delete(key)
+                        }
+                        return next
+                      }),
                   }}
                 />
               </Surface>

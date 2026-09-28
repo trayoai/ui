@@ -34,8 +34,10 @@ Row selection, contact status and per-row actions:
 
 <img src="docs/screenshots/people-table.png" width="1352" alt="People table with row selection, company logos, location and reachability badges" />
 
-Sorting, paging and selection are yours to own — the table renders and reflects
-them, and ships loading and empty states so a list never flashes a false
+Sorting and selection are yours to own — the table renders and reflects them.
+Paging is built in but controlled: pass a `pagination` prop and the table
+slices the rows and renders the control, so a 500-row list is never a 500-row
+page. Loading and empty states ship too, so a list never flashes a false
 "nothing found".
 
 <img src="docs/screenshots/accounts-table-dark.png" width="1352" alt="The same account table in dark mode" />
@@ -151,8 +153,9 @@ glows. Wrap your app in it once.
 
 Most GTM screens are a table, and `DataTable` is the component you will reach for
 most. It is **presentational**: you own sorting, paging and selection state, and
-it renders and reflects them. Put a `<Company>` or `<Person>` in the identity
-column and a dense screen still reads as Trayo.
+it renders and reflects them — paging included, via the `pagination` prop below.
+Put a `<Company>` or `<Person>` in the identity column and a dense screen still
+reads as Trayo.
 
 ```tsx
 type AccountRow = { id: string; company: CompanyLike; owner: PersonLike; score: number; stage: string }
@@ -187,6 +190,54 @@ const columns: Column<AccountRow>[] = [
 />
 ```
 
+### Paging
+
+**Any list that can exceed ~50 rows is paged.** Never render it in full: a
+500-row table is dozens of screens tall, and nobody scrolls it. `DataTable`
+takes a controlled `pagination` prop — you hold the page, it renders the
+`<Pagination>` footer ("1–25 of 382", prev/next, a compact page list) and,
+when you have all the rows, does the slicing for you. `usePagination` holds
+the state; it clamps the page when the list shrinks and resets to page 1 when
+the page size changes.
+
+```tsx
+// Client-side: you have every row. Omit `total` and the table slices `rows`.
+const paging = usePagination(rows.length, { pageSize: 25 })
+
+<DataTable
+  columns={columns}
+  rows={rows}
+  getRowKey={(r) => r.id}
+  pagination={{
+    page: paging.page,
+    pageSize: paging.pageSize,
+    onPageChange: paging.setPage,
+    pageSizeOptions: [25, 50, 100],      // optional "Rows per page" Select
+    onPageSizeChange: paging.setPageSize,
+  }}
+/>
+
+// Server-side: fetch one page, pass it as `rows`, and give the table `total`.
+const paging = usePagination(data?.total ?? 0, { pageSize: 25 })
+const { data } = useQuery(['people', paging.page], () =>
+  fetch(`/v1/people?limit=${paging.pageSize}&offset=${paging.from - 1}`).then((r) => r.json()),
+)
+
+<DataTable
+  columns={columns}
+  rows={data?.items ?? []}
+  getRowKey={(r) => r.id}
+  loading={isLoading}
+  pagination={{ page: paging.page, pageSize: paging.pageSize, total: data?.total, onPageChange: paging.setPage }}
+/>
+```
+
+Sort before you page (sort the full list, then hand it to the table). The
+footer stays out of the way when there is a single page and no page-size
+Select, so small lists can pass `pagination` unconditionally. For lists that
+are not tables — a card grid, a feed — render `<Pagination>` yourself with the
+same props.
+
 ### Column options
 
 | Field | What it does |
@@ -205,6 +256,14 @@ const columns: Column<AccountRow>[] = [
   shows when `!loading && rows.length === 0`.
 - **`selection`** is fully controlled — you hold the selected-key set, so it can
   span pages. Omit it entirely and no checkbox column renders.
+- **`onToggleAllPage(selected, pageKeys)`** selects the *current page*, not the
+  whole list. With client-side paging the table knows which rows are on the
+  page and you don't, so add or remove the `pageKeys` it hands you rather than
+  every key in `rows`. Rows `isRowSelectable` rejects are not in `pageKeys`.
+- **`pagination`** never slices when `total` is given — the rows you pass are
+  the page. Without `total`, it slices and reports `rows.length` as the total.
+  The header `count` pill is independent; with paging the footer already says
+  "of 382", so most tables drop `count`.
 - **`layout="fixed"`** makes the per-column `width`/`className` hints
   authoritative. Pin the columns that matter and leave exactly one column
   width-less: it absorbs surplus space and is the first to shrink. Pair it with
@@ -282,7 +341,7 @@ Sizes: `xs sm md lg xl 2xl`.
 | Decorative | `BrandMesh` (drifting brand gradient) `GradientText` |
 | States | `EmptyState` `StatTile` `Skeleton` `Progress` |
 | Type | `PageTitle` `SectionTitle` `CardTitle` `EntityName` `Body` `Meta` `Eyebrow` `SectionLabel` `Code` |
-| Controls | `Button` `Input` `Textarea` `Select` `Checkbox` `Switch` `Label` `Tabs` |
+| Controls | `Button` `Input` `Textarea` `Select` `Checkbox` `Switch` `Label` `Tabs` `Pagination` (+ `usePagination`) |
 | Display | `Badge` `TagChip` `Card` `Separator` `Tooltip` `ScrollArea` |
 | Overlays | `Dialog` `Popover` `DropdownMenu` |
 
