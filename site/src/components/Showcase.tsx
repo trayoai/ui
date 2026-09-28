@@ -43,8 +43,10 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  Toaster,
   ToneAvatar,
   Well,
+  toast,
   type Column,
   type SortState,
   type CompanyLike,
@@ -537,6 +539,7 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
   return (
     <div className={dark ? 'dark' : undefined}>
       <AppShell className={compact ? 'min-h-0' : undefined}>
+        <Toaster />
         <PageContainer width='wide' className={compact ? 'py-6' : undefined}>
           <DemoHeader
             compact={compact}
@@ -879,6 +882,82 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                         </div>
                       )
                     )}
+                  </div>
+                </Panel>
+              </Specimen>
+            </Section>
+
+            {/* ---------------------------------------------- feedback */}
+            <Section
+              title='Feedback'
+              caption='One <Toaster /> inside the shell; toast() from anywhere. Stubbed actions use the preview variant so a demo never claims it sent something it did not.'
+            >
+              <Specimen
+                name='Toast'
+                note='Five variants. Hover the stack to pause auto-dismiss.'
+                component='toast()'
+              >
+                <Panel>
+                  <div className='flex flex-wrap items-center gap-3'>
+                    <Button
+                      variant='secondary'
+                      onClick={() =>
+                        toast({
+                          title: 'List saved',
+                          description: '12 accounts added to Q3 targets.',
+                        })
+                      }
+                    >
+                      Default
+                    </Button>
+                    <Button
+                      variant='secondary'
+                      onClick={() =>
+                        toast({
+                          variant: 'success',
+                          title: 'Email found',
+                          description: 'dana@ramp.com verified by two providers.',
+                        })
+                      }
+                    >
+                      Success
+                    </Button>
+                    <Button
+                      variant='secondary'
+                      onClick={() =>
+                        toast({
+                          variant: 'warning',
+                          title: 'Enrichment throttled',
+                          description: 'Provider quota resets in 40 minutes.',
+                        })
+                      }
+                    >
+                      Warning
+                    </Button>
+                    <Button
+                      variant='secondary'
+                      onClick={() =>
+                        toast({
+                          variant: 'destructive',
+                          title: 'Export failed',
+                          description: 'The CSV could not be written.',
+                          action: { label: 'Retry', onClick: () => undefined },
+                        })
+                      }
+                    >
+                      Destructive
+                    </Button>
+                    <Button
+                      onClick={() =>
+                        toast({
+                          variant: 'preview',
+                          title: 'Push to Salesforce',
+                          description: 'Would create 3 leads under the Ramp account.',
+                        })
+                      }
+                    >
+                      Preview <ArrowRight />
+                    </Button>
                   </div>
                 </Panel>
               </Specimen>

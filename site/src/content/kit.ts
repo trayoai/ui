@@ -116,6 +116,7 @@ export const RULES = [
   'Content uses type roles (`text-page-title`, `text-name`, `text-body`, `text-meta`). Controls use `text-sm font-medium`. Never `text-[15px]`.',
   '`<Button loading>` — do not swap in your own spinner.',
   'Use `cn()` from the library, not bare `clsx`.',
+  'Stubbed or demo actions (Push to Salesforce, Send email, Post to Slack with no integration wired) confirm with `toast({ variant: \'preview\', title, description })` from a single `<Toaster />` mounted inside `<AppShell>`. It says "Preview - nothing was sent". Never a bespoke toast component, never a silent success.',
 ] as const
 
 export const INVENTORY = [
@@ -128,6 +129,7 @@ export const INVENTORY = [
   { group: 'Controls', items: 'Button, Input, Textarea, Select, Checkbox, Switch, Label, Tabs' },
   { group: 'Display', items: 'Badge, TagChip, Card, Separator, Tooltip, ScrollArea' },
   { group: 'Overlays', items: 'Dialog, Popover, DropdownMenu' },
+  { group: 'Feedback', items: 'Toaster, toast() — variants default, success, warning, destructive, preview' },
 ] as const
 
 /**

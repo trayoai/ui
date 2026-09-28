@@ -285,6 +285,7 @@ Sizes: `xs sm md lg xl 2xl`.
 | Controls | `Button` `Input` `Textarea` `Select` `Checkbox` `Switch` `Label` `Tabs` |
 | Display | `Badge` `TagChip` `Card` `Separator` `Tooltip` `ScrollArea` |
 | Overlays | `Dialog` `Popover` `DropdownMenu` |
+| Feedback | `Toaster` `toast()` `useToast()` |
 
 ### Buttons
 
@@ -301,6 +302,46 @@ Never hand-roll a spinner swap inside a `<Button>` — pass `loading`.
 Action glyphs (`Plus`, `Check`) lead; directional ones (`ArrowRight`,
 `ExternalLink`) trail. Icons scale with the button size automatically — don't
 size them per instance.
+
+### Toasts
+
+Mount `<Toaster />` once, inside `<AppShell>`, then call `toast()` from
+anywhere — no provider, no context. The stack sits bottom-right on desktop and
+spans the bottom on a phone; it is a polite live region, and hovering it pauses
+auto-dismiss.
+
+```tsx
+<AppShell>
+  <Toaster />
+  …
+</AppShell>
+
+toast({ title: 'List saved', description: '12 accounts added to Q3 targets.' })
+toast({ variant: 'success', title: 'Email found', duration: 3000 })
+toast({ variant: 'destructive', title: 'Export failed', action: { label: 'Retry', onClick: retry } })
+```
+
+Variants: `default` `success` `warning` `destructive` `preview`. Options:
+`title`, `description`, `duration` (ms, default 5000, `Infinity` to keep),
+`action` (one button), `id` (a repeat call with the same id updates that toast
+in place instead of stacking), `eyebrow`, `icon`. `useToast()` returns
+`{ toast, dismiss }` for people who prefer a hook.
+
+**Stubbed actions use the `preview` variant.** A demo that has no Salesforce,
+mail or Slack connection still has "Push", "Send" and "Post" buttons. When one
+is clicked, say what *would* have happened and that nothing left the browser —
+never a silent success, never a hand-rolled banner:
+
+```tsx
+toast({
+  variant: 'preview',
+  title: 'Push to Salesforce',
+  description: 'Would create 3 leads under the Ramp account.',
+})
+```
+
+It renders the eyebrow "Preview - nothing was sent" above the title; pass
+`eyebrow` to reword it.
 
 ---
 
