@@ -281,16 +281,23 @@ Sizes: `xs sm md lg xl 2xl`.
 | Page scaffolding | `AppShell` `PageContainer` `PageHeader` `Surface` `Well` |
 | Decorative | `BrandMesh` (drifting brand gradient) `GradientText` |
 | States | `EmptyState` `StatTile` `Skeleton` `Progress` |
-| Type | `PageTitle` `SectionTitle` `CardTitle` `EntityName` `Body` `Meta` `Eyebrow` `SectionLabel` `Code` |
+| Type | `PageTitle` `SectionTitle` `CardTitle` `EntityName` `Body` `Meta` `Eyebrow` `SectionLabel` `Code` `DataLabel` |
 | Controls | `Button` `Input` `Textarea` `Select` `Checkbox` `Switch` `Label` `Tabs` |
 | Display | `Badge` `TagChip` `Card` `Separator` `Tooltip` `ScrollArea` |
 | Overlays | `Dialog` `Popover` `DropdownMenu` |
+| Charts | `ChartLegend` `DataLabel` `CHART_COLORS` `CHART_SEQUENTIAL` `CHART_MUTED` `chartColor` `chartSequential` |
 
 ### Buttons
 
+Variants: `default | secondary | tertiary | quiet | destructive | destructive-outline | destructive-quiet`.
+Sizes: `xs | sm | default | lg | icon | icon-sm`.
+
 Pills at every size. `default` is the solid brand violet (one per screen area);
 `secondary` outlines it; `tertiary` recedes; `quiet` is bare until hovered.
-Sizes `xs sm default lg icon icon-sm`.
+There is no `ghost`, `outline`, `link` or `primary`. Those shadcn names are
+accepted so a build does not fail on them — `ghost` → `tertiary`, `outline` →
+`secondary`, `link` → `quiet`, `primary` → `default` — but each one logs a
+console warning in development. Write the canonical name.
 
 ```tsx
 <Button loading>Saving…</Button>              {/* the primitive owns the spinner */}
@@ -301,6 +308,54 @@ Never hand-roll a spinner swap inside a `<Button>` — pass `loading`.
 Action glyphs (`Plus`, `Check`) lead; directional ones (`ArrowRight`,
 `ExternalLink`) trail. Icons scale with the button size automatically — don't
 size them per instance.
+
+### Charts
+
+Bubbles, treemaps, quadrants, sparklines and bars are built from the same
+tokens as everything else. Nothing in a chart is a hex colour or an arbitrary
+font size.
+
+- **Series colour** — the categorical palette `chart-1` … `chart-5` (brand
+  violet, teal, amber, rose, blue), in that fixed order. Classes where you can
+  (`bg-chart-1`, `fill-chart-2`, `stroke-chart-3`, `text-chart-4`);
+  `CHART_COLORS[i]` / `chartColor(i)` for an inline SVG `fill` or `stroke`
+  prop. Assign series in sequence and keep the assignment stable; a sixth
+  series folds into "Other". In a bubble, scatter or treemap — where any two
+  marks can touch — keep to the first three.
+- **Intensity** (momentum, score, density) — the sequential ramp
+  `chart-seq-1` … `chart-seq-5` / `CHART_SEQUENTIAL`, or `chartSequential(t)`
+  for a `0..1` value. One hue, light to dark; never for identity.
+- **Out of scope** (outside ICP, not tracked, other) — `bg-chart-muted` /
+  `CHART_MUTED`. The one neutral fill.
+- **Labels** — `<DataLabel>` (`text-data-label`): 11px, tabular, muted. It is
+  the only sanctioned size below Meta and it is for axis ticks, mark labels
+  and dense numeric annotations only — never prose. `as="text"` puts it on an
+  SVG text node.
+- **The key** — `<ChartLegend items={[{ label, color }]}>` whenever there are
+  two or more series.
+
+```tsx
+import { ChartLegend, DataLabel, chartColor, CHART_MUTED } from './trayo-ui'
+
+// width comes from a ResizeObserver on the container — see below
+<svg width={width} height={120} viewBox={`0 0 ${width} 120`}>
+  {series.map((s, i) => (
+    <rect key={s.id} x={i * 40} y={120 - s.value} width={32} height={s.value}
+          fill={s.inIcp ? chartColor(i) : CHART_MUTED} />
+  ))}
+  <DataLabel as="text" x={0} y={116} textAnchor="start">0</DataLabel>
+</svg>
+<ChartLegend items={series.map((s, i) => ({ label: s.name, color: chartColor(i) }))} />
+```
+
+Never `style={{ background: '#…' }}`, never `text-[10px]` / `text-[11px]`.
+Text inside a chart wears text tokens, not the series colour — the swatch
+carries identity, the label reads.
+
+Size the SVG in pixels (measure the container with a `ResizeObserver` and
+draw at that width) rather than stretching a fixed `viewBox` to `w-full`: a
+scaled viewBox scales the text with it, and an 11px label drawn at 1.8× is
+no longer 11px. That is what pushed earlier charts to `text-[9px]`.
 
 ---
 
@@ -328,6 +383,8 @@ Follow these and the result stays on-brand. Break them and it drifts.
 
 3. **Never arbitrary type.** No `text-[13px]`, `tracking-[0.07em]`,
    `leading-[1.55]`. The ramp is 11/12/13/14/16/18/24/40/56 and it is enough.
+   Below Meta (12px) there is exactly one role, `text-data-label` (11px), and
+   it is for chart and axis labels only — `text-[10px]` is never the answer.
 
 4. **Compose, don't fork.** Build from these components. If you find yourself
    writing a second bespoke `<button className="rounded-full …">` or a second

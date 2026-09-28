@@ -59,6 +59,7 @@ export {
   Body,
   CardTitle,
   Code,
+  DataLabel,
   Display,
   EntityName,
   Eyebrow,
@@ -70,8 +71,25 @@ export {
   SectionTitle,
 } from './components/typography'
 
+/* ------------------------------------------------------------------ charts */
+export { ChartLegend } from './components/chart-legend'
+export type { ChartLegendItem, ChartLegendProps } from './components/chart-legend'
+export {
+  CHART_COLORS,
+  CHART_MUTED,
+  CHART_SEQUENTIAL,
+  chartColor,
+  chartSequential,
+} from './lib/chart'
+
 /* -------------------------------------------------------------- primitives */
-export { Button, buttonVariants } from './components/ui/button'
+export {
+  BUTTON_VARIANTS,
+  BUTTON_VARIANT_ALIASES,
+  Button,
+  buttonVariants,
+} from './components/ui/button'
+export type { ButtonProps, ButtonVariant, ButtonVariantAlias } from './components/ui/button'
 export { Badge, badgeVariants } from './components/ui/badge'
 export { TagChip } from './components/ui/tag-chip'
 export {

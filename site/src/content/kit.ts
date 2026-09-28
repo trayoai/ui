@@ -115,6 +115,8 @@ export const RULES = [
   'No raw colours. Not `#hex`, not `bg-slate-800`. Use `bg-surface-card`, `text-text-secondary`, `border-border-subtle`, `bg-accent-brand` — they flip light/dark themselves.',
   'Content uses type roles (`text-page-title`, `text-name`, `text-body`, `text-meta`). Controls use `text-sm font-medium`. Never `text-[15px]`.',
   '`<Button loading>` — do not swap in your own spinner.',
+  'Button variants are exactly `default | secondary | tertiary | quiet | destructive | destructive-outline | destructive-quiet`. There is no `ghost`, `outline`, `link` or `primary`; those are accepted and remapped (ghost -> tertiary, outline -> secondary, link -> quiet, primary -> default) but warn in development. Write the canonical name.',
+  'Charts use the chart tokens: series colour from `bg-chart-1`…`bg-chart-5` (or `CHART_COLORS[i]` / `chartColor(i)` for an inline SVG fill), intensity from `CHART_SEQUENTIAL`, out-of-scope marks from `CHART_MUTED`, labels with `<DataLabel>` (11px, the only size below Meta, chart labels only) and a `<ChartLegend>` for two or more series. Never a raw hex, never `text-[10px]` / `text-[Npx]`.',
   'Use `cn()` from the library, not bare `clsx`.',
 ] as const
 
@@ -124,10 +126,11 @@ export const INVENTORY = [
   { group: 'Page scaffolding', items: 'AppShell, PageContainer, PageHeader, Surface, Well' },
   { group: 'Decorative', items: 'BrandMesh, GradientText' },
   { group: 'States', items: 'EmptyState, StatTile, Skeleton, Progress' },
-  { group: 'Type', items: 'PageTitle, SectionTitle, CardTitle, EntityName, Body, Meta, Eyebrow, SectionLabel' },
+  { group: 'Type', items: 'PageTitle, SectionTitle, CardTitle, EntityName, Body, Meta, Eyebrow, SectionLabel, DataLabel' },
   { group: 'Controls', items: 'Button, Input, Textarea, Select, Checkbox, Switch, Label, Tabs' },
   { group: 'Display', items: 'Badge, TagChip, Card, Separator, Tooltip, ScrollArea' },
   { group: 'Overlays', items: 'Dialog, Popover, DropdownMenu' },
+  { group: 'Charts', items: 'ChartLegend, DataLabel, CHART_COLORS, CHART_SEQUENTIAL, CHART_MUTED, chartColor(i), chartSequential(t)' },
 ] as const
 
 /**
