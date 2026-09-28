@@ -91,10 +91,11 @@ the wrong place or not at all. Nothing errors at build time.
 
 8. **`cn()` from `./trayo-ui`**, not bare `clsx`, when merging classes.
 
-9. **Body is the default; Meta is for the small print.** `<Body>` (14px) for
-   paragraphs, summaries and the main line of a card. `<Meta>` (12px, muted)
-   only for timestamps, counts and secondary attributes. A screen set mostly
-   in Meta reads as grey and unfinished.
+9. **Body is the default; Meta is for the small print.** `<Body>`
+   (`text-body`, `--text-sm`) for paragraphs, summaries and the main line of a
+   card. `<Meta>` (`text-meta`, `--text-xs`, muted) only for timestamps, counts
+   and secondary attributes. A screen set mostly in Meta reads as grey and
+   unfinished. Name the role, never the pixel size.
 
 10. **A tool is not a landing page.** `<GradientText>` is for one phrase in a
     hero; `<BrandMesh>` for one hero or empty state. Not on a page title, not
@@ -120,7 +121,8 @@ the wrong place or not at all. Nothing errors at build time.
 
 15. **Charts use the chart tokens.** `bg-chart-1`…`5` / `CHART_COLORS[i]`
     for series, `CHART_SEQUENTIAL` for intensity, `CHART_MUTED` for
-    out-of-scope, `<DataLabel>` (11px) for labels, `<ChartLegend>` for the key.
+    out-of-scope, `<DataLabel>` (`text-data-label`) for labels, `<ChartLegend>`
+    for the key.
     Never a hex, never `text-[10px]`.
 
 16. **Button variants are** `default | secondary | tertiary | quiet |

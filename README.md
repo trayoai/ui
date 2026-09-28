@@ -500,7 +500,7 @@ font size.
   for a `0..1` value. One hue, light to dark; never for identity.
 - **Out of scope** (outside ICP, not tracked, other) — `bg-chart-muted` /
   `CHART_MUTED`. The one neutral fill.
-- **Labels** — `<DataLabel>` (`text-data-label`): 11px, tabular, muted. It is
+- **Labels** — `<DataLabel>` (`text-data-label`, `--text-caption`): tabular, muted. It is
   the only sanctioned size below Meta and it is for axis ticks, mark labels
   and dense numeric annotations only — never prose. `as="text"` puts it on an
   SVG text node.
@@ -556,8 +556,9 @@ Follow these and the result stays on-brand. Break them and it drifts.
 
 3. **Never arbitrary type.** No `text-[13px]`, `tracking-[0.07em]`,
    `leading-[1.55]`. The ramp is 11/12/13/14/16/18/24/40/56 and it is enough.
-   Below Meta (12px) there is exactly one role, `text-data-label` (11px), and
-   it is for chart and axis labels only — `text-[10px]` is never the answer.
+   Below `text-meta` there is exactly one role, `text-data-label`
+   (`--text-caption`), and it is for chart and axis labels only —
+   `text-[10px]` is never the answer.
 
 4. **Compose, don't fork.** Build from these components. If you find yourself
    writing a second bespoke `<button className="rounded-full …">` or a second
@@ -566,10 +567,11 @@ Follow these and the result stays on-brand. Break them and it drifts.
 5. **Use `cn()`** (exported) to merge classes — it knows about the role classes,
    which plain `clsx` does not.
 
-6. **Body is the default; Meta is for the small print.** `<Body>` (14px) for
-   paragraphs, summaries and the main line of a card; `<Meta>` (12px, muted)
-   only for timestamps, counts and secondary attributes. A screen set mostly in
-   Meta reads as grey and unfinished.
+6. **Body is the default; Meta is for the small print.** `<Body>`
+   (`text-body`, `--text-sm`) for paragraphs, summaries and the main line of a
+   card; `<Meta>` (`text-meta`, `--text-xs`, muted) only for timestamps, counts
+   and secondary attributes. A screen set mostly in Meta reads as grey and
+   unfinished. Name the role, never the pixel size.
 
 7. **A tool is not a landing page.** `<GradientText>` is for one phrase in a
    hero and `<BrandMesh>` for one hero or empty state — not a page title, not
