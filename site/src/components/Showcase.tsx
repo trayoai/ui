@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   AlertTriangle,
   ArrowRight,
@@ -19,11 +19,16 @@ import {
   Body,
   Button,
   Callout,
+  CHART_MUTED,
+  CHART_SEQUENTIAL,
+  ChartLegend,
   Company,
   CompanyCard,
   CompanyLogo,
   Code,
+  DataLabel,
   DataTable,
+  chartColor,
   EmptyState,
   Eyebrow,
   Hero,
@@ -554,6 +559,147 @@ function Panel({ className, ...props }: React.ComponentProps<typeof Surface>) {
   return <Surface className={cn('flex-1', className)} {...props} />
 }
 
+/* ---------------------------------------------------------------- charts */
+
+// Spelled out so Tailwind sees each class literally.
+const CHART_SWATCHES = ['bg-chart-1', 'bg-chart-2', 'bg-chart-3', 'bg-chart-4', 'bg-chart-5']
+const SEQ_SWATCHES = [
+  'bg-chart-seq-1',
+  'bg-chart-seq-2',
+  'bg-chart-seq-3',
+  'bg-chart-seq-4',
+  'bg-chart-seq-5',
+]
+
+const SIGNAL_SERIES = [
+  { id: 'hiring', name: 'Hiring surge', values: [18, 24, 21, 30] },
+  { id: 'funding', name: 'Funding round', values: [6, 9, 7, 12] },
+  { id: 'leader', name: 'New security leader', values: [11, 8, 14, 16] },
+] as const
+const SIGNAL_WEEKS = ['W36', 'W37', 'W38', 'W39']
+/** A quarter that is out of scope for the ICP, drawn in the neutral fill. */
+const OUT_OF_SCOPE_WEEK = 1
+
+/** The rendered width of an element, so an SVG can be laid out in real pixels. */
+function useMeasuredWidth<T extends HTMLElement>(fallback: number) {
+  const ref = useRef<T>(null)
+  const [width, setWidth] = useState(fallback)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const ro = new ResizeObserver(([entry]) => setWidth(Math.max(240, entry.contentRect.width)))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  return [ref, width] as const
+}
+
+/**
+ * Grouped bars in plain SVG — what an agent's own chart should look like:
+ * every fill is `chartColor(i)` or `CHART_MUTED`, every label is a
+ * `<DataLabel as="text">`, the key is a `<ChartLegend>`, and the axis and
+ * grid are border tokens. Nothing here is a hex or a `text-[Npx]`.
+ *
+ * The SVG is sized in PIXELS from the measured container, not scaled through
+ * a fixed viewBox: a scaled viewBox scales the text with it, and an 11px
+ * label drawn at 1.8× is no longer 11px.
+ */
+function SignalsBarChart() {
+  const [wrapRef, W] = useMeasuredWidth<HTMLDivElement>(420)
+  const H = 180
+  const PAD = { t: 8, r: 8, b: 24, l: 28 }
+  const max = 32
+  const plotW = W - PAD.l - PAD.r
+  const plotH = H - PAD.t - PAD.b
+  const groupW = plotW / SIGNAL_WEEKS.length
+  const gap = 4
+  // Bars fill about two thirds of their group, within a sane range.
+  const barW = Math.max(12, Math.min(32, Math.floor((groupW * 0.66) / SIGNAL_SERIES.length) - gap))
+  const groupInner = SIGNAL_SERIES.length * barW + (SIGNAL_SERIES.length - 1) * gap
+  const y = (v: number) => PAD.t + plotH - (v / max) * plotH
+  const ticks = [0, 8, 16, 24, 32]
+
+  return (
+    <div ref={wrapRef} className='flex flex-col gap-3'>
+      <svg
+        width={W}
+        height={H}
+        viewBox={`0 0 ${W} ${H}`}
+        className='block'
+        role='img'
+        aria-label='Signals per week by type, four weeks'
+      >
+        {ticks.map((t) => (
+          <g key={t}>
+            <line
+              x1={PAD.l}
+              x2={W - PAD.r}
+              y1={y(t)}
+              y2={y(t)}
+              className={t === 0 ? 'stroke-border-strong' : 'stroke-border-subtle'}
+            />
+            <DataLabel as='text' x={PAD.l - 6} y={y(t) + 3.5} textAnchor='end'>
+              {t}
+            </DataLabel>
+          </g>
+        ))}
+        {SIGNAL_WEEKS.map((week, wi) => {
+          const x0 = PAD.l + wi * groupW + (groupW - groupInner) / 2
+          const muted = wi === OUT_OF_SCOPE_WEEK
+          return (
+            <g key={week}>
+              {SIGNAL_SERIES.map((s, si) => {
+                const v = s.values[wi]
+                const x = x0 + si * (barW + gap)
+                return (
+                  <rect
+                    key={s.id}
+                    x={x}
+                    y={y(v)}
+                    width={barW}
+                    height={y(0) - y(v)}
+                    rx={2}
+                    fill={muted ? CHART_MUTED : chartColor(si)}
+                  />
+                )
+              })}
+              <DataLabel
+                as='text'
+                x={x0 + groupInner / 2}
+                y={H - PAD.b + 14}
+                textAnchor='middle'
+                className={muted ? 'text-text-muted' : 'text-text-secondary'}
+              >
+                {week}
+                {muted ? ' · n/a' : ''}
+              </DataLabel>
+            </g>
+          )
+        })}
+      </svg>
+      <div className='flex flex-wrap items-center justify-between gap-x-6 gap-y-2'>
+        <ChartLegend
+          swatch='square'
+          items={[
+            ...SIGNAL_SERIES.map((s, i) => ({ label: s.name, color: chartColor(i) })),
+            { label: 'Outside ICP', color: CHART_MUTED },
+          ]}
+        />
+        {/* An intensity key is a ramp strip, not a legend: the steps have no names. */}
+        <div className='flex items-center gap-1.5'>
+          <DataLabel>low</DataLabel>
+          <span className='flex gap-px'>
+            {CHART_SEQUENTIAL.map((c) => (
+              <span key={c} aria-hidden className='size-2.5 rounded-[2px]' style={{ background: c }} />
+            ))}
+          </span>
+          <DataLabel>high momentum</DataLabel>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /**
  * Where the library itself (docs + source download) is published.
  *
@@ -1039,6 +1185,59 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                   </div>
                 </Panel>
               </Specimen>
+            {/* ------------------------------------------------ charts */}
+            <Section
+              title='Charts'
+              caption='Five categorical hues in a fixed order, one sequential ramp for intensity, one neutral for out-of-scope. Labels are the 11px data-label role — the only size below Meta.'
+            >
+              <div className='grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]'>
+                <Specimen
+                  name='Chart tokens'
+                  note='Classes where you can, CHART_COLORS[i] for SVG props.'
+                  component='bg-chart-1 … CHART_SEQUENTIAL'
+                >
+                  <Panel>
+                    <div className='flex flex-col gap-4'>
+                      <div>
+                        <DataLabel as='div' className='mb-1.5'>
+                          Categorical · chart-1 … chart-5
+                        </DataLabel>
+                        <div className='flex gap-1.5'>
+                          {CHART_SWATCHES.map((c) => (
+                            <span key={c} className={cn('h-8 flex-1 rounded-sm', c)} />
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <DataLabel as='div' className='mb-1.5'>
+                          Sequential · chart-seq-1 … chart-seq-5
+                        </DataLabel>
+                        <div className='flex gap-1.5'>
+                          {SEQ_SWATCHES.map((c) => (
+                            <span key={c} className={cn('h-8 flex-1 rounded-sm', c)} />
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <DataLabel as='div' className='mb-1.5'>
+                          Muted · outside ICP, not tracked, other
+                        </DataLabel>
+                        <span className='block h-8 w-1/5 rounded-sm bg-chart-muted' />
+                      </div>
+                    </div>
+                  </Panel>
+                </Specimen>
+
+                <Specimen
+                  name='Bar chart'
+                  note='Inline SVG: chartColor(i) fills, DataLabel ticks, a legend for the key.'
+                  component='<DataLabel> <ChartLegend>'
+                >
+                  <Panel>
+                    <SignalsBarChart />
+                  </Panel>
+                </Specimen>
+              </div>
             </Section>
 
             {/* ------------------------------------ type, stats, states */}

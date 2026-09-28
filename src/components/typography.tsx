@@ -49,6 +49,35 @@ export const Label = role('span', 'text-label', 'text-text-secondary')
 /** 13px mono — ids, code, raw API values. */
 export const Code = role('code', 'text-code', 'text-text-secondary')
 
+type DataLabelProps =
+  | ({ as?: 'span' | 'div' | 'p' | 'figcaption' | 'th' | 'td' } & React.ComponentProps<'span'>)
+  | ({ as: 'text' } & React.ComponentProps<'text'>)
+  | ({ as: 'tspan' } & React.ComponentProps<'tspan'>)
+
+/**
+ * 11px medium, tabular, muted — the ONLY sanctioned size below `<Meta>`, and
+ * only for what sits inside a data visualisation: axis ticks, bar/bubble/cell
+ * labels, legend keys, dense numeric annotations. Never for prose or table
+ * cells (use `<Meta>`), never as a caption. Renders a `<span>` by default;
+ * `as="text"` (or `"tspan"`) puts the same role on an SVG text node with its
+ * `x` / `y` / `textAnchor` props typed:
+ *
+ *   <DataLabel as="text" x={12} y={y} textAnchor="end">{tick}</DataLabel>
+ *
+ * The colour is muted ink by default. To put it on a fill, override with a
+ * text token (`className="text-text-primary"` or `"text-white"`) — never with
+ * the series colour.
+ *
+ * Draw the SVG at its measured pixel width (`width={w} viewBox={\`0 0 ${w} ${h}\`}`),
+ * not a fixed viewBox stretched to `w-full`: a scaled viewBox scales the text
+ * with it, and 11px stops being 11px.
+ */
+export function DataLabel(props: DataLabelProps) {
+  const { as, className, ...rest } = props
+  const Comp = (as ?? 'span') as React.ElementType
+  return <Comp className={cn('text-data-label', className)} {...rest} />
+}
+
 /** The accent-tinted caption that titles a block of a card. */
 export function SectionLabel({
   className,

@@ -116,6 +116,8 @@ export const RULES = [
   'No raw colours. Not `#hex`, not `bg-slate-800`. Use `bg-surface-card`, `text-text-secondary`, `border-border-subtle`, `bg-accent-brand` — they flip light/dark themselves.',
   'Content uses type roles (`text-page-title`, `text-name`, `text-body`, `text-meta`). Controls use `text-sm font-medium`. Never `text-[15px]`.',
   '`<Button loading>` — do not swap in your own spinner.',
+  'Button variants are exactly `default | secondary | tertiary | quiet | destructive | destructive-outline | destructive-quiet`. There is no `ghost`, `outline`, `link` or `primary`; those are accepted and remapped (ghost -> tertiary, outline -> secondary, link -> quiet, primary -> default) but warn in development. Write the canonical name.',
+  'Charts use the chart tokens: series colour from `bg-chart-1`…`bg-chart-5` (or `CHART_COLORS[i]` / `chartColor(i)` for an inline SVG fill), intensity from `CHART_SEQUENTIAL`, out-of-scope marks from `CHART_MUTED`, labels with `<DataLabel>` (11px, the only size below Meta, chart labels only) and a `<ChartLegend>` for two or more series. Never a raw hex, never `text-[10px]` / `text-[Npx]`.',
   'Use `cn()` from the library, not bare `clsx`.',
   'View switching goes in `<AppShell nav={…}>` as `<AppShellNavLink>`s; a filter group ("All 59 · Red 3 · Amber 7") is a `<SegmentedControl>` with `count`s; a row of `<StatTile>`s sits in a `<StatGrid>`. Do not hand-roll a top bar, a pill group or the stat grid classes.',
   'Stubbed or demo actions (Push to Salesforce, Send email, Post to Slack with no integration wired) confirm with `toast({ variant: \'preview\', title, description })` from a single `<Toaster />` mounted inside `<AppShell>`. It says "Preview - nothing was sent". Never a bespoke toast component, never a silent success.',
@@ -128,11 +130,12 @@ export const INVENTORY = [
   { group: 'Page scaffolding', items: 'AppShell (with brand / nav / actions top bar), AppShellNavLink, PageContainer, PageHeader, Surface, Well, StatGrid' },
   { group: 'Decorative', items: 'BrandMesh, GradientText' },
   { group: 'States', items: 'EmptyState, StatTile, Callout, Skeleton, Progress' },
-  { group: 'Type', items: 'PageTitle, SectionTitle, CardTitle, EntityName, Body, Meta, Eyebrow, SectionLabel' },
+  { group: 'Type', items: 'PageTitle, SectionTitle, CardTitle, EntityName, Body, Meta, Eyebrow, SectionLabel, DataLabel' },
   { group: 'Controls', items: 'Button, Input, Textarea, Select, Checkbox, Switch, Label, Tabs, SegmentedControl' },
   { group: 'Display', items: 'Badge, TagChip, Card, Separator, Tooltip, ScrollArea' },
   { group: 'Overlays', items: 'Dialog, Popover, DropdownMenu' },
   { group: 'Feedback', items: 'Toaster, toast() — variants default, success, warning, destructive, preview' },
+  { group: 'Charts', items: 'ChartLegend, DataLabel, CHART_COLORS, CHART_SEQUENTIAL, CHART_MUTED, chartColor(i), chartSequential(t)' },
 ] as const
 
 /**

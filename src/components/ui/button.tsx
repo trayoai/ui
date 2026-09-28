@@ -4,6 +4,45 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { Loader2 } from 'lucide-react'
 import { cn } from '../../lib/cn'
 
+/**
+ * The canonical Button variants — every value `variant` renders as:
+ * `default | secondary | tertiary | quiet | destructive | destructive-outline | destructive-quiet`.
+ * There is no `ghost`, `outline`, `link` or `primary` (see `BUTTON_VARIANT_ALIASES`).
+ */
+export type ButtonVariant =
+  | 'default'
+  | 'secondary'
+  | 'tertiary'
+  | 'quiet'
+  | 'destructive'
+  | 'destructive-outline'
+  | 'destructive-quiet'
+
+/** The canonical variant names, in the order the showcase renders them. */
+export const BUTTON_VARIANTS: readonly ButtonVariant[] = [
+  'default',
+  'secondary',
+  'tertiary',
+  'quiet',
+  'destructive',
+  'destructive-outline',
+  'destructive-quiet',
+]
+
+/**
+ * shadcn names that are NOT Trayo variants. They are accepted so a build does
+ * not fail on them, remapped to the closest canonical variant, and warned about
+ * once per name in development. Write the canonical name.
+ */
+export type ButtonVariantAlias = 'ghost' | 'outline' | 'link' | 'primary'
+
+export const BUTTON_VARIANT_ALIASES: Readonly<Record<ButtonVariantAlias, ButtonVariant>> = {
+  ghost: 'tertiary',
+  outline: 'secondary',
+  link: 'quiet',
+  primary: 'default',
+}
+
 const buttonVariants = cva(
   // Icon sizing is NOT set here — it scales with the button `size` (below) so a
   // bare `<Icon/>` child auto-fits the button. The `:not([class*='size-'])`
@@ -11,6 +50,7 @@ const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all cursor-pointer disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
   {
     variants: {
+      /** Full enum: default | secondary | tertiary | quiet | destructive | destructive-outline | destructive-quiet. */
       variant: {
         // Primary action — the solid-accent pill. There is no rounded-md solid
         // primary in the design. A compact in-row CTA is just this variant at
@@ -107,18 +147,44 @@ const buttonVariants = cva(
   }
 )
 
-function Button({
-  className,
-  variant,
-  size,
-  asChild = false,
-  loading = false,
-  loadingIconPosition = 'start',
-  disabled,
-  children,
-  ...props
-}: React.ComponentProps<'button'> &
-  VariantProps<typeof buttonVariants> & {
+// Vite, webpack, esbuild, Next and Bun all substitute `process.env.NODE_ENV`
+// at build time, so this is a literal `false` in a production bundle and the
+// warning branch below folds away entirely. Deliberately NOT wrapped in a
+// `typeof process` guard or a try/catch: either one hides the constant from the
+// minifier and the warning text ships to production. (Every bundler that
+// resolves this file's bare `@radix-ui/*` imports also defines this value.)
+declare const process: { env: { NODE_ENV?: string } }
+const IS_DEVELOPMENT = process.env.NODE_ENV !== 'production'
+
+const warnedAliases = new Set<string>()
+
+/** Map an accepted alias to its canonical variant; warn once per alias in development. */
+function resolveVariant(
+  variant: ButtonVariant | ButtonVariantAlias | null | undefined
+): ButtonVariant | null | undefined {
+  if (variant && variant in BUTTON_VARIANT_ALIASES) {
+    const alias = variant as ButtonVariantAlias
+    const canonical = BUTTON_VARIANT_ALIASES[alias]
+    if (IS_DEVELOPMENT && !warnedAliases.has(alias)) {
+      warnedAliases.add(alias)
+      console.warn(
+        `[trayo-ui] <Button variant="${alias}"> is not a Trayo variant; rendering it as ` +
+          `variant="${canonical}". Use that name. The variants are: ${BUTTON_VARIANTS.join(' | ')}.`
+      )
+    }
+    return canonical
+  }
+  return variant as ButtonVariant | null | undefined
+}
+
+type ButtonProps = React.ComponentProps<'button'> &
+  Omit<VariantProps<typeof buttonVariants>, 'variant'> & {
+    /**
+     * `default | secondary | tertiary | quiet | destructive | destructive-outline | destructive-quiet`.
+     * The shadcn names `ghost` → tertiary, `outline` → secondary, `link` → quiet
+     * and `primary` → default are accepted but warn in development.
+     */
+    variant?: ButtonVariant | ButtonVariantAlias | null
     asChild?: boolean
     /**
      * Show an inline spinner and disable the button. The spinner replaces
@@ -134,7 +200,19 @@ function Button({
      * spinner doesn't reflow the label (design rule #1).
      */
     loadingIconPosition?: 'start' | 'end'
-  }) {
+  }
+
+function Button({
+  className,
+  variant,
+  size,
+  asChild = false,
+  loading = false,
+  loadingIconPosition = 'start',
+  disabled,
+  children,
+  ...props
+}: ButtonProps) {
   const Comp = asChild ? Slot : 'button'
   const spinner = <Loader2 className='animate-spin' aria-hidden />
 
@@ -142,7 +220,7 @@ function Button({
     <Comp
       data-slot='button'
       data-loading={loading || undefined}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant: resolveVariant(variant), size, className }))}
       disabled={loading || disabled}
       {...props}
     >
@@ -166,3 +244,4 @@ function Button({
 }
 
 export { Button, buttonVariants }
+export type { ButtonProps }

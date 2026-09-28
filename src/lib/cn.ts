@@ -30,6 +30,7 @@ const twMerge = extendTailwindMerge({
             'dense', // 13px compact-table/tab-strip step (no Tailwind default)
             'name-sm', // 13px compact entity-name role (dense tables)
             'body-sm', // 13px compact body role (dense tables)
+            'data-label', // 11px chart/axis label role — the only role below meta
           ],
         },
       ],
