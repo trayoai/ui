@@ -78,6 +78,9 @@ const listeners = new Set<() => void>()
 const EMPTY: ToastItem[] = []
 let snapshot: ToastItem[] = EMPTY
 let paused = false
+// Hover and keyboard focus pause independently; timers resume only when neither holds.
+let hovered = false
+let focused = false
 let counter = 0
 
 function emit() {
@@ -301,11 +304,22 @@ export function Toaster({ className, ...props }: React.ComponentProps<'div'>) {
       role='status'
       aria-live='polite'
       aria-atomic='false'
-      onMouseEnter={pauseAll}
-      onMouseLeave={resumeAll}
-      onFocus={pauseAll}
+      onMouseEnter={() => {
+        hovered = true
+        pauseAll()
+      }}
+      onMouseLeave={() => {
+        hovered = false
+        if (!focused) resumeAll()
+      }}
+      onFocus={() => {
+        focused = true
+        pauseAll()
+      }}
       onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) resumeAll()
+        if (e.currentTarget.contains(e.relatedTarget as Node | null)) return
+        focused = false
+        if (!hovered) resumeAll()
       }}
       className={cn(
         'pointer-events-none fixed inset-x-3 bottom-3 z-50 flex flex-col gap-2 sm:inset-x-auto sm:right-6 sm:bottom-6 sm:w-96',

@@ -219,10 +219,13 @@ const paging = usePagination(rows.length, { pageSize: 25 })
   }}
 />
 
-// Server-side: fetch one page, pass it as `rows`, and give the table `total`.
-const paging = usePagination(data?.total ?? 0, { pageSize: 25 })
-const { data } = useQuery(['people', paging.page], () =>
-  fetch(`/v1/people?limit=${paging.pageSize}&offset=${paging.from - 1}`).then((r) => r.json()),
+// Server-side: hold the page yourself, fetch that page, and give the table
+// the response's `total`. (`usePagination` needs the total up front, so it is
+// the wrong tool here — the total arrives with the page.)
+const pageSize = 25
+const [page, setPage] = useState(1)
+const { data, isLoading } = useQuery(['people', page], () =>
+  fetch(`/v1/people?limit=${pageSize}&offset=${(page - 1) * pageSize}`).then((r) => r.json()),
 )
 
 <DataTable
@@ -230,7 +233,7 @@ const { data } = useQuery(['people', paging.page], () =>
   rows={data?.items ?? []}
   getRowKey={(r) => r.id}
   loading={isLoading}
-  pagination={{ page: paging.page, pageSize: paging.pageSize, total: data?.total, onPageChange: paging.setPage }}
+  pagination={{ page, pageSize, total: data?.total, onPageChange: setPage }}
 />
 ```
 
