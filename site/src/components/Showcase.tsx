@@ -1185,6 +1185,8 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                   </div>
                 </Panel>
               </Specimen>
+            </Section>
+
             {/* ------------------------------------------------ charts */}
             <Section
               title='Charts'
