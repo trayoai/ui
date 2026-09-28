@@ -91,6 +91,42 @@ the wrong place or not at all. Nothing errors at build time.
 
 8. **`cn()` from `./trayo-ui`**, not bare `clsx`, when merging classes.
 
+9. **Body is the default; Meta is for the small print.** `<Body>` (14px) for
+   paragraphs, summaries and the main line of a card. `<Meta>` (12px, muted)
+   only for timestamps, counts and secondary attributes. A screen set mostly
+   in Meta reads as grey and unfinished.
+
+10. **A tool is not a landing page.** `<GradientText>` is for one phrase in a
+    hero; `<BrandMesh>` for one hero or empty state. Not on a page title, not
+    behind a table or a stat strip. `<PageHeader>` with a plain title is the
+    default.
+
+11. **Notes go in `<Callout>`.** "How this was built", a coverage caveat, a
+    data limit, a target met: `<Callout tone="note|info|success|warning|destructive">`,
+    never a hand-made bordered div.
+
+12. **Stubbed actions confirm with a preview toast.** One `<Toaster />` inside
+    `<AppShell>`; `toast({ variant: 'preview', title, description })` says
+    "Preview - nothing was sent". Never a bespoke toast, never a silent success.
+
+13. **Page scaffolding is provided.** View links in `<AppShell nav>` as
+    `<AppShellNavLink>`s; filter groups are a `<SegmentedControl>` with counts;
+    stat strips sit in a `<StatGrid>`. Contact rows are `<PersonContactLinks>`,
+    firmographics are `<CompanyMeta>`.
+
+14. **Long lists are paged.** Over ~50 rows, pass DataTable's `pagination`
+    prop (client-side without `total`, server-side with it) or render
+    `<Pagination>`. Never render a long list in full.
+
+15. **Charts use the chart tokens.** `bg-chart-1`…`5` / `CHART_COLORS[i]`
+    for series, `CHART_SEQUENTIAL` for intensity, `CHART_MUTED` for
+    out-of-scope, `<DataLabel>` (11px) for labels, `<ChartLegend>` for the key.
+    Never a hex, never `text-[10px]`.
+
+16. **Button variants are** `default | secondary | tertiary | quiet |
+    destructive | destructive-outline | destructive-quiet`. `ghost`, `outline`,
+    `link` and `primary` are remapped with a dev warning; write the real name.
+
 The files are yours once copied, so editing them is allowed. Prefer extending a
 variant over forking a component, and keep the token vocabulary intact.
 

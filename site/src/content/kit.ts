@@ -108,24 +108,29 @@ export const VALUE = [
 ] as const
 
 export const RULES = [
-  'Rendering a person? Use `<Person>` or `<PersonCard>`. Never hand-assemble an avatar and a name — a person always gets a face, never initials.',
-  'Rendering a company? Use `<Company>` or `<CompanyCard>`. Pass `domain` and the logo resolves itself; never hand-write a logo `<img>`.',
-  'Wrap the app in `<AppShell>`. Without it the page reads as generic Tailwind.',
+  // Entities
+  'Rendering a person? Use `<Person>` or `<PersonCard>`. Never hand-assemble an avatar and a name — a person always gets a face, never initials. Email, phone and LinkedIn rows are `<PersonContactLinks>`, not your own icon row.',
+  'Rendering a company? Use `<Company>` or `<CompanyCard>`. Pass `domain` and the logo resolves itself; never hand-write a logo `<img>`. Industry, headcount and location under a company are `<CompanyMeta>`.',
+  // Page
+  'Wrap the app in `<AppShell>`. Without it the page reads as generic Tailwind. View switching goes in `<AppShell nav={…}>` as `<AppShellNavLink>`s; a filter group ("All 59 · Red 3 · Amber 7") is a `<SegmentedControl>` with `count`s; a row of `<StatTile>`s sits in a `<StatGrid>`. Do not hand-roll a top bar, a pill group or the stat grid classes.',
+  '`<GradientText>` is for one phrase in a hero and `<BrandMesh>` for one hero or empty state. Neither belongs on a data screen: not on the page title, not behind a table or a stat strip. A tool is not a landing page; `<PageHeader>` with a plain title is the default.',
   'Use the provided components before writing your own.',
   'Explanatory notes — "how this was built", coverage caveats, data limits, a target met — go in `<Callout>` (tones `note` `info` `success` `warning` `destructive`), not a hand-made bordered div or a `Surface` + `SectionLabel` + `Body` stack.',
-  'No raw colours. Not `#hex`, not `bg-slate-800`. Use `bg-surface-card`, `text-text-secondary`, `border-border-subtle`, `bg-accent-brand` — they flip light/dark themselves.',
-  'Content uses type roles (`text-page-title`, `text-name`, `text-body`, `text-meta`). Controls use `text-sm font-medium`. Never `text-[15px]`.',
-  '`<Button loading>` — do not swap in your own spinner.',
-  'Button variants are exactly `default | secondary | tertiary | quiet | destructive | destructive-outline | destructive-quiet`. There is no `ghost`, `outline`, `link` or `primary`; those are accepted and remapped (ghost -> tertiary, outline -> secondary, link -> quiet, primary -> default) but warn in development. Write the canonical name.',
-  'Charts use the chart tokens: series colour from `bg-chart-1`…`bg-chart-5` (or `CHART_COLORS[i]` / `chartColor(i)` for an inline SVG fill), intensity from `CHART_SEQUENTIAL`, out-of-scope marks from `CHART_MUTED`, labels with `<DataLabel>` (11px, the only size below Meta, chart labels only) and a `<ChartLegend>` for two or more series. Never a raw hex, never `text-[10px]` / `text-[Npx]`.',
-  'Use `cn()` from the library, not bare `clsx`.',
-  'View switching goes in `<AppShell nav={…}>` as `<AppShellNavLink>`s; a filter group ("All 59 · Red 3 · Amber 7") is a `<SegmentedControl>` with `count`s; a row of `<StatTile>`s sits in a `<StatGrid>`. Do not hand-roll a top bar, a pill group or the stat grid classes.',
   'Stubbed or demo actions (Push to Salesforce, Send email, Post to Slack with no integration wired) confirm with `toast({ variant: \'preview\', title, description })` from a single `<Toaster />` mounted inside `<AppShell>`. It says "Preview - nothing was sent". Never a bespoke toast component, never a silent success.',
   'Any list that can exceed ~50 rows is paged: pass DataTable\'s `pagination` prop (client-side without `total`, server-side with it), or render `<Pagination>` under a card grid. Never render a long list in full.',
+  // Colour and type
+  'No raw colours. Not `#hex`, not `bg-slate-800`. Use `bg-surface-card`, `text-text-secondary`, `border-border-subtle`, `bg-accent-brand` — they flip light/dark themselves.',
+  'Content uses type roles (`text-page-title`, `text-name`, `text-body`, `text-meta`). Controls use `text-sm font-medium`. Never `text-[15px]`.',
+  'Body copy is `<Body>` (14px). `<Meta>` (12px, muted) is only for timestamps, counts and secondary attributes — never for a paragraph, a summary or the main line of a card. If most of a screen is set in Meta, the screen is wrong: promote it to Body.',
+  'Charts use the chart tokens: series colour from `bg-chart-1`…`bg-chart-5` (or `CHART_COLORS[i]` / `chartColor(i)` for an inline SVG fill), intensity from `CHART_SEQUENTIAL`, out-of-scope marks from `CHART_MUTED`, labels with `<DataLabel>` (11px, the only size below Meta, chart labels only) and a `<ChartLegend>` for two or more series. Never a raw hex, never `text-[10px]` / `text-[Npx]`.',
+  // Controls and helpers
+  'Button variants are exactly `default | secondary | tertiary | quiet | destructive | destructive-outline | destructive-quiet`. There is no `ghost`, `outline`, `link` or `primary`; those are accepted and remapped (ghost -> tertiary, outline -> secondary, link -> quiet, primary -> default) but warn in development. Write the canonical name.',
+  '`<Button loading>` — do not swap in your own spinner.',
+  'Use `cn()` from the library, not bare `clsx`.',
 ] as const
 
 export const INVENTORY = [
-  { group: 'Entities', items: 'Person, PersonCard, Company, CompanyCard, PersonAvatar, CompanyLogo, ToneAvatar' },
+  { group: 'Entities', items: 'Person, PersonCard, PersonContactLinks, Company, CompanyCard, CompanyMeta, PersonAvatar, CompanyLogo, ToneAvatar' },
   { group: 'Tables', items: 'DataTable (sortable, selectable, paged via `pagination`, skeleton loading), Pagination + usePagination, and the raw Table primitives' },
   { group: 'Page scaffolding', items: 'AppShell (with brand / nav / actions top bar), AppShellNavLink, PageContainer, PageHeader, Surface, Well, StatGrid' },
   { group: 'Decorative', items: 'BrandMesh, GradientText' },

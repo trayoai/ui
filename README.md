@@ -560,6 +560,16 @@ Follow these and the result stays on-brand. Break them and it drifts.
 5. **Use `cn()`** (exported) to merge classes — it knows about the role classes,
    which plain `clsx` does not.
 
+6. **Body is the default; Meta is for the small print.** `<Body>` (14px) for
+   paragraphs, summaries and the main line of a card; `<Meta>` (12px, muted)
+   only for timestamps, counts and secondary attributes. A screen set mostly in
+   Meta reads as grey and unfinished.
+
+7. **A tool is not a landing page.** `<GradientText>` is for one phrase in a
+   hero and `<BrandMesh>` for one hero or empty state — not a page title, not
+   the backdrop of a table or a stat strip. `<PageHeader>` with a plain title
+   is the default.
+
 You own these files now, so editing them is fair game. Prefer extending a
 variant over forking a component, and keep the token vocabulary intact — that
 is what holds the aesthetic together.
