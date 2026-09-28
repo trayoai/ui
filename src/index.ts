@@ -30,8 +30,12 @@ export type {
   SortState,
   DataTableProps,
   DataTableSelection,
+  DataTablePagination,
 } from './components/data-table'
 export { DataTableSkeletonRow } from './components/skeleton-row'
+export { Pagination } from './components/ui/pagination'
+export type { PaginationProps } from './components/ui/pagination'
+export { usePagination } from './components/ui/use-pagination'
 export {
   Table,
   TableBody,
@@ -46,19 +50,24 @@ export {
 /* -------------------------------------------------- layout, surfaces, type */
 export {
   AppShell,
+  AppShellNavLink,
   BrandMesh,
   EmptyState,
   GradientText,
   PageContainer,
   PageHeader,
+  StatGrid,
   StatTile,
   Surface,
   Well,
 } from './components/surfaces'
+export { Callout } from './components/callout'
+export type { CalloutProps, CalloutTone } from './components/callout'
 export {
   Body,
   CardTitle,
   Code,
+  DataLabel,
   Display,
   EntityName,
   Eyebrow,
@@ -70,8 +79,25 @@ export {
   SectionTitle,
 } from './components/typography'
 
+/* ------------------------------------------------------------------ charts */
+export { ChartLegend } from './components/chart-legend'
+export type { ChartLegendItem, ChartLegendProps } from './components/chart-legend'
+export {
+  CHART_COLORS,
+  CHART_MUTED,
+  CHART_SEQUENTIAL,
+  chartColor,
+  chartSequential,
+} from './lib/chart'
+
 /* -------------------------------------------------------------- primitives */
-export { Button, buttonVariants } from './components/ui/button'
+export {
+  BUTTON_VARIANTS,
+  BUTTON_VARIANT_ALIASES,
+  Button,
+  buttonVariants,
+} from './components/ui/button'
+export type { ButtonProps, ButtonVariant, ButtonVariantAlias } from './components/ui/button'
 export { Badge, badgeVariants } from './components/ui/badge'
 export { TagChip } from './components/ui/tag-chip'
 export {
@@ -94,6 +120,8 @@ export { Separator } from './components/ui/separator'
 export { Skeleton } from './components/ui/skeleton'
 export { ScrollArea, ScrollBar } from './components/ui/scroll-area'
 export { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs'
+export { SegmentedControl } from './components/ui/segmented-control'
+export type { SegmentedControlOption, SegmentedControlProps } from './components/ui/segmented-control'
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './components/ui/tooltip'
 export {
   Select,
@@ -125,6 +153,8 @@ export {
   DialogTrigger,
 } from './components/ui/dialog'
 export { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from './components/ui/popover'
+export { Toaster, toast, useToast } from './components/ui/toast'
+export type { ToastOptions, ToastVariant } from './components/ui/toast'
 
 /* ------------------------------------------------------------------ config */
 export { TrayoUIProvider, useTrayoUI } from './lib/config'

@@ -34,8 +34,10 @@ Row selection, contact status and per-row actions:
 
 <img src="docs/screenshots/people-table.png" width="1352" alt="People table with row selection, company logos, location and reachability badges" />
 
-Sorting, paging and selection are yours to own — the table renders and reflects
-them, and ships loading and empty states so a list never flashes a false
+Sorting and selection are yours to own — the table renders and reflects them.
+Paging is built in but controlled: pass a `pagination` prop and the table
+slices the rows and renders the control, so a 500-row list is never a 500-row
+page. Loading and empty states ship too, so a list never flashes a false
 "nothing found".
 
 <img src="docs/screenshots/accounts-table-dark.png" width="1352" alt="The same account table in dark mode" />
@@ -96,7 +98,9 @@ npm install react@^19 react-dom@^19 clsx tailwind-merge lucide-react \
   @radix-ui/react-tabs @radix-ui/react-tooltip
 ```
 
-Requires **Tailwind CSS v4** and **React 19**. React 18 is not supported: the
+Requires **Tailwind CSS v4** and **React 19**. The bundler must define
+`process.env.NODE_ENV` (Vite, Astro, webpack, esbuild, Next and Bun all do);
+`Button` reads it to warn about alias variant names in development. React 18 is not supported: the
 components take `ref` as an ordinary prop (a React 19 feature), so on React 18
 refs are silently dropped and Radix `asChild` triggers — `<TooltipTrigger
 asChild><Button/>`, popovers, dropdown menus — lose their anchor. If your app is
@@ -151,8 +155,9 @@ glows. Wrap your app in it once.
 
 Most GTM screens are a table, and `DataTable` is the component you will reach for
 most. It is **presentational**: you own sorting, paging and selection state, and
-it renders and reflects them. Put a `<Company>` or `<Person>` in the identity
-column and a dense screen still reads as Trayo.
+it renders and reflects them — paging included, via the `pagination` prop below.
+Put a `<Company>` or `<Person>` in the identity column and a dense screen still
+reads as Trayo.
 
 ```tsx
 type AccountRow = { id: string; company: CompanyLike; owner: PersonLike; score: number; stage: string }
@@ -187,6 +192,57 @@ const columns: Column<AccountRow>[] = [
 />
 ```
 
+### Paging
+
+**Any list that can exceed ~50 rows is paged.** Never render it in full: a
+500-row table is dozens of screens tall, and nobody scrolls it. `DataTable`
+takes a controlled `pagination` prop — you hold the page, it renders the
+`<Pagination>` footer ("1–25 of 382", prev/next, a compact page list) and,
+when you have all the rows, does the slicing for you. `usePagination` holds
+the state; it clamps the page when the list shrinks and resets to page 1 when
+the page size changes.
+
+```tsx
+// Client-side: you have every row. Omit `total` and the table slices `rows`.
+const paging = usePagination(rows.length, { pageSize: 25 })
+
+<DataTable
+  columns={columns}
+  rows={rows}
+  getRowKey={(r) => r.id}
+  pagination={{
+    page: paging.page,
+    pageSize: paging.pageSize,
+    onPageChange: paging.setPage,
+    pageSizeOptions: [25, 50, 100],      // optional "Rows per page" Select
+    onPageSizeChange: paging.setPageSize,
+  }}
+/>
+
+// Server-side: hold the page yourself, fetch that page, and give the table
+// the response's `total`. (`usePagination` needs the total up front, so it is
+// the wrong tool here — the total arrives with the page.)
+const pageSize = 25
+const [page, setPage] = useState(1)
+const { data, isLoading } = useQuery(['people', page], () =>
+  fetch(`/v1/people?limit=${pageSize}&offset=${(page - 1) * pageSize}`).then((r) => r.json()),
+)
+
+<DataTable
+  columns={columns}
+  rows={data?.items ?? []}
+  getRowKey={(r) => r.id}
+  loading={isLoading}
+  pagination={{ page, pageSize, total: data?.total, onPageChange: setPage }}
+/>
+```
+
+Sort before you page (sort the full list, then hand it to the table). The
+footer stays out of the way when there is a single page and no page-size
+Select, so small lists can pass `pagination` unconditionally. For lists that
+are not tables — a card grid, a feed — render `<Pagination>` yourself with the
+same props.
+
 ### Column options
 
 | Field | What it does |
@@ -205,6 +261,14 @@ const columns: Column<AccountRow>[] = [
   shows when `!loading && rows.length === 0`.
 - **`selection`** is fully controlled — you hold the selected-key set, so it can
   span pages. Omit it entirely and no checkbox column renders.
+- **`onToggleAllPage(selected, pageKeys)`** selects the *current page*, not the
+  whole list. With client-side paging the table knows which rows are on the
+  page and you don't, so add or remove the `pageKeys` it hands you rather than
+  every key in `rows`. Rows `isRowSelectable` rejects are not in `pageKeys`.
+- **`pagination`** never slices when `total` is given — the rows you pass are
+  the page. Without `total`, it slices and reports `rows.length` as the total.
+  The header `count` pill is independent; with paging the footer already says
+  "of 382", so most tables drop `count`.
 - **`layout="fixed"`** makes the per-column `width`/`className` hints
   authoritative. Pin the columns that matter and leave exactly one column
   width-less: it absorbs surplus space and is the first to shrink. Pair it with
@@ -278,19 +342,76 @@ Sizes: `xs sm md lg xl 2xl`.
 
 | What | Components |
 |---|---|
-| Page scaffolding | `AppShell` `PageContainer` `PageHeader` `Surface` `Well` |
+| Page scaffolding | `AppShell` `AppShellNavLink` `PageContainer` `PageHeader` `Surface` `Well` `StatGrid` |
 | Decorative | `BrandMesh` (drifting brand gradient) `GradientText` |
-| States | `EmptyState` `StatTile` `Skeleton` `Progress` |
-| Type | `PageTitle` `SectionTitle` `CardTitle` `EntityName` `Body` `Meta` `Eyebrow` `SectionLabel` `Code` |
-| Controls | `Button` `Input` `Textarea` `Select` `Checkbox` `Switch` `Label` `Tabs` |
+| States | `EmptyState` `StatTile` `Callout` `Skeleton` `Progress` |
+| Type | `PageTitle` `SectionTitle` `CardTitle` `EntityName` `Body` `Meta` `Eyebrow` `SectionLabel` `Code` `DataLabel` |
+| Controls | `Button` `Input` `Textarea` `Select` `Checkbox` `Switch` `Label` `Tabs` `SegmentedControl` `Pagination` (+ `usePagination`) |
 | Display | `Badge` `TagChip` `Card` `Separator` `Tooltip` `ScrollArea` |
 | Overlays | `Dialog` `Popover` `DropdownMenu` |
+| Feedback | `Toaster` `toast()` `useToast()` |
+| Charts | `ChartLegend` `DataLabel` `CHART_COLORS` `CHART_SEQUENTIAL` `CHART_MUTED` `chartColor` `chartSequential` |
+
+### Page scaffolding
+
+Give `AppShell` a `brand`, `nav` or `actions` and it renders the app's top bar:
+sticky, blurred, on a hairline, its inner width aligned with `PageContainer`
+(pass the same `width`). View links are `AppShellNavLink`s — quiet pills that
+take the soft accent when `active`; use `asChild` to wrap your router's link.
+A filter group is a `SegmentedControl`; a row of `StatTile`s goes in a
+`StatGrid`, which is two columns on a phone and lets an odd last tile span both
+so nothing dangles.
+
+```tsx
+<AppShell
+  brand="Churn radar"
+  nav={
+    <>
+      <AppShellNavLink active>Board</AppShellNavLink>
+      <AppShellNavLink onClick={() => go('/runs')}>What ran</AppShellNavLink>
+    </>
+  }
+  actions={<Button size="sm">Run now</Button>}
+>
+  <PageContainer>
+    <StatGrid className="mb-6">
+      <StatTile label="Accounts" value="317" hint="283 with events" />
+      <StatTile label="At risk" value="3" hint="$2.6M ARR" delta="+1" />
+      <StatTile label="Signals this week" value="47" delta="-4%" />
+      <StatTile label="Meetings booked" value="12" />
+      <StatTile label="Reply rate" value="18%" delta="+2.1%" />
+    </StatGrid>
+
+    <SegmentedControl
+      aria-label="Risk band"
+      value={band}
+      onValueChange={setBand}
+      options={[
+        { value: 'all', label: 'All', count: 59 },
+        { value: 'red', label: 'Red', count: 3 },
+        { value: 'amber', label: 'Amber', count: 7 },
+        { value: 'green', label: 'Green', count: 49 },
+      ]}
+    />
+  </PageContainer>
+</AppShell>
+```
+
+Bare `<AppShell>` still renders no bar. `SegmentedControl` is a radio group —
+arrow keys move the selection — for filtering what is on screen; view switching
+belongs in the top bar, and content panels belong to `Tabs`.
 
 ### Buttons
 
+Variants: `default | secondary | tertiary | quiet | destructive | destructive-outline | destructive-quiet`.
+Sizes: `xs | sm | default | lg | icon | icon-sm`.
+
 Pills at every size. `default` is the solid brand violet (one per screen area);
 `secondary` outlines it; `tertiary` recedes; `quiet` is bare until hovered.
-Sizes `xs sm default lg icon icon-sm`.
+There is no `ghost`, `outline`, `link` or `primary`. Those shadcn names are
+accepted so a build does not fail on them — `ghost` → `tertiary`, `outline` →
+`secondary`, `link` → `quiet`, `primary` → `default` — but each one logs a
+console warning in development. Write the canonical name.
 
 ```tsx
 <Button loading>Saving…</Button>              {/* the primitive owns the spinner */}
@@ -301,6 +422,113 @@ Never hand-roll a spinner swap inside a `<Button>` — pass `loading`.
 Action glyphs (`Plus`, `Check`) lead; directional ones (`ArrowRight`,
 `ExternalLink`) trail. Icons scale with the button size automatically — don't
 size them per instance.
+
+### Callouts
+
+The note box: "how this was built", a coverage caveat, a data limit, a result
+that cleared the bar. A short `title` as the eyebrow, one to three lines of
+body, at most one `action`. Tones `note` (default) `info` `success` `warning`
+`destructive`; `compact` puts title and body on one line.
+
+```tsx
+<Callout title="How this was built" action={<a href="/method">Full method</a>}>
+  Every row came back from the Trayo API; nothing here is hand-typed.
+</Callout>
+<Callout tone="warning" icon={<AlertTriangle />} title="Post coverage is incomplete">
+  Only public posts from the last 30 days were read.
+</Callout>
+```
+
+Do not build this from `Surface` + `SectionLabel` + `Body` — that is the drift
+this component exists to stop.
+
+### Toasts
+
+Mount `<Toaster />` once, inside `<AppShell>`, then call `toast()` from
+anywhere — no provider, no context. The stack sits bottom-right on desktop and
+spans the bottom on a phone; it is a polite live region, and hovering it pauses
+auto-dismiss.
+
+```tsx
+<AppShell>
+  <Toaster />
+  …
+</AppShell>
+
+toast({ title: 'List saved', description: '12 accounts added to Q3 targets.' })
+toast({ variant: 'success', title: 'Email found', duration: 3000 })
+toast({ variant: 'destructive', title: 'Export failed', action: { label: 'Retry', onClick: retry } })
+```
+
+Variants: `default` `success` `warning` `destructive` `preview`. Options:
+`title`, `description`, `duration` (ms, default 5000, `Infinity` to keep),
+`action` (one button), `id` (a repeat call with the same id updates that toast
+in place instead of stacking), `eyebrow`, `icon`. `useToast()` returns
+`{ toast, dismiss }` for people who prefer a hook.
+
+**Stubbed actions use the `preview` variant.** A demo that has no Salesforce,
+mail or Slack connection still has "Push", "Send" and "Post" buttons. When one
+is clicked, say what *would* have happened and that nothing left the browser —
+never a silent success, never a hand-rolled banner:
+
+```tsx
+toast({
+  variant: 'preview',
+  title: 'Push to Salesforce',
+  description: 'Would create 3 leads under the Ramp account.',
+})
+```
+
+It renders the eyebrow "Preview - nothing was sent" above the title; pass
+`eyebrow` to reword it.
+
+### Charts
+
+Bubbles, treemaps, quadrants, sparklines and bars are built from the same
+tokens as everything else. Nothing in a chart is a hex colour or an arbitrary
+font size.
+
+- **Series colour** — the categorical palette `chart-1` … `chart-5` (brand
+  violet, teal, amber, rose, blue), in that fixed order. Classes where you can
+  (`bg-chart-1`, `fill-chart-2`, `stroke-chart-3`, `text-chart-4`);
+  `CHART_COLORS[i]` / `chartColor(i)` for an inline SVG `fill` or `stroke`
+  prop. Assign series in sequence and keep the assignment stable; a sixth
+  series folds into "Other". In a bubble, scatter or treemap — where any two
+  marks can touch — keep to the first three.
+- **Intensity** (momentum, score, density) — the sequential ramp
+  `chart-seq-1` … `chart-seq-5` / `CHART_SEQUENTIAL`, or `chartSequential(t)`
+  for a `0..1` value. One hue, light to dark; never for identity.
+- **Out of scope** (outside ICP, not tracked, other) — `bg-chart-muted` /
+  `CHART_MUTED`. The one neutral fill.
+- **Labels** — `<DataLabel>` (`text-data-label`, `--text-caption`): tabular, muted. It is
+  the only sanctioned size below Meta and it is for axis ticks, mark labels
+  and dense numeric annotations only — never prose. `as="text"` puts it on an
+  SVG text node.
+- **The key** — `<ChartLegend items={[{ label, color }]}>` whenever there are
+  two or more series.
+
+```tsx
+import { ChartLegend, DataLabel, chartColor, CHART_MUTED } from './trayo-ui'
+
+// width comes from a ResizeObserver on the container — see below
+<svg width={width} height={120} viewBox={`0 0 ${width} 120`}>
+  {series.map((s, i) => (
+    <rect key={s.id} x={i * 40} y={120 - s.value} width={32} height={s.value}
+          fill={s.inIcp ? chartColor(i) : CHART_MUTED} />
+  ))}
+  <DataLabel as="text" x={0} y={116} textAnchor="start">0</DataLabel>
+</svg>
+<ChartLegend items={series.map((s, i) => ({ label: s.name, color: chartColor(i) }))} />
+```
+
+Never `style={{ background: '#…' }}`, never `text-[10px]` / `text-[11px]`.
+Text inside a chart wears text tokens, not the series colour — the swatch
+carries identity, the label reads.
+
+Size the SVG in pixels (measure the container with a `ResizeObserver` and
+draw at that width) rather than stretching a fixed `viewBox` to `w-full`: a
+scaled viewBox scales the text with it, and an 11px label drawn at 1.8× is
+no longer 11px. That is what pushed earlier charts to `text-[9px]`.
 
 ---
 
@@ -328,6 +556,9 @@ Follow these and the result stays on-brand. Break them and it drifts.
 
 3. **Never arbitrary type.** No `text-[13px]`, `tracking-[0.07em]`,
    `leading-[1.55]`. The ramp is 11/12/13/14/16/18/24/40/56 and it is enough.
+   Below `text-meta` there is exactly one role, `text-data-label`
+   (`--text-caption`), and it is for chart and axis labels only —
+   `text-[10px]` is never the answer.
 
 4. **Compose, don't fork.** Build from these components. If you find yourself
    writing a second bespoke `<button className="rounded-full …">` or a second
@@ -335,6 +566,17 @@ Follow these and the result stays on-brand. Break them and it drifts.
 
 5. **Use `cn()`** (exported) to merge classes — it knows about the role classes,
    which plain `clsx` does not.
+
+6. **Body is the default; Meta is for the small print.** `<Body>`
+   (`text-body`, `--text-sm`) for paragraphs, summaries and the main line of a
+   card; `<Meta>` (`text-meta`, `--text-xs`, muted) only for timestamps, counts
+   and secondary attributes. A screen set mostly in Meta reads as grey and
+   unfinished. Name the role, never the pixel size.
+
+7. **A tool is not a landing page.** `<GradientText>` is for one phrase in a
+   hero and `<BrandMesh>` for one hero or empty state — not a page title, not
+   the backdrop of a table or a stat strip. `<PageHeader>` with a plain title
+   is the default.
 
 You own these files now, so editing them is fair game. Prefer extending a
 variant over forking a component, and keep the token vocabulary intact — that

@@ -50,11 +50,38 @@
   --lh-normal: 1.45;
   --lh-relaxed: 1.5;
 
-  --chart-1: oklch(0.69 0.19 61.3);
-  --chart-2: oklch(0.64 0.224 348.32);
-  --chart-3: oklch(0.537 0.149 264.05);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  /* CHART PALETTE — the only colours a data visualisation may use.
+   *
+   * --chart-1..5 is CATEGORICAL: fixed hue order (brand violet, teal, amber,
+   * rose, blue), assigned to series in sequence and never cycled past five —
+   * a sixth series folds into "Other". Every step is a fill that clears 3:1 on
+   * --color-app-card; the adjacent pairs pass CVD ΔE >= 8 (worst 9.4 light /
+   * 8.3 dark, deutan). All-pairs (bubble, scatter, treemap, where any two
+   * marks can touch) passes with the FIRST THREE only: blue↔violet collapse
+   * under protanopia, so keep those forms to three series or facet them.
+   * Utilities: bg-chart-1 … text-chart-1 … fill-chart-1 … stroke-chart-1.
+   * Inline SVG props read CHART_COLORS[i] / chartColor(i) from lib/chart.ts.
+   *
+   * --chart-seq-1..5 is SEQUENTIAL: ONE hue (the brand violet), monotone
+   * lightness, 1 = least, 5 = most. Light runs pale → deep on the cream card
+   * (ΔL >= 0.09 per step, light end 2.02:1); dark is NOT a flip — its own steps,
+   * dim → bright on the dark card (light end 2.33:1). Use it for intensity
+   * (momentum, score, density), never for identity.
+   *
+   * --chart-muted is the one neutral fill: "outside ICP", "not tracked",
+   * "other". Chroma-free so it never reads as a sixth category.
+   * Validated with the dataviz palette validator; do not re-step by eye. */
+  --chart-1: var(--color-brand);   /* violet — the brand accent */
+  --chart-2: #0d9488;              /* teal-600 */
+  --chart-3: #d97706;              /* amber-600 */
+  --chart-4: #e11d48;              /* rose-600 */
+  --chart-5: #2563eb;              /* blue-600 */
+  --chart-muted: #d6d0c6;          /* oklch(0.86 0.015 80) — warm neutral on cream */
+  --chart-seq-1: #b9acf2;          /* oklch(0.78 0.10 293) */
+  --chart-seq-2: #a087ef;          /* oklch(0.69 0.15 293) */
+  --chart-seq-3: #8860ea;          /* oklch(0.60 0.20 293) */
+  --chart-seq-4: #6c3fc8;          /* oklch(0.50 0.20 293) */
+  --chart-seq-5: #4f2998;          /* oklch(0.40 0.17 293) */
 
   /* Self-serve funnel stages — a SEQUENTIAL violet ramp (deeper stage =
    * more emphasis), not categorical: the stages nest, they don't compete.
@@ -402,11 +429,18 @@
   --seg-thumb: var(--surface-card);
   --seg-text-idle: var(--text-secondary);
 
-  --chart-1: oklch(0.69 0.19 61.3);
-  --chart-2: oklch(0.64 0.224 348.32);
-  --chart-3: oklch(0.537 0.149 264.05);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  /* See :root. */
+  --chart-1: var(--color-brand);
+  --chart-2: #0d9488;
+  --chart-3: #d97706;
+  --chart-4: #e11d48;
+  --chart-5: #2563eb;
+  --chart-muted: #d6d0c6;
+  --chart-seq-1: #b9acf2;
+  --chart-seq-2: #a087ef;
+  --chart-seq-3: #8860ea;
+  --chart-seq-4: #6c3fc8;
+  --chart-seq-5: #4f2998;
 
   /* See :root. On the light card the ramp runs dark→light: the deepest
    * funnel stage is the darkest mark. */
@@ -500,11 +534,22 @@
 
 .dark {
 
-  --chart-1: oklch(0.69 0.19 61.3);
-  --chart-2: oklch(0.64 0.224 348.32);
-  --chart-3: oklch(0.537 0.149 264.05);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.645 0.246 16.439);
+  /* See :root. Same five hues, re-solved for the dark card: all five sit in
+   * the L 0.62–0.66 band so no series out-shouts another, each >= 3:1 on
+   * #232835. Adjacent CVD worst pair 8.3 (rose↔amber, deutan). */
+  --chart-1: #987aef;              /* oklch(0.66 0.17 293) */
+  --chart-2: #00a38f;              /* oklch(0.64 0.12 180) */
+  --chart-3: #cb7f00;              /* oklch(0.66 0.15 70) */
+  --chart-4: #e14660;              /* oklch(0.62 0.19 15) */
+  --chart-5: #3986e4;              /* oklch(0.62 0.16 255) */
+  --chart-muted: #515561;          /* oklch(0.45 0.02 270) — cool neutral on the dark card */
+  /* dim → bright: the weakest step barely lifts off the card, the strongest is
+   * the readable violet text tone. */
+  --chart-seq-1: #6850ab;          /* oklch(0.50 0.14 293) */
+  --chart-seq-2: #8161d4;          /* oklch(0.58 0.17 293) */
+  --chart-seq-3: #9978f5;          /* oklch(0.66 0.18 293) */
+  --chart-seq-4: #af99fb;          /* oklch(0.74 0.14 293) */
+  --chart-seq-5: #c6bafa;          /* oklch(0.82 0.09 293) */
 
   /* Not an inversion of light — its own steps from the same ramp, chosen
    * against the dark card: on this ground the ramp runs light→dark, so the
@@ -816,11 +861,19 @@
   --color-tooltip: var(--tooltip);
   --color-tooltip-foreground: var(--tooltip-foreground);
 
+  /* Chart palette → bg-chart-1, text-chart-1, fill-chart-1, stroke-chart-1,
+     bg-chart-seq-3, bg-chart-muted … (see the CHART PALETTE note in :root). */
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-chart-muted: var(--chart-muted);
+  --color-chart-seq-1: var(--chart-seq-1);
+  --color-chart-seq-2: var(--chart-seq-2);
+  --color-chart-seq-3: var(--chart-seq-3);
+  --color-chart-seq-4: var(--chart-seq-4);
+  --color-chart-seq-5: var(--chart-seq-5);
 
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);

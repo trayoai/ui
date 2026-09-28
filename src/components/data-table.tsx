@@ -13,6 +13,7 @@ import {
   TableRow,
 } from './ui/table';
 import { DataTableSkeletonRow } from './skeleton-row';
+import { Pagination } from './ui/pagination';
 
 export interface Column<T> {
   id: string;
@@ -38,13 +39,34 @@ export interface DataTableSelection {
   selectedKeys: Set<string>;
   /** Toggle a single row by key. */
   onToggleRow: (key: string, selected: boolean) => void;
-  /** Toggle every row on the current page (the `rows` passed to the table). */
-  onToggleAllPage: (selected: boolean) => void;
+  /** Toggle every selectable row on the current page. Without `pagination`
+   *  that is every row passed in `rows`; with client-side paging it is the
+   *  slice the table is showing — so use the second argument, the keys of
+   *  exactly those rows, rather than re-deriving the page yourself. */
+  onToggleAllPage: (selected: boolean, pageKeys: string[]) => void;
   /** Optional per-row gate. When it returns false, that row renders no checkbox
    *  and is excluded from the header select-all / its "all selected" state — for
    *  rows that can't be acted on (e.g. results with no match, or already added).
    *  Defaults to all-selectable when omitted. */
   isRowSelectable?: (key: string) => boolean;
+}
+
+/** Controlled paging for `DataTable`. The caller owns `page` (1-based) and
+ *  `pageSize`; the table renders a `<Pagination>` footer and either slices
+ *  `rows` itself (no `total`: client-side) or shows `rows` as-is and trusts
+ *  `total` (server-side: pass only the current page of rows). */
+export interface DataTablePagination {
+  /** Current page, 1-based. */
+  page: number;
+  pageSize: number;
+  /** Total rows across every page. Omit it and the table slices `rows` by
+   *  page/pageSize and reports `rows.length` as the total. Pass it when the
+   *  server does the paging and `rows` is already just the current page. */
+  total?: number;
+  onPageChange: (page: number) => void;
+  /** Renders a "Rows per page" Select when both are given. */
+  pageSizeOptions?: number[];
+  onPageSizeChange?: (size: number) => void;
 }
 
 export interface DataTableProps<T> {
@@ -94,6 +116,11 @@ export interface DataTableProps<T> {
    *  header, so a table with no toolbar or footer still shows its result count on
    *  the identity column. */
   count?: number;
+  /** Paging. Any list that can exceed ~50 rows should set this rather than
+   *  render every row. Client-side when `total` is omitted (the table slices
+   *  `rows`), server-side when it is given (`rows` is the current page). The
+   *  footer is omitted while there is a single page and no page-size Select. */
+  pagination?: DataTablePagination;
 }
 
 export function DataTable<T>({
@@ -113,6 +140,7 @@ export function DataTable<T>({
   loading = false,
   skeletonRows = 8,
   count,
+  pagination,
 }: DataTableProps<T>) {
   if (!loading && rows.length === 0 && empty) return <>{empty}</>;
   // Only render skeleton placeholders when there is nothing to show yet.
@@ -125,7 +153,23 @@ export function DataTable<T>({
   const alignClass = (align: Column<T>['align']) =>
     align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : undefined;
 
-  const pageKeys = rows.map(getRowKey);
+  // Paging. Without `total` the table pages `rows` itself; with it, `rows` is
+  // already the current page (server paging) and is rendered untouched. The
+  // page is clamped so a filter that shrinks the list never shows an empty
+  // page — the footer still reflects the caller's state on the next change.
+  const pageTotal = pagination ? (pagination.total ?? rows.length) : rows.length;
+  const pageCount = pagination ? Math.max(1, Math.ceil(pageTotal / pagination.pageSize)) : 1;
+  const currentPage = pagination ? Math.min(Math.max(1, pagination.page), pageCount) : 1;
+  const pageRows =
+    pagination && pagination.total == null
+      ? rows.slice((currentPage - 1) * pagination.pageSize, currentPage * pagination.pageSize)
+      : rows;
+  const showPagination =
+    pagination != null &&
+    !showSkeletons &&
+    (pageCount > 1 || (pagination.pageSizeOptions != null && pagination.onPageSizeChange != null));
+
+  const pageKeys = pageRows.map(getRowKey);
   // Only rows the caller allows to be selected count toward the header
   // select-all + its checked/indeterminate state.
   const selectableKeys = pageKeys.filter(
@@ -209,9 +253,10 @@ export function DataTable<T>({
   };
 
   return (
-    // The leading cell of every
-    // row (header + body) gets a larger left inset (16px) than the default cell
-    // padding, so identity/checkbox columns breathe against the card edge.
+    <>
+    {/* The leading cell of every
+        row (header + body) gets a larger left inset (16px) than the default cell
+        padding, so identity/checkbox columns breathe against the card edge. */}
     <Table
       className={cn(
         '[&_tr>:first-child]:pl-4',
@@ -226,7 +271,9 @@ export function DataTable<T>({
               <Checkbox
                 aria-label="Select all"
                 checked={headerCheckedState}
-                onCheckedChange={(value) => selection.onToggleAllPage(value === true)}
+                onCheckedChange={(value) =>
+                  selection.onToggleAllPage(value === true, selectableKeys)
+                }
                 // While skeletons are showing there are no visible rows to act
                 // on, so bulk-select must be inert — otherwise a user could
                 // toggle "select all" against stale, off-screen rows and fire
@@ -302,7 +349,7 @@ export function DataTable<T>({
                 hasSelection={!!selection}
               />
             ))
-          : rows.map((row) => {
+          : pageRows.map((row) => {
           const key = getRowKey(row);
           const isSelected = selection?.selectedKeys.has(key) ?? false;
           const subRow = renderSubRow?.(row);
@@ -414,5 +461,21 @@ export function DataTable<T>({
         })}
       </TableBody>
     </Table>
+    {showPagination && (
+      // The footer sits OUTSIDE the scroll region as a sibling of the table,
+      // so it never scrolls away horizontally with a wide table. `px-4`
+      // matches the leading cell inset; the hairline replaces the last row's
+      // suppressed bottom border.
+      <Pagination
+        page={currentPage}
+        pageSize={pagination.pageSize}
+        total={pageTotal}
+        onPageChange={pagination.onPageChange}
+        pageSizeOptions={pagination.pageSizeOptions}
+        onPageSizeChange={pagination.onPageSizeChange}
+        className="border-t border-border-subtle px-4 py-2"
+      />
+    )}
+    </>
   );
 }

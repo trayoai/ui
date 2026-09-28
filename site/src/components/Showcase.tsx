@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  AlertTriangle,
   ArrowRight,
   Building2,
   Check,
+  CheckCircle2,
   Moon,
   Plus,
   Search,
@@ -12,14 +14,21 @@ import {
 } from 'lucide-react'
 import {
   AppShell,
+  AppShellNavLink,
   Badge,
   Body,
   Button,
+  Callout,
+  CHART_MUTED,
+  CHART_SEQUENTIAL,
+  ChartLegend,
   Company,
   CompanyCard,
   CompanyLogo,
   Code,
+  DataLabel,
   DataTable,
+  chartColor,
   EmptyState,
   Eyebrow,
   Hero,
@@ -31,11 +40,13 @@ import {
   PersonAvatar,
   PersonCard,
   SectionTitle,
+  SegmentedControl,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  StatGrid,
   StatTile,
   Surface,
   Switch,
@@ -43,8 +54,11 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  Toaster,
   ToneAvatar,
   Well,
+  toast,
+  usePagination,
   type Column,
   type SortState,
   type CompanyLike,
@@ -242,6 +256,32 @@ const ACCOUNTS: AccountRow[] = [
   { id: 'a-5', company: { id: 'c-5', name: 'Figma', domain: 'figma.com', industry: 'Design', employeeCount: 1400, location: 'San Francisco, CA' }, owner: PEOPLE[4], score: 58, signals: 1, stage: 'Prospect', lastActivity: '2w ago' },
 ]
 
+// A realistic list is longer than one screen, so the table demo pages. The
+// five fixtures repeat with drifting scores so every page looks different.
+const STAGES: AccountRow['stage'][] = ['Prospect', 'Engaged', 'Meeting booked']
+const ACTIVITY = ['2h ago', 'Yesterday', '3d ago', '1w ago', '2w ago', '1mo ago']
+const MANY_ACCOUNTS: AccountRow[] = Array.from({ length: 62 }, (_, i) => {
+  const base = ACCOUNTS[i % ACCOUNTS.length]
+  return {
+    ...base,
+    id: `a-${i + 1}`,
+    owner: PEOPLE[(i * 3) % PEOPLE.length],
+    score: Math.max(12, base.score - ((i * 7) % 60)),
+    signals: (i * 5) % 9,
+    stage: STAGES[(i * 2) % STAGES.length],
+    lastActivity: ACTIVITY[i % ACTIVITY.length],
+  }
+})
+
+function sortAccounts(rows: AccountRow[], sort: SortState): AccountRow[] {
+  const dir = sort.dir === 'asc' ? 1 : -1
+  return [...rows].sort((a, b) => {
+    if (sort.key === 'account') return a.company.name.localeCompare(b.company.name) * dir
+    if (sort.key === 'signals') return (a.signals - b.signals) * dir
+    return (a.score - b.score) * dir
+  })
+}
+
 const STAGE_VARIANT = {
   'Meeting booked': 'success',
   Engaged: 'accent',
@@ -344,13 +384,7 @@ function Section({
  * hero size, the version is a badge beside it, the tagline sits underneath,
  * and a hairline separates the masthead from the first section.
  */
-function DemoHeader({
-  compact,
-  actions,
-}: {
-  compact?: boolean
-  actions?: React.ReactNode
-}) {
+function DemoHeader({ compact }: { compact?: boolean }) {
   const Title = compact ? PageTitle : Hero
   return (
     <header
@@ -372,7 +406,6 @@ function DemoHeader({
         </div>
         <Body className='mt-2'>The component kit for apps built on the Trayo API.</Body>
       </div>
-      {actions && <div className='flex shrink-0 items-center gap-2'>{actions}</div>}
     </header>
   )
 }
@@ -519,6 +552,147 @@ function Panel({ className, ...props }: React.ComponentProps<typeof Surface>) {
   return <Surface className={cn('flex-1', className)} {...props} />
 }
 
+/* ---------------------------------------------------------------- charts */
+
+// Spelled out so Tailwind sees each class literally.
+const CHART_SWATCHES = ['bg-chart-1', 'bg-chart-2', 'bg-chart-3', 'bg-chart-4', 'bg-chart-5']
+const SEQ_SWATCHES = [
+  'bg-chart-seq-1',
+  'bg-chart-seq-2',
+  'bg-chart-seq-3',
+  'bg-chart-seq-4',
+  'bg-chart-seq-5',
+]
+
+const SIGNAL_SERIES = [
+  { id: 'hiring', name: 'Hiring surge', values: [18, 24, 21, 30] },
+  { id: 'funding', name: 'Funding round', values: [6, 9, 7, 12] },
+  { id: 'leader', name: 'New security leader', values: [11, 8, 14, 16] },
+] as const
+const SIGNAL_WEEKS = ['W36', 'W37', 'W38', 'W39']
+/** A quarter that is out of scope for the ICP, drawn in the neutral fill. */
+const OUT_OF_SCOPE_WEEK = 1
+
+/** The rendered width of an element, so an SVG can be laid out in real pixels. */
+function useMeasuredWidth<T extends HTMLElement>(fallback: number) {
+  const ref = useRef<T>(null)
+  const [width, setWidth] = useState(fallback)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const ro = new ResizeObserver(([entry]) => setWidth(Math.max(240, entry.contentRect.width)))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  return [ref, width] as const
+}
+
+/**
+ * Grouped bars in plain SVG — what an agent's own chart should look like:
+ * every fill is `chartColor(i)` or `CHART_MUTED`, every label is a
+ * `<DataLabel as="text">`, the key is a `<ChartLegend>`, and the axis and
+ * grid are border tokens. Nothing here is a hex or a `text-[Npx]`.
+ *
+ * The SVG is sized in PIXELS from the measured container, not scaled through
+ * a fixed viewBox: a scaled viewBox scales the text with it, and an 11px
+ * label drawn at 1.8× is no longer 11px.
+ */
+function SignalsBarChart() {
+  const [wrapRef, W] = useMeasuredWidth<HTMLDivElement>(420)
+  const H = 180
+  const PAD = { t: 8, r: 8, b: 24, l: 28 }
+  const max = 32
+  const plotW = W - PAD.l - PAD.r
+  const plotH = H - PAD.t - PAD.b
+  const groupW = plotW / SIGNAL_WEEKS.length
+  const gap = 4
+  // Bars fill about two thirds of their group, within a sane range.
+  const barW = Math.max(12, Math.min(32, Math.floor((groupW * 0.66) / SIGNAL_SERIES.length) - gap))
+  const groupInner = SIGNAL_SERIES.length * barW + (SIGNAL_SERIES.length - 1) * gap
+  const y = (v: number) => PAD.t + plotH - (v / max) * plotH
+  const ticks = [0, 8, 16, 24, 32]
+
+  return (
+    <div ref={wrapRef} className='flex flex-col gap-3'>
+      <svg
+        width={W}
+        height={H}
+        viewBox={`0 0 ${W} ${H}`}
+        className='block'
+        role='img'
+        aria-label='Signals per week by type, four weeks'
+      >
+        {ticks.map((t) => (
+          <g key={t}>
+            <line
+              x1={PAD.l}
+              x2={W - PAD.r}
+              y1={y(t)}
+              y2={y(t)}
+              className={t === 0 ? 'stroke-border-strong' : 'stroke-border-subtle'}
+            />
+            <DataLabel as='text' x={PAD.l - 6} y={y(t) + 3.5} textAnchor='end'>
+              {t}
+            </DataLabel>
+          </g>
+        ))}
+        {SIGNAL_WEEKS.map((week, wi) => {
+          const x0 = PAD.l + wi * groupW + (groupW - groupInner) / 2
+          const muted = wi === OUT_OF_SCOPE_WEEK
+          return (
+            <g key={week}>
+              {SIGNAL_SERIES.map((s, si) => {
+                const v = s.values[wi]
+                const x = x0 + si * (barW + gap)
+                return (
+                  <rect
+                    key={s.id}
+                    x={x}
+                    y={y(v)}
+                    width={barW}
+                    height={y(0) - y(v)}
+                    rx={2}
+                    fill={muted ? CHART_MUTED : chartColor(si)}
+                  />
+                )
+              })}
+              <DataLabel
+                as='text'
+                x={x0 + groupInner / 2}
+                y={H - PAD.b + 14}
+                textAnchor='middle'
+                className={muted ? 'text-text-muted' : 'text-text-secondary'}
+              >
+                {week}
+                {muted ? ' · n/a' : ''}
+              </DataLabel>
+            </g>
+          )
+        })}
+      </svg>
+      <div className='flex flex-wrap items-center justify-between gap-x-6 gap-y-2'>
+        <ChartLegend
+          swatch='square'
+          items={[
+            ...SIGNAL_SERIES.map((s, i) => ({ label: s.name, color: chartColor(i) })),
+            { label: 'Outside ICP', color: CHART_MUTED },
+          ]}
+        />
+        {/* An intensity key is a ramp strip, not a legend: the steps have no names. */}
+        <div className='flex items-center gap-1.5'>
+          <DataLabel>low</DataLabel>
+          <span className='flex gap-px'>
+            {CHART_SEQUENTIAL.map((c) => (
+              <span key={c} aria-hidden className='size-2.5 rounded-xs' style={{ background: c }} />
+            ))}
+          </span>
+          <DataLabel>high momentum</DataLabel>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /**
  * Where the library itself (docs + source download) is published.
  *
@@ -529,41 +703,78 @@ function Panel({ className, ...props }: React.ComponentProps<typeof Surface>) {
 const LIBRARY_URL = 'REPLACE_LIB_URL'
 const libraryHref = LIBRARY_URL.startsWith('http') ? LIBRARY_URL : null
 
+/** The filter group demonstrated by the segmented control. */
+const BANDS = [
+  { value: 'all', label: 'All', count: 59 },
+  { value: 'red', label: 'Red', count: 3 },
+  { value: 'amber', label: 'Amber', count: 7 },
+  { value: 'green', label: 'Green', count: 49 },
+] as const
+type Band = (typeof BANDS)[number]['value']
+
 export function Showcase({ compact = false }: { compact?: boolean } = {}) {
   const [dark, setDark] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set(['p-2']))
   const [sort, setSort] = useState<SortState>({ key: 'score', dir: 'desc' })
+  const [band, setBand] = useState<Band>('all')
+  // Sort the whole list, then let the table page it (client-side: no `total`).
+  const sortedAccounts = useMemo(() => sortAccounts(MANY_ACCOUNTS, sort), [sort])
+  const accountPaging = usePagination(sortedAccounts.length, { pageSize: 10 })
 
   return (
     <div className={dark ? 'dark' : undefined}>
-      <AppShell className={compact ? 'min-h-0' : undefined}>
+      {/* The demo runs inside the kit's own top bar: brand on the left, the
+          view links on the right, the theme switch as the bar's action. */}
+      <AppShell
+        className={compact ? 'min-h-0' : undefined}
+        width='wide'
+        brand={
+          <>
+            <span>
+              Trayo <span className='text-accent-brand'>GTM UI</span>
+            </span>
+            <Badge variant='soft'>demo</Badge>
+          </>
+        }
+        nav={
+          <>
+            <AppShellNavLink active>Components</AppShellNavLink>
+            <AppShellNavLink href={libraryHref ?? 'https://ui.trayo.ai'} target='_top'>
+              Get the library
+            </AppShellNavLink>
+          </>
+        }
+        actions={<ThemeSwitch dark={dark} onChange={setDark} />}
+      >
+        <Toaster />
         <PageContainer width='wide' className={compact ? 'py-6' : undefined}>
-          <DemoHeader
-            compact={compact}
-            actions={
-              <ThemeSwitch dark={dark} onChange={setDark} />
-            }
-          />
+          <DemoHeader compact={compact} />
 
           {/* -------------------------------------------------- table */}
           <Section
             title='Tables'
-            caption='DataTable is the workhorse — most GTM screens are a table. It is presentational: you own sorting, paging and selection, and it renders and reflects them. Put a Company or Person in the identity column and the whole table reads as Trayo.'
+            caption='DataTable is the workhorse — most GTM screens are a table. It is presentational: you own sorting, selection and the page, and it renders and reflects them — including the paging control, so a long list is never rendered in full. Put a Company or Person in the identity column and the whole table reads as Trayo.'
           >
             <Specimen
               name='Account table'
-              note='Sortable, with a fit score, signal counts and owners.'
-              component='<DataTable>'
+              note='Sortable and paged — 62 accounts, ten to a page, with a fit score, signal counts and owners.'
+              component='<DataTable pagination>'
               className='mb-8'
             >
               <Surface padded={false} className='overflow-hidden p-1'>
                 <DataTable
                   columns={ACCOUNT_COLUMNS}
-                  rows={ACCOUNTS}
+                  rows={sortedAccounts}
                   getRowKey={(r) => r.id}
-                  count={ACCOUNTS.length}
                   sort={sort}
                   onSortChange={setSort}
+                  pagination={{
+                    page: accountPaging.page,
+                    pageSize: accountPaging.pageSize,
+                    onPageChange: accountPaging.setPage,
+                    pageSizeOptions: [10, 25, 50],
+                    onPageSizeChange: accountPaging.setPageSize,
+                  }}
                   layout='fixed'
                   tableClassName='min-w-[1040px]'
                 />
@@ -593,8 +804,17 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                         else next.delete(key)
                         return next
                       }),
-                    onToggleAllPage: (on: boolean) =>
-                      setSelected(on ? new Set(PEOPLE.map((p) => p.id!)) : new Set()),
+                    // The table hands over the keys on the current page, so
+                    // this stays correct if the list is ever paged.
+                    onToggleAllPage: (on, pageKeys) =>
+                      setSelected((prev) => {
+                        const next = new Set(prev)
+                        for (const key of pageKeys) {
+                          if (on) next.add(key)
+                          else next.delete(key)
+                        }
+                        return next
+                      }),
                   }}
                 />
               </Surface>
@@ -884,10 +1104,156 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
               </Specimen>
             </Section>
 
+            {/* ---------------------------------------------- feedback */}
+            <Section
+              title='Feedback'
+              caption='One <Toaster /> inside the shell; toast() from anywhere. Stubbed actions use the preview variant so a demo never claims it sent something it did not.'
+            >
+              <Specimen
+                name='Toast'
+                note='Five variants. Hover the stack to pause auto-dismiss.'
+                component='toast()'
+              >
+                <Panel>
+                  <div className='flex flex-wrap items-center gap-3'>
+                    <Button
+                      variant='secondary'
+                      onClick={() =>
+                        toast({
+                          title: 'List saved',
+                          description: '12 accounts added to Q3 targets.',
+                        })
+                      }
+                    >
+                      Default
+                    </Button>
+                    <Button
+                      variant='secondary'
+                      onClick={() =>
+                        toast({
+                          variant: 'success',
+                          title: 'Email found',
+                          description: 'dana@ramp.com verified by two providers.',
+                        })
+                      }
+                    >
+                      Success
+                    </Button>
+                    <Button
+                      variant='secondary'
+                      onClick={() =>
+                        toast({
+                          variant: 'warning',
+                          title: 'Enrichment throttled',
+                          description: 'Provider quota resets in 40 minutes.',
+                        })
+                      }
+                    >
+                      Warning
+                    </Button>
+                    <Button
+                      variant='secondary'
+                      onClick={() =>
+                        toast({
+                          variant: 'destructive',
+                          title: 'Export failed',
+                          description: 'The CSV could not be written.',
+                          action: { label: 'Retry', onClick: () => undefined },
+                        })
+                      }
+                    >
+                      Destructive
+                    </Button>
+                    <Button
+                      onClick={() =>
+                        toast({
+                          variant: 'preview',
+                          title: 'Push to Salesforce',
+                          description: 'Would create 3 leads under the Ramp account.',
+                        })
+                      }
+                    >
+                      Preview <ArrowRight />
+                    </Button>
+                  </div>
+                </Panel>
+              </Specimen>
+            </Section>
+
+            {/* ------------------------------------------------ charts */}
+            <Section
+              title='Charts'
+              caption='Five categorical hues in a fixed order, one sequential ramp for intensity, one neutral for out-of-scope. Labels are the 11px data-label role — the only size below Meta.'
+            >
+              <div className='grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]'>
+                <Specimen
+                  name='Chart tokens'
+                  note='Classes where you can, CHART_COLORS[i] for SVG props.'
+                  component='bg-chart-1 … CHART_SEQUENTIAL'
+                >
+                  <Panel>
+                    <div className='flex flex-col gap-4'>
+                      <div>
+                        <Meta as='div' className='mb-1.5'>
+                          Categorical · chart-1 … chart-5
+                        </Meta>
+                        <div className='flex gap-1.5'>
+                          {CHART_SWATCHES.map((c) => (
+                            <span key={c} className={cn('h-8 flex-1 rounded-sm', c)} />
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <Meta as='div' className='mb-1.5'>
+                          Sequential · chart-seq-1 … chart-seq-5
+                        </Meta>
+                        <div className='flex gap-1.5'>
+                          {SEQ_SWATCHES.map((c) => (
+                            <span key={c} className={cn('h-8 flex-1 rounded-sm', c)} />
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <Meta as='div' className='mb-1.5'>
+                          Muted · outside ICP, not tracked, other
+                        </Meta>
+                        <span className='block h-8 w-1/5 rounded-sm bg-chart-muted' />
+                      </div>
+                    </div>
+                  </Panel>
+                </Specimen>
+
+                <Specimen
+                  name='Bar chart'
+                  note='Inline SVG: chartColor(i) fills, DataLabel ticks, a legend for the key.'
+                  component='<DataLabel> <ChartLegend>'
+                >
+                  <Panel>
+                    <SignalsBarChart />
+                  </Panel>
+                </Specimen>
+              </div>
+            </Section>
+
             {/* ------------------------------------ type, stats, states */}
             {/* Masonry columns: each stage sizes to its own content, so a
                 short specimen never stretches to match a tall neighbour. */}
             <Section title='Type, stats and empty states'>
+              <Specimen
+                name='Stat strip'
+                note='Five tiles: one column each from md up, two on a phone with the odd last tile spanning both. A hint sits beside the number.'
+                component='<StatGrid> <StatTile hint>'
+                className='mb-4'
+              >
+                <StatGrid>
+                  <StatTile label='Accounts tracked' value='317' hint='283 with events' />
+                  <StatTile label='At risk' value='3' delta='+1' hint='$2.6M ARR' />
+                  <StatTile label='Signals this week' value='47' delta='-4%' />
+                  <StatTile label='Meetings booked' value='12' delta='+3' />
+                  <StatTile label='Reply rate' value='18%' delta='+2.1%' />
+                </StatGrid>
+              </Specimen>
+
               <div className='gap-4 md:columns-2 xl:columns-3 [&>*]:mb-4 [&>*]:break-inside-avoid'>
                 <Specimen name='Type roles' note='Content roles, one per job.' component='text-page-title …'>
                   <Panel>
@@ -904,11 +1270,31 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                   </Panel>
                 </Specimen>
 
-                <Specimen name='Stat tiles' note='A number and its change.' component='<StatTile>'>
-                  <div className='grid grid-cols-2 gap-1.5'>
-                    <StatTile label='Accounts tracked' value='1,284' delta='+12%' />
-                    <StatTile label='Signals this week' value='47' delta='-4%' />
-                  </div>
+                <Specimen
+                  name='Segmented control'
+                  note='A filter group with counts; arrow keys move the selection.'
+                  component='<SegmentedControl>'
+                >
+                  <Panel>
+                    <div className='flex flex-col items-start gap-3'>
+                      <SegmentedControl
+                        aria-label='Health band'
+                        value={band}
+                        onValueChange={setBand}
+                        options={BANDS}
+                      />
+                      <SegmentedControl
+                        aria-label='Health band, small'
+                        size='sm'
+                        value={band}
+                        onValueChange={setBand}
+                        options={BANDS}
+                      />
+                      <Meta>
+                        Showing {BANDS.find((b) => b.value === band)?.count} accounts
+                      </Meta>
+                    </div>
+                  </Panel>
                 </Specimen>
 
                 <Specimen name='Form controls' note='Pill-shaped fields.' component='<Input> <Select>'>
@@ -937,6 +1323,29 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                       <Badge variant='warning'>Warning</Badge>
                       <Badge variant='soft'>Soft tag</Badge>
                       <Badge variant='count'>12</Badge>
+                    </div>
+                  </Panel>
+                </Specimen>
+
+                <Specimen name='Callouts' note='A note, a caveat, a result.' component='<Callout>'>
+                  <Panel>
+                    <div className='flex flex-col gap-2'>
+                      <Callout
+                        title='How this was built'
+                        action={
+                          <a href='#method' className='text-meta text-accent-text underline-offset-4 hover:underline'>
+                            Full method
+                          </a>
+                        }
+                      >
+                        Every row came back from the Trayo API; nothing here is hand-typed.
+                      </Callout>
+                      <Callout tone='warning' icon={<AlertTriangle />} title='Post coverage is incomplete'>
+                        Only public posts from the last 30 days were read.
+                      </Callout>
+                      <Callout tone='success' icon={<CheckCircle2 />} title='Target met' compact>
+                        81 accounts cleared the bar.
+                      </Callout>
                     </div>
                   </Panel>
                 </Specimen>

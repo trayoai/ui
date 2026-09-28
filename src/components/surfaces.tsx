@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { Slot } from '@radix-ui/react-slot'
 import { cn } from '../lib/cn'
 
 /**
@@ -9,24 +10,132 @@ import { cn } from '../lib/cn'
  * standing on an `AppShell`; nest a `Well` inside the card for a sub-panel.
  */
 
+type ContainerWidth = 'default' | 'wide' | 'narrow'
+
+/** Shared by `PageContainer` and the `AppShell` top bar so the two stay aligned. */
+const CONTAINER_MAX: Record<ContainerWidth, string> = {
+  narrow: 'max-w-2xl',
+  default: 'max-w-6xl',
+  wide: 'max-w-[1400px]',
+}
+
 /**
  * The page canvas. Paints Trayo's warm shell gradient with the fractal-noise
  * grain and the two corner glows — the single element that makes an app look
  * like Trayo rather than like a default Tailwind page. Wrap your whole app.
+ *
+ * Give it a `brand`, `nav` or `actions` and it also renders the app's top bar:
+ * a sticky, blurred strip on a hairline, with the brand on the left, the view
+ * links (`<AppShellNavLink>`) on the right and any actions after them. Bare
+ * `<AppShell>` renders no bar, exactly as before.
  */
 export function AppShell({
   className,
   children,
+  brand,
+  nav,
+  actions,
+  width = 'default',
   ...props
-}: React.ComponentProps<'div'>) {
+}: React.ComponentProps<'div'> & {
+  /** App name, optionally a link or with a workspace tag beside it. */
+  brand?: React.ReactNode
+  /** The view switcher — a few `<AppShellNavLink>`s. */
+  nav?: React.ReactNode
+  /** Far right: a search field, a theme switch, the signed-in user. */
+  actions?: React.ReactNode
+  /** Aligns the bar's inner width with your `PageContainer`'s `width`. */
+  width?: ContainerWidth
+}) {
+  const hasBar = brand != null || nav != null || actions != null
   return (
     <div
       data-slot='app-shell'
       className={cn('app-shell-bg min-h-screen text-text-primary', className)}
       {...props}
     >
+      {hasBar && (
+        <header
+          data-slot='top-bar'
+          className='sticky top-0 z-30 border-b border-border-subtle bg-surface-shell/80 backdrop-blur-md'
+        >
+          <div
+            className={cn(
+              'mx-auto flex min-h-topbar w-full flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 md:px-6',
+              CONTAINER_MAX[width]
+            )}
+          >
+            {brand != null && (
+              <div
+                data-slot='top-bar-brand'
+                className='flex min-w-0 items-center gap-2 text-name text-text-primary'
+              >
+                {brand}
+              </div>
+            )}
+            {nav != null && (
+              // Below sm the links drop to their own full-width row under the
+              // brand; from sm up they sit on the right, before the actions.
+              <nav
+                data-slot='top-bar-nav'
+                aria-label='Primary'
+                className='order-3 flex basis-full flex-wrap items-center gap-1 sm:order-2 sm:ml-auto sm:basis-auto'
+              >
+                {nav}
+              </nav>
+            )}
+            {actions != null && (
+              <div
+                data-slot='top-bar-actions'
+                className={cn(
+                  'order-2 ml-auto flex shrink-0 items-center gap-2 sm:order-3',
+                  nav != null && 'sm:ml-0'
+                )}
+              >
+                {actions}
+              </div>
+            )}
+          </div>
+        </header>
+      )}
       {children}
     </div>
+  )
+}
+
+/**
+ * A view link in the `AppShell` top bar: a quiet pill that takes the soft
+ * accent when `active`. Renders an `<a>` when given `href`, a `<button>`
+ * otherwise, or wraps your router's link with `asChild`:
+ *
+ *   <AppShellNavLink asChild active={pathname === '/board'}>
+ *     <Link to="/board">Board</Link>
+ *   </AppShellNavLink>
+ */
+export function AppShellNavLink({
+  active = false,
+  asChild = false,
+  className,
+  href,
+  ...props
+}: React.ComponentProps<'a'> & { active?: boolean; asChild?: boolean }) {
+  const Comp: React.ElementType = asChild ? Slot : href ? 'a' : 'button'
+  return (
+    <Comp
+      data-slot='top-bar-link'
+      data-active={active || undefined}
+      aria-current={active ? 'page' : undefined}
+      href={href}
+      type={!asChild && !href ? 'button' : undefined}
+      className={cn(
+        'inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full px-3 text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 [&_svg]:size-4 [&_svg]:shrink-0',
+        active
+          ? 'bg-accent-soft text-accent-text'
+          : 'text-text-secondary hover:bg-surface-well hover:text-text-primary',
+        className
+      )}
+      {...(props as React.HTMLAttributes<HTMLElement>)}
+    />
   )
 }
 
@@ -35,16 +144,11 @@ export function PageContainer({
   className,
   width = 'default',
   ...props
-}: React.ComponentProps<'div'> & { width?: 'default' | 'wide' | 'narrow' }) {
-  const max = {
-    narrow: 'max-w-2xl',
-    default: 'max-w-6xl',
-    wide: 'max-w-[1400px]',
-  }[width]
+}: React.ComponentProps<'div'> & { width?: ContainerWidth }) {
   return (
     <div
       data-slot='page-container'
-      className={cn('mx-auto w-full px-4 py-8 md:px-6', max, className)}
+      className={cn('mx-auto w-full px-4 py-8 md:px-6', CONTAINER_MAX[width], className)}
       {...props}
     />
   )
@@ -196,11 +300,15 @@ export function EmptyState({
   )
 }
 
-/** A single headline number with its label. Rows of these make a stat strip. */
+/**
+ * A single headline number with its label. Rows of these make a stat strip —
+ * lay them out with `<StatGrid>`.
+ */
 export function StatTile({
   label,
   value,
   delta,
+  hint,
   className,
   ...props
 }: React.ComponentProps<'div'> & {
@@ -208,6 +316,8 @@ export function StatTile({
   value: React.ReactNode
   /** Signed change, e.g. `+12%`. Green when it starts with `+`, red with `-`. */
   delta?: string
+  /** A second reading beside the number, e.g. `$2.6M ARR` or `283 with events`. */
+  hint?: React.ReactNode
 }) {
   const tone = delta?.startsWith('+')
     ? 'text-success-text'
@@ -224,10 +334,53 @@ export function StatTile({
       {...props}
     >
       <span className='text-eyebrow'>{label}</span>
-      <span className='flex items-baseline gap-2'>
+      <span className='flex flex-wrap items-baseline gap-x-2'>
         <span className='text-page-title tabular-nums text-text-primary'>{value}</span>
         {delta && <span className={cn('text-meta font-medium', tone)}>{delta}</span>}
+        {hint != null && <span className='text-meta tabular-nums'>{hint}</span>}
       </span>
+    </div>
+  )
+}
+
+const STAT_GRID_COLUMNS = {
+  1: 'md:grid-cols-1',
+  2: 'md:grid-cols-2',
+  3: 'md:grid-cols-3',
+  4: 'md:grid-cols-4',
+  5: 'md:grid-cols-5',
+  6: 'md:grid-cols-6',
+} as const
+
+/**
+ * The grid a row of `<StatTile>`s sits in. Two columns under `md`, then one
+ * per tile (or `columns`, at most 6). With an odd number of tiles the last one
+ * spans both mobile columns, so a five-tile strip never leaves a tile dangling
+ * on its own half-row at phone width.
+ */
+export function StatGrid({
+  columns,
+  className,
+  children,
+  ...props
+}: React.ComponentProps<'div'> & {
+  /** Columns from `md` up. Defaults to the number of tiles, capped at 6. */
+  columns?: 1 | 2 | 3 | 4 | 5 | 6
+}) {
+  const count = React.Children.toArray(children).length
+  const cols = (columns ?? Math.min(6, Math.max(1, count))) as keyof typeof STAT_GRID_COLUMNS
+  return (
+    <div
+      data-slot='stat-grid'
+      className={cn(
+        'grid grid-cols-2 gap-1.5',
+        STAT_GRID_COLUMNS[cols],
+        count % 2 === 1 && '[&>*:last-child]:col-span-2 md:[&>*:last-child]:col-span-1',
+        className
+      )}
+      {...props}
+    >
+      {children}
     </div>
   )
 }

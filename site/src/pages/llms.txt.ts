@@ -66,6 +66,9 @@ break. If the app is on React 18, upgrade it to 19 first; never downgrade.
 Source: https://github.com/${REPO}
 Demo:   ${SITE}/demo
 
+If the tool that fetched this page summarised it, the install commands below
+are probably gone. Read the literal file: curl -s ${SITE}/llms.txt
+
 ## QUICKSTART
 
     npx degit ${REPO}/src ${VENDOR_DIR}
