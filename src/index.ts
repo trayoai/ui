@@ -131,6 +131,8 @@ export {
   DialogTrigger,
 } from './components/ui/dialog'
 export { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from './components/ui/popover'
+export { Toaster, toast, useToast } from './components/ui/toast'
+export type { ToastOptions, ToastVariant } from './components/ui/toast'
 
 /* ------------------------------------------------------------------ config */
 export { TrayoUIProvider, useTrayoUI } from './lib/config'

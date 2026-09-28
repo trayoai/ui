@@ -118,6 +118,7 @@ export const RULES = [
   '`<Button loading>` — do not swap in your own spinner.',
   'Use `cn()` from the library, not bare `clsx`.',
   'View switching goes in `<AppShell nav={…}>` as `<AppShellNavLink>`s; a filter group ("All 59 · Red 3 · Amber 7") is a `<SegmentedControl>` with `count`s; a row of `<StatTile>`s sits in a `<StatGrid>`. Do not hand-roll a top bar, a pill group or the stat grid classes.',
+  'Stubbed or demo actions (Push to Salesforce, Send email, Post to Slack with no integration wired) confirm with `toast({ variant: \'preview\', title, description })` from a single `<Toaster />` mounted inside `<AppShell>`. It says "Preview - nothing was sent". Never a bespoke toast component, never a silent success.',
 ] as const
 
 export const INVENTORY = [
@@ -130,6 +131,7 @@ export const INVENTORY = [
   { group: 'Controls', items: 'Button, Input, Textarea, Select, Checkbox, Switch, Label, Tabs, SegmentedControl' },
   { group: 'Display', items: 'Badge, TagChip, Card, Separator, Tooltip, ScrollArea' },
   { group: 'Overlays', items: 'Dialog, Popover, DropdownMenu' },
+  { group: 'Feedback', items: 'Toaster, toast() — variants default, success, warning, destructive, preview' },
 ] as const
 
 /**
