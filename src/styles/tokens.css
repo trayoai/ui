@@ -182,6 +182,17 @@
 
   /* Brand hero gradient — CTA buttons + person avatars */
   --gradient-cta: linear-gradient(135deg, #FFB82B 0%, #FF4F9E 100%);
+  /* The gradient a customer's brand owns (hero bands, branded headers). Trayo
+     violet → lavender by default; `[data-brand]` repoints it to the brand's
+     primary → secondary. --gradient-cta stays Trayo's in every brand. */
+  --gradient-brand: linear-gradient(135deg, #845CFF 0%, #CD81FF 100%);
+  /* The cool (brand-coloured) layers of the shell glow and .brand-mesh, as
+     `r g b` channels so `[data-brand]` can swap the hue and keep each layer's
+     alpha. The warm layers (peach, salmon, cream) are Trayo DNA and stay. */
+  --shell-glow-cool-rgb: 123 93 243;
+  --shell-glow-cool-alpha: 0.10;
+  --mesh-cool-rgb: 132 92 255;
+  --mesh-cool-2-rgb: 205 129 255;
 
   /* Identity avatar gradients. Theme-invariant; white initials sit on top. */
   --gradient-avatar:        linear-gradient(135deg, #6E79D6, #8E5BD0);
@@ -477,6 +488,8 @@
   --surface-popover: var(--color-app-raised);
 
   --gradient-shell: linear-gradient(160deg, #fdf9ee 0%, #fdf9ee 100%);
+  --shell-glow-cool-rgb: 123 93 243;
+  --shell-glow-cool-alpha: 0.10;
   --gradient-card: linear-gradient(160deg, var(--color-app-raised) 0%, #FEFBF4 100%);
   --gradient-card-hover: linear-gradient(160deg, #ffffff 0%, #FFFDF8 40%, #FEFBF4 100%);
 
@@ -615,6 +628,8 @@
   /* Card + shell gradients: the same stops as the ladder, named, so they
      cannot drift from it. Shell runs its own top down to below the shell. */
   --gradient-shell: linear-gradient(160deg, #181B24 0%, #0E1015 100%);
+  --shell-glow-cool-rgb: 132 92 255;
+  --shell-glow-cool-alpha: 0.12;
   --gradient-card: linear-gradient(160deg, var(--color-app-raised) 0%, var(--color-app-well) 100%);
   --gradient-card-hover: linear-gradient(160deg, var(--color-app-row) 0%, var(--color-app-card) 100%);
 
@@ -791,6 +806,445 @@
      surface cannot be translucent. */
   --tooltip: #464F69;
   --tooltip-foreground: var(--text-primary);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   BRAND SLOTS — wear a customer's brand on Trayo UI.
+
+   For agents: to brand an app, choose the slots below from the company's
+   colours, run them through `resolveBrandPalette` (./trayo-ui; slot rules in
+   BRAND_SLOTS), put the stylesheet
+   `brandPaletteCss` returns after this file, and add `data-brand` to <html>.
+   Do not set the derived --brand-* tokens by hand: the resolver makes them
+   readable on every Trayo surface, in light and dark.
+
+   @slot --brand-primary (required) The colour the company is known for, not
+     the first one logo.dev lists. Fills primary buttons; drives links, focus
+     rings, selected states, tints and accent borders. A black-and-white brand
+     uses its black; never invent a hue.
+   @slot --brand-on-primary / --brand-on-shell (optional) Text on the
+     primary fill and inside the shell. Kept only when they read at 4.5:1;
+     derived otherwise.
+   @slot --brand-secondary (optional) A second brand colour, decoration only:
+     the brand gradient's end and the mesh's second cool layer.
+   @slot --brand-primary-dark (optional) Dark-mode fill, only for an official
+     dark colour or a black-and-white brand (near-white). Derived otherwise.
+   @slot --brand-background --brand-surface --brand-text --brand-text-secondary
+     (optional, together) The complete override: the page, cards and text take
+     the brand's colours when <html> also carries data-brand-surfaces. Omit
+     them and the page stays Trayo's cream.
+   @slot --brand-chart-2..5 (optional) The brand's accents as chart series
+     2–5; series 1 is primary.
+   @slot --brand-shell (optional) The brand's own product chrome (Slack's
+     aubergine). Paints the AppShell top bar and any [data-shell-region]
+     when <html> also carries data-brand-shell; text, hover, selection,
+     fields and borders inside it are derived. Omit for brands with light
+     navigation.
+
+   What a brand does NOT change (Trayo DNA): page and card surfaces, grain,
+   text outside shell regions, status
+   colours, charts, radius, pill buttons, typography, the warm glow layers
+   and --gradient-cta. Without `data-brand` every token below keeps the
+   Trayo value, byte for byte.
+
+   Fallbacks: an agent that sets only --brand-primary still gets a working
+   theme — controls derived by the browser, without the resolver's contrast
+   checks; glows and the mesh keep Trayo's violet (they need the -rgb tokens).
+   ═══════════════════════════════════════════════════════════════════════ */
+[data-brand],
+[data-brand] .light,
+.light[data-brand] {
+  --accent-brand: var(--brand-primary);
+  --accent-brand-foreground: var(--brand-on-primary, #ffffff);
+  --accent-text: var(--brand-accent-text, var(--brand-primary));
+  --accent-soft: var(--brand-accent-soft, color-mix(in srgb, var(--brand-primary) 10%, transparent));
+  --accent-line: var(--brand-accent-line, color-mix(in srgb, var(--brand-primary) 38%, transparent));
+  /* Tokens that read --accent-* resolve where they are declared, so a branded
+     element re-declares the chain; otherwise it would inherit :root's violet. */
+  --accent-brand-strong: color-mix(in oklab, var(--accent-brand) 88%, #000);
+  --primary: var(--accent-brand);
+  --primary-foreground: var(--accent-brand-foreground);
+  --ring: var(--brand-ring, var(--brand-primary));
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-ring: var(--ring);
+  --tooltip: var(--brand-tooltip, color-mix(in srgb, var(--brand-primary) 10%, var(--surface-card)));
+  --tooltip-foreground: var(--accent-text);
+  --shadow-search-glow: 0 1px 2px rgba(16, 17, 26, 0.04),
+    0 18px 50px -28px rgb(var(--brand-primary-rgb, 132 92 255) / 0.45);
+  --shadow-search-glow-focus: 0 0 0 4px var(--accent-soft),
+    0 22px 60px -26px rgb(var(--brand-primary-rgb, 132 92 255) / 0.55);
+  --gradient-brand: var(--brand-gradient, linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary, var(--brand-primary)) 100%));
+  --shell-glow-cool-rgb: var(--brand-primary-rgb, 123 93 243);
+  --mesh-cool-rgb: var(--brand-primary-rgb, 132 92 255);
+  --mesh-cool-2-rgb: var(--brand-secondary-rgb, var(--brand-primary-rgb, 205 129 255));
+  /* Charts: series 1 is the brand (its ring tone, visible on cream even for a
+     yellow brand); the intensity ramp takes the brand's hue. Series 2-5 stay
+     Trayo's. Fallbacks are Trayo's ramp. */
+  --chart-1: var(--brand-ring, var(--brand-primary));
+  /* Series 2–5 are the brand's accents (contract accents[]), each checked at
+     3:1 on the card. The resolver fills missing series from Trayo's palette
+     (skipping a hue already taken) whenever the brand has accents or its own
+     surfaces; the fallbacks here only serve a brand with neither. */
+  --chart-2: var(--brand-chart-2, #0d9488);
+  --chart-3: var(--brand-chart-3, #d97706);
+  --chart-4: var(--brand-chart-4, #e11d48);
+  --chart-5: var(--brand-chart-5, #2563eb);
+  --chart-seq-1: var(--brand-seq-1, #b9acf2);
+  --chart-seq-2: var(--brand-seq-2, #a087ef);
+  --chart-seq-3: var(--brand-seq-3, #8860ea);
+  --chart-seq-4: var(--brand-seq-4, #6c3fc8);
+  --chart-seq-5: var(--brand-seq-5, #4f2998);
+}
+
+.dark[data-brand],
+.dark [data-brand],
+[data-brand] .dark {
+  --accent-brand: var(--brand-primary-dark, var(--brand-primary));
+  --accent-brand-foreground: var(--brand-on-primary-dark, var(--brand-on-primary, #ffffff));
+  --accent-text: var(--brand-accent-text-dark, var(--accent-brand));
+  --accent-soft: var(--brand-accent-soft-dark, color-mix(in srgb, var(--accent-brand) 16%, transparent));
+  --accent-line: var(--brand-accent-line-dark, color-mix(in srgb, var(--accent-text) 55%, transparent));
+  --accent-brand-strong: color-mix(in oklab, var(--accent-brand) 88%, #000);
+  --primary: var(--accent-brand);
+  --primary-foreground: var(--accent-brand-foreground);
+  /* Dark ring follows the text tone, as in Trayo's own dark theme. */
+  --ring: var(--accent-text);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-ring: var(--ring);
+  /* Dark tooltips stay Trayo's neutral grey (same values as .dark). */
+  --tooltip: #464F69;
+  --tooltip-foreground: var(--text-primary);
+  --shadow-search-glow: 0 1px 2px rgba(16, 17, 26, 0.04),
+    0 18px 50px -28px rgb(var(--brand-primary-dark-rgb, var(--brand-primary-rgb, 132 92 255)) / 0.45);
+  --shadow-search-glow-focus: 0 0 0 4px var(--accent-soft),
+    0 22px 60px -26px rgb(var(--brand-primary-dark-rgb, var(--brand-primary-rgb, 132 92 255)) / 0.55);
+  --gradient-brand: var(--brand-gradient-dark, linear-gradient(135deg, var(--accent-brand) 0%, var(--accent-brand) 100%));
+  --shell-glow-cool-rgb: var(--brand-primary-dark-rgb, var(--brand-primary-rgb, 132 92 255));
+  /* The accent text tone: clears 4.5:1 on every dark surface, the card
+     included (the fill only guarantees 3:1 on the shell). */
+  --chart-1: var(--accent-text);
+  --chart-2: var(--brand-chart-dark-2, #00a38f);
+  --chart-3: var(--brand-chart-dark-3, #cb7f00);
+  --chart-4: var(--brand-chart-dark-4, #e14660);
+  --chart-5: var(--brand-chart-dark-5, #3986e4);
+  --chart-seq-1: var(--brand-seq-dark-1, #6850ab);
+  --chart-seq-2: var(--brand-seq-dark-2, #8161d4);
+  --chart-seq-3: var(--brand-seq-dark-3, #9978f5);
+  --chart-seq-4: var(--brand-seq-dark-4, #af99fb);
+  --chart-seq-5: var(--brand-seq-dark-5, #c6bafa);
+}
+
+/* Complete override: the page, cards and text take the brand's colours
+   (contract background/surface/text/mutedText, resolved with the well, hover
+   row, raised surface, text scale and borders derived). Every token that
+   aliases one of these is restated — they resolve where they are declared.
+   Grain, shadows, radius, status colours and the warm glow stay Trayo's. */
+[data-brand-surfaces],
+[data-brand-surfaces] .light,
+.light[data-brand-surfaces] {
+  --color-app-shell: var(--brand-background);
+  --color-app-card: var(--brand-surface);
+  --color-app-well: var(--brand-well);
+  --color-app-row: var(--brand-row);
+  --color-app-raised: var(--brand-raised);
+  --gradient-shell: linear-gradient(160deg, var(--brand-background) 0%, var(--brand-background) 100%);
+  --gradient-card: linear-gradient(160deg, var(--brand-raised) 0%, var(--brand-row) 100%);
+  --gradient-card-hover: linear-gradient(160deg, var(--brand-raised) 0%, var(--brand-surface) 40%, var(--brand-row) 100%);
+  --text-primary: var(--brand-text);
+  --text-secondary: var(--brand-text-secondary);
+  --text-muted: var(--brand-text-muted);
+  --border-subtle: var(--brand-border-subtle);
+  --border-strong: var(--brand-border-strong);
+  --surface-shell: var(--color-app-shell);
+  --surface-card: var(--color-app-card);
+  --surface-well: var(--color-app-well);
+  --surface-row: var(--color-app-row);
+  --surface-popover: var(--color-app-raised);
+  --surface-field: var(--color-app-raised);
+  --text-secondary-card: var(--text-secondary);
+  --text-muted-card: var(--text-muted);
+  --text-secondary-raised: var(--text-secondary);
+  --text-muted-raised: var(--text-muted);
+  --seg-track-line: var(--border-subtle);
+  --seg-text-idle: var(--text-secondary);
+  --foreground: var(--text-primary);
+  --card-foreground: var(--text-primary);
+  --popover-foreground: var(--text-primary);
+  --secondary-foreground: var(--text-primary);
+  --muted-foreground: var(--text-muted);
+  --accent-foreground: var(--text-primary);
+  --border: var(--border-subtle);
+  --input: var(--border-subtle);
+  --surface-dialog: var(--surface-shell);
+  --surface-dropzone: var(--surface-card);
+  --surface-hover: var(--surface-well);
+  --seg-track: var(--surface-well);
+  --seg-thumb: var(--surface-card);
+  --shadow-tile-overlap: 0 0 0 2px var(--surface-card), 0 0 0 2.5px rgba(28, 26, 23, 0.16), inset 0 0 0 1px rgba(28, 26, 23, 0.08);
+  --shadow-face-overlap: 0 0 0 2px var(--surface-card);
+  --background: var(--surface-shell);
+  --card: var(--surface-card);
+  --popover: var(--surface-card);
+  --muted: var(--surface-well);
+  --accent: var(--surface-well);
+}
+
+/* Dark: Trayo's dark ladder tinted with the brand's hue. Text, borders and
+   every alias the light block above sets are restated with .dark's own values
+   (:root's for a token .dark never redeclares; the contract has no dark
+   colours): the light block matches this element too and, being later at
+   equal specificity, would otherwise win. */
+.dark[data-brand-surfaces],
+.dark [data-brand-surfaces],
+[data-brand-surfaces] .dark {
+  --color-app-shell: var(--brand-background-dark);
+  --color-app-card: var(--brand-surface-dark);
+  --color-app-well: var(--brand-well-dark);
+  --color-app-row: var(--brand-row-dark);
+  --color-app-raised: var(--brand-raised-dark);
+  --gradient-shell: linear-gradient(160deg, var(--brand-surface-dark) 0%, var(--brand-background-dark) 100%);
+  --gradient-card: linear-gradient(160deg, var(--color-app-raised) 0%, var(--color-app-well) 100%);
+  --gradient-card-hover: linear-gradient(160deg, var(--color-app-row) 0%, var(--color-app-card) 100%);
+  --text-primary: #EAECF1;
+  --text-secondary: #A4ACC2;
+  --text-muted: #7F8AA9;
+  --border-subtle: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.19);
+  --surface-shell: var(--color-app-shell);
+  --surface-card: var(--color-app-card);
+  --surface-well: var(--color-app-well);
+  --surface-row: var(--color-app-row);
+  --surface-popover: var(--color-app-raised);
+  --surface-field: var(--surface-well);
+  --text-secondary-card: var(--text-secondary);
+  --text-muted-card: var(--text-muted);
+  --text-secondary-raised: #B7BDCF;
+  --text-muted-raised: #A3ABC2;
+  --seg-track-line: var(--border-subtle);
+  --seg-text-idle: #C7CCDA;
+  --foreground: var(--text-primary);
+  --card-foreground: var(--text-primary);
+  --popover-foreground: var(--text-primary);
+  --secondary-foreground: var(--text-primary);
+  --muted-foreground: var(--text-muted);
+  --accent-foreground: var(--text-primary);
+  --border: var(--border-subtle);
+  --input: var(--border-subtle);
+  --surface-dialog: var(--surface-popover);
+  --surface-dropzone: var(--surface-row);
+  --surface-hover: var(--surface-row);
+  --seg-track: var(--surface-row);
+  --seg-thumb: #444D65;
+  --shadow-tile-overlap: 0 0 0 2px var(--surface-card), 0 0 0 2.5px rgba(255, 255, 255, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  --shadow-face-overlap: 0 0 0 2px var(--surface-card);
+  --background: var(--surface-shell);
+  --card: var(--surface-card);
+  --popover: var(--surface-popover);
+  --muted: var(--surface-well);
+  --accent: rgba(255, 255, 255, 0.06);
+  --sidebar: var(--surface-card);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-accent: var(--surface-row);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-hover: var(--surface-row);
+  --sidebar-border: var(--border-subtle);
+  --surface-sidebar: var(--surface-card);
+  --surface-chip-warm: var(--surface-well);
+  --secondary: var(--surface-row);
+  --tooltip-foreground: var(--text-primary);
+}
+
+/* Brand shell region: the sidebar (and any element marked
+   data-shell-region) re-themes its own surfaces, text and borders from the
+   resolved shell tokens, the same in light and dark. Popovers it opens portal
+   out of the region and keep the page theme. The -card/-raised text tokens
+   and shadcn aliases resolve where they are declared, so they are restated. */
+[data-brand-shell] [data-shell-region],
+[data-brand-shell][data-shell-region] {
+  --surface-sidebar: var(--brand-shell);
+  --surface-shell: var(--brand-shell);
+  /* Fields, cards and inline popovers inside the bar (a search input, a
+     workspace chip) sit one step up from the shell, with shell text. */
+  --surface-card: var(--brand-shell-hover);
+  --surface-field: var(--brand-shell-hover);
+  --surface-popover: var(--brand-shell-active);
+  --surface-well: var(--brand-shell-hover);
+  --surface-row: var(--brand-shell-hover);
+  --surface-hover: var(--brand-shell-hover);
+  --sidebar-hover: var(--brand-shell-hover);
+  --text-primary: var(--brand-on-shell);
+  --text-secondary: var(--brand-on-shell-secondary);
+  --text-muted: var(--brand-on-shell-muted);
+  --text-secondary-card: var(--text-secondary);
+  --text-muted-card: var(--text-muted);
+  --text-secondary-raised: var(--text-secondary);
+  --text-muted-raised: var(--text-muted);
+  --foreground: var(--text-primary);
+  --muted-foreground: var(--text-muted);
+  --accent-text: var(--brand-on-shell);
+  --accent-soft: var(--brand-shell-active);
+  --accent-line: var(--brand-shell-border);
+  --border-subtle: var(--brand-shell-border);
+  --border-strong: var(--brand-shell-border);
+  --border: var(--border-subtle);
+  /* Tokens that alias the ones above resolve where they are declared, so
+     the region restates them (seg control, shadcn aliases, dialogs...).
+     The focus ring takes the shell text tone so it shows on the chrome. */
+  --surface-dialog: var(--surface-shell);
+  --surface-dropzone: var(--surface-card);
+  --shadow-search-glow-focus: 0 0 0 4px var(--accent-soft), 0 22px 60px -26px rgba(132, 92, 255, 0.55);
+  --seg-track: var(--surface-well);
+  --seg-track-line: var(--border-subtle);
+  --seg-thumb: var(--surface-card);
+  --seg-text-idle: var(--text-secondary);
+  --shadow-tile-overlap: 0 0 0 2px var(--surface-card), 0 0 0 2.5px rgba(28, 26, 23, 0.16), inset 0 0 0 1px rgba(28, 26, 23, 0.08);
+  --shadow-face-overlap: 0 0 0 2px var(--surface-card);
+  --background: var(--surface-shell);
+  --card: var(--surface-card);
+  --card-foreground: var(--text-primary);
+  --popover: var(--surface-card);
+  --popover-foreground: var(--text-primary);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--surface-well);
+  --accent: var(--surface-well);
+  --accent-foreground: var(--text-primary);
+  --input: var(--border-subtle);
+  --tooltip-foreground: var(--accent-text);
+  --sidebar: var(--surface-card);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-accent: var(--surface-row);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border-subtle);
+  --surface-chip-warm: var(--surface-well);
+  --secondary: var(--surface-row);
+  --ring: var(--accent-text);
+  --sidebar-ring: var(--ring);
+}
+
+/* The region's own background is the opaque shell: the resolver checks shell
+   text against the shell itself, so a translucent bar (the top bar is /80 with
+   a blur) would let the page lift it and cost contrast. */
+[data-brand-shell] [data-shell-region],
+[data-brand-shell][data-shell-region] {
+  background-color: var(--brand-shell);
+}
+
+/* Inline surfaces inside a shell region (the sidebar's user menu renders in
+   place, not in a portal) mark themselves data-shell-exit and get the page
+   theme back. The page values are captured on the branded root, where the
+   tokens still hold them; without a branded shell the rule must not match,
+   since the --page-* captures do not exist there. */
+[data-brand-shell] {
+  --page-surface-sidebar: var(--surface-sidebar);
+  --page-surface-shell: var(--surface-shell);
+  --page-surface-card: var(--surface-card);
+  --page-surface-field: var(--surface-field);
+  --page-surface-popover: var(--surface-popover);
+  --page-surface-well: var(--surface-well);
+  --page-surface-row: var(--surface-row);
+  --page-surface-hover: var(--surface-hover);
+  --page-sidebar-hover: var(--sidebar-hover);
+  --page-text-primary: var(--text-primary);
+  --page-text-secondary: var(--text-secondary);
+  --page-text-muted: var(--text-muted);
+  --page-text-secondary-card: var(--text-secondary-card);
+  --page-text-muted-card: var(--text-muted-card);
+  --page-text-secondary-raised: var(--text-secondary-raised);
+  --page-text-muted-raised: var(--text-muted-raised);
+  --page-foreground: var(--foreground);
+  --page-muted-foreground: var(--muted-foreground);
+  --page-accent-text: var(--accent-text);
+  --page-accent-soft: var(--accent-soft);
+  --page-accent-line: var(--accent-line);
+  --page-border-subtle: var(--border-subtle);
+  --page-border-strong: var(--border-strong);
+  --page-border: var(--border);
+  --page-surface-dialog: var(--surface-dialog);
+  --page-surface-dropzone: var(--surface-dropzone);
+  --page-shadow-search-glow-focus: var(--shadow-search-glow-focus);
+  --page-seg-track: var(--seg-track);
+  --page-seg-track-line: var(--seg-track-line);
+  --page-seg-thumb: var(--seg-thumb);
+  --page-seg-text-idle: var(--seg-text-idle);
+  --page-shadow-tile-overlap: var(--shadow-tile-overlap);
+  --page-shadow-face-overlap: var(--shadow-face-overlap);
+  --page-background: var(--background);
+  --page-card: var(--card);
+  --page-card-foreground: var(--card-foreground);
+  --page-popover: var(--popover);
+  --page-popover-foreground: var(--popover-foreground);
+  --page-secondary-foreground: var(--secondary-foreground);
+  --page-muted: var(--muted);
+  --page-accent: var(--accent);
+  --page-accent-foreground: var(--accent-foreground);
+  --page-input: var(--input);
+  --page-tooltip-foreground: var(--tooltip-foreground);
+  --page-sidebar: var(--sidebar);
+  --page-sidebar-foreground: var(--sidebar-foreground);
+  --page-sidebar-accent: var(--sidebar-accent);
+  --page-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --page-sidebar-border: var(--sidebar-border);
+  --page-surface-chip-warm: var(--surface-chip-warm);
+  --page-secondary: var(--secondary);
+  --page-ring: var(--ring);
+  --page-sidebar-ring: var(--sidebar-ring);
+}
+[data-brand-shell] [data-shell-region] [data-shell-exit] {
+  --surface-sidebar: var(--page-surface-sidebar);
+  --surface-shell: var(--page-surface-shell);
+  --surface-card: var(--page-surface-card);
+  --surface-field: var(--page-surface-field);
+  --surface-popover: var(--page-surface-popover);
+  --surface-well: var(--page-surface-well);
+  --surface-row: var(--page-surface-row);
+  --surface-hover: var(--page-surface-hover);
+  --sidebar-hover: var(--page-sidebar-hover);
+  --text-primary: var(--page-text-primary);
+  --text-secondary: var(--page-text-secondary);
+  --text-muted: var(--page-text-muted);
+  --text-secondary-card: var(--page-text-secondary-card);
+  --text-muted-card: var(--page-text-muted-card);
+  --text-secondary-raised: var(--page-text-secondary-raised);
+  --text-muted-raised: var(--page-text-muted-raised);
+  --foreground: var(--page-foreground);
+  --muted-foreground: var(--page-muted-foreground);
+  --accent-text: var(--page-accent-text);
+  --accent-soft: var(--page-accent-soft);
+  --accent-line: var(--page-accent-line);
+  --border-subtle: var(--page-border-subtle);
+  --border-strong: var(--page-border-strong);
+  --border: var(--page-border);
+  --surface-dialog: var(--page-surface-dialog);
+  --surface-dropzone: var(--page-surface-dropzone);
+  --shadow-search-glow-focus: var(--page-shadow-search-glow-focus);
+  --seg-track: var(--page-seg-track);
+  --seg-track-line: var(--page-seg-track-line);
+  --seg-thumb: var(--page-seg-thumb);
+  --seg-text-idle: var(--page-seg-text-idle);
+  --shadow-tile-overlap: var(--page-shadow-tile-overlap);
+  --shadow-face-overlap: var(--page-shadow-face-overlap);
+  --background: var(--page-background);
+  --card: var(--page-card);
+  --card-foreground: var(--page-card-foreground);
+  --popover: var(--page-popover);
+  --popover-foreground: var(--page-popover-foreground);
+  --secondary-foreground: var(--page-secondary-foreground);
+  --muted: var(--page-muted);
+  --accent: var(--page-accent);
+  --accent-foreground: var(--page-accent-foreground);
+  --input: var(--page-input);
+  --tooltip-foreground: var(--page-tooltip-foreground);
+  --sidebar: var(--page-sidebar);
+  --sidebar-foreground: var(--page-sidebar-foreground);
+  --sidebar-accent: var(--page-sidebar-accent);
+  --sidebar-accent-foreground: var(--page-sidebar-accent-foreground);
+  --sidebar-border: var(--page-sidebar-border);
+  --surface-chip-warm: var(--page-surface-chip-warm);
+  --secondary: var(--page-secondary);
+  --ring: var(--page-ring);
+  --sidebar-ring: var(--page-sidebar-ring);
 }
 
 @theme inline {
@@ -979,7 +1433,7 @@
   background-color: var(--surface-shell);
   background-image:
     radial-gradient(120% 80% at 85% 0%, rgba(255, 201, 168, 0.30) 0%, rgba(255, 201, 168, 0) 42%),
-    radial-gradient(90% 70% at 0% 100%, rgba(123, 93, 243, 0.10) 0%, rgba(123, 93, 243, 0) 46%),
+    radial-gradient(90% 70% at 0% 100%, rgb(var(--shell-glow-cool-rgb) / var(--shell-glow-cool-alpha)) 0%, rgb(var(--shell-glow-cool-rgb) / 0) 46%),
     var(--shell-grain),
     var(--gradient-shell);
   background-repeat: no-repeat, no-repeat, repeat, no-repeat;
@@ -987,7 +1441,7 @@
 :is(.dark) .app-shell-bg {
   background-image:
     radial-gradient(120% 80% at 85% 0%, rgba(255, 161, 130, 0.14) 0%, rgba(255, 161, 130, 0) 42%),
-    radial-gradient(90% 70% at 0% 100%, rgba(132, 92, 255, 0.12) 0%, rgba(132, 92, 255, 0) 46%),
+    radial-gradient(90% 70% at 0% 100%, rgb(var(--shell-glow-cool-rgb) / var(--shell-glow-cool-alpha)) 0%, rgb(var(--shell-glow-cool-rgb) / 0) 46%),
     var(--shell-grain),
     var(--gradient-shell);
 }
@@ -1015,8 +1469,8 @@
   position: absolute;
   inset: -20%;
   background-image:
-    radial-gradient(40% 55% at 18% 30%, rgba(132, 92, 255, 0.42) 0%, rgba(132, 92, 255, 0) 70%),
-    radial-gradient(35% 50% at 48% 12%, rgba(205, 129, 255, 0.40) 0%, rgba(205, 129, 255, 0) 70%),
+    radial-gradient(40% 55% at 18% 30%, rgb(var(--mesh-cool-rgb) / 0.42) 0%, rgb(var(--mesh-cool-rgb) / 0) 70%),
+    radial-gradient(35% 50% at 48% 12%, rgb(var(--mesh-cool-2-rgb) / 0.40) 0%, rgb(var(--mesh-cool-2-rgb) / 0) 70%),
     radial-gradient(45% 60% at 80% 28%, rgba(255, 161, 130, 0.55) 0%, rgba(255, 161, 130, 0) 70%),
     radial-gradient(30% 45% at 92% 70%, rgba(255, 123, 49, 0.30) 0%, rgba(255, 123, 49, 0) 70%),
     radial-gradient(40% 50% at 35% 80%, rgba(253, 220, 152, 0.50) 0%, rgba(253, 220, 152, 0) 70%);
@@ -1030,9 +1484,9 @@
   position: absolute;
   inset: -20%;
   background-image:
-    radial-gradient(30% 45% at 70% 60%, rgba(132, 92, 255, 0.30) 0%, rgba(132, 92, 255, 0) 70%),
+    radial-gradient(30% 45% at 70% 60%, rgb(var(--mesh-cool-rgb) / 0.30) 0%, rgb(var(--mesh-cool-rgb) / 0) 70%),
     radial-gradient(35% 45% at 25% 55%, rgba(255, 161, 130, 0.35) 0%, rgba(255, 161, 130, 0) 70%),
-    radial-gradient(25% 35% at 55% 35%, rgba(205, 129, 255, 0.30) 0%, rgba(205, 129, 255, 0) 70%);
+    radial-gradient(25% 35% at 55% 35%, rgb(var(--mesh-cool-2-rgb) / 0.30) 0%, rgb(var(--mesh-cool-2-rgb) / 0) 70%);
   will-change: transform;
   animation: brand-mesh-counterflow 18s ease-in-out infinite alternate;
 }

@@ -351,6 +351,7 @@ Sizes: `xs sm md lg xl 2xl`.
 | Overlays | `Dialog` `Popover` `DropdownMenu` |
 | Feedback | `Toaster` `toast()` `useToast()` |
 | Charts | `ChartLegend` `DataLabel` `CHART_COLORS` `CHART_SEQUENTIAL` `CHART_MUTED` `chartColor` `chartSequential` |
+| Customer brand | `resolveBrandPalette` `checkBrandPalette` `fromBrandThemeContract` `brandSlotsAgentGuide` `brandPaletteCss` `brandAttributes` `BRAND_SLOTS` (see [Customer brand](#customer-brand)) |
 
 ### Page scaffolding
 
@@ -581,6 +582,73 @@ Follow these and the result stays on-brand. Break them and it drifts.
 You own these files now, so editing them is fair game. Prefer extending a
 variant over forking a component, and keep the token vocabulary intact — that
 is what holds the aesthetic together.
+
+---
+
+## Customer brand
+
+Building an app for a specific company? Give it that company's styling and let
+the kit supply the language. Two depths:
+
+- **Brand** (default): the company's colours are the canvas — page, cards,
+  text, buttons, links, focus rings, selection, the brand gradient, the charts
+  and, when the brand has one, the top bar. Trayo contributes what makes it
+  recognisably Trayo: the components, pill buttons, type roles, radius, grain,
+  motion and status colours. Dark mode keeps the kit's dark ladder tinted with
+  the brand's hue.
+- **Accent only** (`surfaces: 'trayo'`): the page, cards and text stay the
+  kit's cream; only the accent, charts and chrome take the brand.
+
+You choose **what** the colours are; the kit works out **how** to use them.
+Colour lists from logo APIs come by prominence, not role (PayPal's starts with
+black), so pick deliberately. The slots are the fields of the **brand theme
+contract**, the JSON a brand-research agent writes (`brandSlotsAgentGuide()` is
+that prompt):
+
+| Field | | Role |
+|---|---|---|
+| `primary` | required | The colour the company is known for. A black-and-white brand uses its black. Chart series 1. |
+| `onPrimary` | optional | Text on primary; kept only when it reads at 4.5:1. |
+| `shell` / `onShell` | optional | The brand's own product chrome (Slack's aubergine) — paints the `AppShell` top bar. Omit when that chrome is white. |
+| `accents[]` | optional | Chart series 2–5, in order (missing ones filled from the kit's series, skipping hues already taken); the first is also the decorative secondary (gradient end, mesh). |
+| `background` `surface` `text` `mutedText` | optional | Page, cards, main and supporting text. Left out with `surfaces: 'trayo'`. |
+| `primaryDark` | optional | The dark-mode fill, for an official dark colour or a black-and-white brand. |
+
+```tsx
+import {
+  brandAttributes, brandPaletteCss, checkBrandPalette, fromBrandThemeContract, resolveBrandPalette,
+} from './trayo-ui'
+
+// Either slots directly…
+const input = { primary: '#611f69', shell: '#4a154b', accents: ['#36c5f0', '#2eb67d'] }
+// …or the agent's brand theme contract. Default applies the company's page,
+// cards and text too; `{ surfaces: 'trayo' }` keeps the kit's cream instead.
+// const { input, notes } = fromBrandThemeContract(contract)
+
+const problems = checkBrandPalette(input)   // [] — or messages to hand back to whoever picked
+const palette = resolveBrandPalette(input)
+
+// Once, at the app root:
+document.head.insertAdjacentHTML('beforeend', `<style>${brandPaletteCss(palette, 'html')}</style>`)
+for (const [k, v] of Object.entries(brandAttributes(palette))) document.documentElement.setAttribute(k, v)
+```
+
+What the resolver guarantees, so you never adjust a colour for contrast:
+
+- text on a brand fill reads at 4.5:1, white or ink picked for you (a supplied
+  `onPrimary`/`onShell` is kept only when it reads);
+- accent text and links are a darker step of the brand where the brand itself
+  is too light (yellow, sky blue) — the fill keeps the brand colour;
+- dark mode lifts the fill until it stands out; a black-and-white brand fills
+  with near-white;
+- shell text, hover and selected rows read on the shell;
+- accents become chart series that clear 3:1 on the card, light and dark;
+- on the brand's surfaces, text clears 7:1 and supporting text 4.5:1, borders
+  and the hover row are derived, and every check above runs against those
+  surfaces instead of the kit's.
+
+Without `data-brand` on `<html>` nothing changes. The live demo at
+[ui.trayo.ai/demo](https://ui.trayo.ai/demo) has a brand switcher.
 
 ---
 

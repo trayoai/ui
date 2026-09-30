@@ -56,7 +56,7 @@ const buttonVariants = cva(
         // primary in the design. A compact in-row CTA is just this variant at
         // size="sm"; there is no separate `cta` variant.
         default:
-          'rounded-full bg-accent-brand text-white shadow-sm hover:brightness-[1.07] border-none',
+          'rounded-full bg-accent-brand text-accent-brand-foreground shadow-sm hover:brightness-[1.07] border-none',
         // Danger semantic — red pill, for delete/destructive affordances;
         // pill-shaped for consistency.
         destructive:

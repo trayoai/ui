@@ -129,6 +129,19 @@ the wrong place or not at all. Nothing errors at build time.
     destructive | destructive-outline | destructive-quiet`. `ghost`, `outline`,
     `link` and `primary` are remapped with a dev warning; write the real name.
 
+17. **Building for a specific company? Use its brand, through the contract.**
+    Write (or receive) the brand theme contract — `primary` is the colour the
+    company is known for, not the first colour a logo API lists; `shell` only
+    if its product chrome is coloured; `accents[]` for chart series 2–5 — and
+    map it with `fromBrandThemeContract(contract)`. The company's styling is
+    the canvas (page, cards, text too); the kit supplies the language. Pass
+    `{ surfaces: 'trayo' }` only when the page should stay the kit's cream. Run `checkBrandPalette`, then `resolveBrandPalette`,
+    put `brandPaletteCss(palette, 'html')` in a `<style>` and
+    `brandAttributes` on `<html>` (README "Customer brand"). Never hand-set
+    `--brand-*` or `--accent-*`, and never adjust a colour for contrast — the
+    resolver does. Status colours, type, radius and the warm glow stay the
+    kit's in every brand.
+
 The files are yours once copied, so editing them is allowed. Prefer extending a
 variant over forking a component, and keep the token vocabulary intact.
 
@@ -155,3 +168,4 @@ return data.map(p => <Person key={p.id} person={p} showContact />)
 - [ ] `@import 'tailwindcss';` then `@import './trayo-ui/styles/trayo-ui.css';`
 - [ ] The app wrapped in `<AppShell>`, content in a `<PageContainer>`
 - [ ] `class="dark"` on `<html>` only if you want the dark palette; light is the default
+- [ ] For a customer build: brand resolved and applied on `<html>` (rule 17)

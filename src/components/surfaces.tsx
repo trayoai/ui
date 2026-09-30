@@ -28,6 +28,9 @@ const CONTAINER_MAX: Record<ContainerWidth, string> = {
  * a sticky, blurred strip on a hairline, with the brand on the left, the view
  * links (`<AppShellNavLink>`) on the right and any actions after them. Bare
  * `<AppShell>` renders no bar, exactly as before.
+ *
+ * With a brand palette that has a `shell`, the top bar wears the customer's
+ * product chrome (Slack's aubergine), text and fields included.
  */
 export function AppShell({
   className,
@@ -57,6 +60,9 @@ export function AppShell({
       {hasBar && (
         <header
           data-slot='top-bar'
+          // Takes a customer's shell colour when <html> carries
+          // data-brand-shell (see brandAttributes); inert otherwise.
+          data-shell-region=''
           className='sticky top-0 z-30 border-b border-border-subtle bg-surface-shell/80 backdrop-blur-md'
         >
           <div

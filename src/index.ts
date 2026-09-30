@@ -160,6 +160,33 @@ export type { ToastOptions, ToastVariant } from './components/ui/toast'
 export { TrayoUIProvider, useTrayoUI } from './lib/config'
 export type { TrayoUIConfig } from './lib/config'
 
+/* ----------------------------------------------------------- brand theme */
+// A customer's colours on the kit: pick the slots (or map a brand theme
+// contract), resolve them, and put the CSS + attributes on <html>.
+export {
+  BRAND_ATTRIBUTE,
+  BRAND_SHELL_ATTRIBUTE,
+  BRAND_SLOTS,
+  BRAND_SURFACES_ATTRIBUTE,
+  SHELL_REGION_ATTRIBUTE,
+  brandAttributes,
+  brandPaletteCss,
+  brandPaletteStyle,
+  brandSlotsAgentGuide,
+  checkBrandPalette,
+  fromBrandThemeContract,
+  resolveBrandPalette,
+} from './lib/brand-palette'
+export type {
+  BrandPaletteInput,
+  BrandPaletteProblem,
+  BrandSlotName,
+  BrandThemeContract,
+  ContractMapping,
+  ContractOptions,
+  ResolvedBrandPalette,
+} from './lib/brand-palette'
+
 /* ----------------------------------------------------------------- helpers */
 export { cn } from './lib/cn'
 export { initials } from './lib/initials'
