@@ -599,6 +599,14 @@ the kit supply the language. Two depths:
 - **Accent only** (`surfaces: 'trayo'`): the page, cards and text stay the
   kit's cream; only the accent, charts and chrome take the brand.
 
+Two more things make one branded app look unlike the next at a glance, and are
+on by default (`emphasis: 'bold'`): a brand whose contract has no coloured
+`shell` gets a top bar in a deep step of its primary, and the mesh band takes
+the brand's colours instead of Trayo's peach and cream. The resolved palette
+also says which theme the brand reads best in — `palette.theme` is `'dark'`
+for a dark primary on a dark bar — so set `class="dark"` on `<html>` when it
+says so. `emphasis: 'quiet'` turns both off.
+
 You choose **what** the colours are; the kit works out **how** to use them.
 Colour lists from logo APIs come by prominence, not role (PayPal's starts with
 black), so pick deliberately. The slots are the fields of the **brand theme

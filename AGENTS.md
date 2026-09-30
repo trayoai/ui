@@ -136,8 +136,9 @@ the wrong place or not at all. Nothing errors at build time.
     map it with `fromBrandThemeContract(contract)`. The company's styling is
     the canvas (page, cards, text too); the kit supplies the language. Pass
     `{ surfaces: 'trayo' }` only when the page should stay the kit's cream. Run `checkBrandPalette`, then `resolveBrandPalette`,
-    put `brandPaletteCss(palette, 'html')` in a `<style>` and
-    `brandAttributes` on `<html>` (README "Customer brand"). Never hand-set
+    put `brandPaletteCss(palette, 'html')` in a `<style>`, `brandAttributes`
+    on `<html>`, and `class="dark"` there when `palette.theme` is `'dark'`
+    (README "Customer brand"). Never hand-set
     `--brand-*` or `--accent-*`, and never adjust a colour for contrast — the
     resolver does. Status colours, type, radius and the warm glow stay the
     kit's in every brand.
