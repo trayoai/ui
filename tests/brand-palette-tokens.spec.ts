@@ -43,7 +43,7 @@ describe('brand slots — tokens.css ⇄ lib/brand-palette', () => {
       // The four surface slots share one annotation; chart-2 stands for 2..5.
       const name = slot.cssVar.replace(/^--brand-chart-2$/, '--brand-chart-2..5')
       expect(docs, `${slot.cssVar} undocumented`).toMatch(
-        new RegExp(`@slot [^\n]*${name.replace(/[.]/g, '\\.')}`)
+        new RegExp(`@slot [^\n]*${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`)
       )
     }
   })
