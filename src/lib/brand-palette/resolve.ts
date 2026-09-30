@@ -98,6 +98,19 @@ const DERIVED_SHELL_MAX_CHROMA = 0.16
 /** A brand whose primary and shell are both this dark reads best in the dark theme. */
 const DARK_THEME_PRIMARY_L = 0.5
 const DARK_THEME_SHELL_L = 0.35
+/**
+ * A tertiary hue for brands that give no secondary or accents: the primary's
+ * hue rotated 60° (Material 3's TONAL_SPOT rule), at modest chroma. It ends
+ * the brand gradient, colours the mesh's second layer and leads the chart
+ * series pool, so a one-colour brand still gets a two-hue look.
+ */
+const TERTIARY_HUE_SHIFT = 60
+const TERTIARY_MAX_CHROMA = 0.12
+/**
+ * Dark surfaces under `emphasis: 'bold'` follow Material 3's tone ladder
+ * (surface 6, containers 10/12/17/22) in the brand's hue, as OKLCH lightness.
+ */
+const DARK_LADDER_L = { shell: 0.19, well: 0.224, card: 0.24, row: 0.29, raised: 0.33 }
 /** Two chart colours closer in hue than this read as the same series. */
 const SERIES_HUE_GAP = 18
 
@@ -276,12 +289,21 @@ export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPale
   const primaryDarkSlot = input.primaryDark ? parseHex(input.primaryDark)! : null
   const accents = uniqueAccents(input.accents ?? [], primary)
   const secondary = input.secondary ? parseHex(input.secondary)! : (accents[0] ?? null)
+  const tertiary = isNeutral(primary)
+    ? null
+    : quantize(
+        fromOklch({
+          l: Math.min(Math.max(toOklch(primary).l, 0.55), 0.7),
+          c: Math.min(toOklch(primary).c, TERTIARY_MAX_CHROMA),
+          h: (toOklch(primary).h + TERTIARY_HUE_SHIFT) % 360
+        })
+      )
 
   // ── Surfaces: Trayo's, or the brand's when it overrides them ──────────
   const trayoLight = mapValues(TRAYO_SURFACES.light, (v) => parseHex(v)!)
   const trayoDark = mapValues(TRAYO_SURFACES.dark, (v) => parseHex(v)!)
   const override = input.background
-    ? resolveSurfaces(input, primary, trayoLight, trayoDark, adjustments)
+    ? resolveSurfaces(input, primary, trayoLight, trayoDark, adjustments, input.emphasis !== 'quiet')
     : null
   const L: Surfaces = override?.light ?? trayoLight
   const D: Surfaces = override?.dark ?? trayoDark
@@ -348,8 +370,8 @@ export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPale
   // Brand gradient: primary → secondary, or → a lighter (dark: dimmer) step of
   // the fill when there is no secondary, so it never runs back to the other
   // theme's fill (a black-and-white brand would otherwise fade white → black).
-  const gradientEnd = secondary ?? shiftL(primary, GRADIENT_STEP)
-  const gradientEndDark = secondary ?? shiftL(darkFill, -GRADIENT_STEP)
+  const gradientEnd = secondary ?? tertiary ?? shiftL(primary, GRADIENT_STEP)
+  const gradientEndDark = secondary ?? tertiary ?? shiftL(darkFill, -GRADIENT_STEP)
 
   // The chart, shell and surface tokens are added below.
   const tokens = {
@@ -392,7 +414,12 @@ export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPale
   if (accents.length || override) {
     const chosen: RGB[] = [primary, ...accents.slice(0, CHART_SERIES)]
     const nearChosen = (rgb: RGB) => chosen.some((c) => sameHue(c, rgb))
-    const pool = SERIES_POOL.map(([l, d]) => [parseHex(l)!, parseHex(d)!] as const)
+    // The tertiary leads the pool, so a brand with no accents still gets a
+    // second series in its own family before Trayo's teal/amber/rose/blue.
+    const pool = [
+      ...(tertiary ? [[tertiary, tertiary] as const] : []),
+      ...SERIES_POOL.map(([l, d]) => [parseHex(l)!, parseHex(d)!] as const)
+    ]
     // Rechecked at every fill: a candidate that was distinct from the accents
     // may sit next to a series filled in the step before.
     const nextFromPool = () => {
@@ -447,8 +474,9 @@ export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPale
       toRgbChannels(quantize(fromOklch({ l, c: Math.min(p.c, c), h: (p.h + dh + 360) % 360 })))
     const second = secondary ? toOklch(secondary) : null
     tokens['--brand-mesh-warm-rgb'] = warm(0.8, 0.14)
-    tokens['--brand-mesh-warm-2-rgb'] = second
-      ? toRgbChannels(quantize(fromOklch({ l: 0.72, c: Math.min(second.c, 0.16), h: second.h })))
+    const secondHue = second ?? (tertiary ? toOklch(tertiary) : null)
+    tokens['--brand-mesh-warm-2-rgb'] = secondHue
+      ? toRgbChannels(quantize(fromOklch({ l: 0.72, c: Math.min(secondHue.c, 0.16), h: secondHue.h })))
       : warm(0.72, 0.16, 40)
     tokens['--brand-mesh-warm-3-rgb'] = warm(0.9, 0.06, -20)
   }
@@ -515,7 +543,8 @@ function resolveSurfaces(
   primary: RGB,
   trayoLight: Surfaces,
   trayoDark: Surfaces,
-  adjustments: string[]
+  adjustments: string[],
+  bold: boolean
 ): { light: Surfaces; dark: Surfaces; tokens: Record<BrandSurfaceToken, string> } {
   const given = parseHex(input.background!)!
   const givenL = toOklch(given)
@@ -578,18 +607,21 @@ function resolveSurfaces(
   // the ink's) at a chroma that keeps the kit's dark text readable everywhere.
   const tint =
     canvasHue !== null ? { h: canvasHue } : [toOklch(text)].find((c) => c.c >= NEUTRAL_SURFACE_CHROMA)
-  const darkOf = (trayo: RGB) => {
+  // Bold: Material's tone ladder in the brand hue, a deeper night than
+  // Trayo's slate. Quiet: Trayo's own lightness steps, tinted.
+  const darkOf = (trayo: RGB, ladderL: number) => {
     const t = toOklch(trayo)
-    return tint ? quantize(fromOklch({ l: t.l, c: DARK_SURFACE_CHROMA, h: tint.h })) : trayo
+    const l = bold && tint ? ladderL : t.l
+    return tint ? quantize(fromOklch({ l, c: DARK_SURFACE_CHROMA, h: tint.h })) : trayo
   }
   const dark: Surfaces = {
-    shell: darkOf(trayoDark.shell),
-    well: darkOf(trayoDark.well),
-    card: darkOf(trayoDark.card),
-    raised: darkOf(trayoDark.raised),
+    shell: darkOf(trayoDark.shell, DARK_LADDER_L.shell),
+    well: darkOf(trayoDark.well, DARK_LADDER_L.well),
+    card: darkOf(trayoDark.card, DARK_LADDER_L.card),
+    raised: darkOf(trayoDark.raised, DARK_LADDER_L.raised),
     text: trayoDark.text
   }
-  const darkRow = darkOf(parseHex('#2e3445')!)
+  const darkRow = darkOf(parseHex('#2e3445')!, DARK_LADDER_L.row)
 
   return {
     light: { shell, well, card, raised, text },

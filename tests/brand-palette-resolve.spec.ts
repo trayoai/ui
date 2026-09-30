@@ -260,6 +260,51 @@ describe('emphasis (bold by default)', () => {
   })
 })
 
+describe('tertiary (primary hue + 60°) for one-colour brands', () => {
+  const hueOf = (hex: string) => toOklch(rgb(hex)).h
+  const gap = (a: number, b: number) => Math.min(Math.abs(a - b), 360 - Math.abs(a - b))
+
+  it('ends the brand gradient and colours the second mesh layer when there is no secondary', () => {
+    const p = resolveBrandPalette({ primary: '#002991' })
+    const end = /(#[0-9a-f]{6}) 100%/.exec(p.tokens['--brand-gradient'])![1]
+    expect(gap(hueOf(end), hueOf('#002991'))).toBeGreaterThan(45)
+    expect(gap(hueOf(end), hueOf('#002991'))).toBeLessThan(75)
+    const [r, g, b] = p.tokens['--brand-mesh-warm-2-rgb']!.split(' ').map((n) => Number(n) / 255)
+    expect(gap(toOklch([r, g, b] as unknown as ReturnType<typeof rgb>).h, hueOf('#002991'))).toBeGreaterThan(
+      45
+    )
+  })
+
+  it('leads the chart pool: series 2 of an accent-less brand is in the tertiary hue', () => {
+    const p = resolveBrandPalette({ primary: '#002991', background: '#ffffff' })
+    expect(gap(hueOf(p.tokens['--brand-chart-2']!), (hueOf('#002991') + 60) % 360)).toBeLessThan(10)
+  })
+
+  it('a given secondary still wins; a black-and-white brand has no tertiary', () => {
+    const p = resolveBrandPalette({ primary: '#002991', secondary: '#3fb6ff' })
+    expect(p.tokens['--brand-gradient']).toContain('#3fb6ff')
+    const apple = resolveBrandPalette({ primary: '#000000' })
+    expect(apple.tokens['--brand-gradient']).toMatch(/#000000 0%, #[0-9a-f]{6} 100%/)
+  })
+})
+
+describe('dark ladder (bold) follows Material tones in the brand hue', () => {
+  it('surface 6 → raised 22 as OKLCH lightness, chroma in the brand hue, text still 7:1', () => {
+    const p = resolveBrandPalette({ primary: '#002991', background: '#ffffff' }).tokens
+    const L = (t: string) => toOklch(rgb(p[t as keyof typeof p]!)).l
+    expect(L('--brand-background-dark')).toBeCloseTo(0.19, 1)
+    expect(L('--brand-well-dark')).toBeCloseTo(0.224, 1)
+    expect(L('--brand-surface-dark')).toBeCloseTo(0.24, 1)
+    expect(L('--brand-row-dark')).toBeCloseTo(0.29, 1)
+    expect(L('--brand-raised-dark')).toBeCloseTo(0.33, 1)
+    for (const t of ['--brand-background-dark', '--brand-surface-dark', '--brand-raised-dark'] as const) {
+      expect(contrast(rgb(TRAYO_SURFACES.dark.text), rgb(p[t]!))).toBeGreaterThanOrEqual(7)
+    }
+    const quiet = resolveBrandPalette({ primary: '#002991', background: '#ffffff', emphasis: 'quiet' }).tokens
+    expect(toOklch(rgb(quiet['--brand-raised-dark']!)).l).toBeGreaterThan(0.36)
+  })
+})
+
 describe('shell slot', () => {
   const slack = resolveBrandPalette({ primary: '#611f69', shell: '#4a154b', secondary: '#36c5f0' })
   const t = slack.tokens
@@ -464,8 +509,13 @@ describe('complete override — surfaces', () => {
     expect(contrast(rgb(q.tokens['--brand-text']!), rgb('#eef3ff'))).toBeGreaterThanOrEqual(7)
   })
 
-  it('dark mode keeps Trayo lightness steps and takes the brand hue at low chroma', () => {
-    const tinted = resolveBrandPalette({ primary: '#002991', background: '#eef3ff', text: '#001435' }).tokens
+  it('quiet: dark mode keeps Trayo lightness steps and takes the brand hue at low chroma', () => {
+    const tinted = resolveBrandPalette({
+      primary: '#002991',
+      background: '#eef3ff',
+      text: '#001435',
+      emphasis: 'quiet'
+    }).tokens
     for (const [token, trayo] of [
       ['--brand-background-dark', TRAYO_SURFACES.dark.shell],
       ['--brand-surface-dark', TRAYO_SURFACES.dark.card],
