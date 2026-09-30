@@ -31,6 +31,8 @@ jobs:
       - run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Typecheck the library
         run: pnpm typecheck
+      - name: Unit tests (brand palette)
+        run: pnpm test
       - name: Build the site (packs the tarball, publishes the faces)
         run: pnpm build
       - name: Check the vendor tarball

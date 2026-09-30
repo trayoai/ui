@@ -351,6 +351,7 @@ Sizes: `xs sm md lg xl 2xl`.
 | Overlays | `Dialog` `Popover` `DropdownMenu` |
 | Feedback | `Toaster` `toast()` `useToast()` |
 | Charts | `ChartLegend` `DataLabel` `CHART_COLORS` `CHART_SEQUENTIAL` `CHART_MUTED` `chartColor` `chartSequential` |
+| Customer brand | `resolveBrandPalette` `checkBrandPalette` `fromBrandThemeContract` `brandPaletteCss` `brandAttributes` `BRAND_SLOTS` (see [Customer brand](#customer-brand)) |
 
 ### Page scaffolding
 
@@ -581,6 +582,63 @@ Follow these and the result stays on-brand. Break them and it drifts.
 You own these files now, so editing them is fair game. Prefer extending a
 variant over forking a component, and keep the token vocabulary intact — that
 is what holds the aesthetic together.
+
+---
+
+## Customer brand
+
+Building an app for a specific company? Give it that company's colours. The kit
+keeps its own look — cream surfaces, type, radius, status colours, the warm glow —
+and takes the brand on the accent (buttons, links, focus rings, selection, the
+brand gradient, chart series 1 and the intensity ramp) and, when the brand has
+one, on the top bar.
+
+You choose **what** the colours are; the kit works out **how** to use them.
+Colour lists from logo APIs come by prominence, not role (PayPal's starts with
+black), so pick deliberately:
+
+| Slot | | Role |
+|---|---|---|
+| `primary` | required | The colour the company is known for. A black-and-white brand uses its black. |
+| `secondary` | optional | A second brand colour for decoration only: gradient end, mesh. |
+| `primaryDark` | optional | The dark-mode fill, for an official dark colour or a black-and-white brand. |
+| `shell` | optional | The brand's own product chrome (Slack's aubergine) — paints the `AppShell` top bar. Omit when that chrome is white. |
+
+`BRAND_SLOTS` has the same roles in full; `brandSlotsAgentGuide()` is a prompt
+built from it.
+
+```tsx
+import {
+  brandAttributes, brandPaletteCss, checkBrandPalette, fromBrandThemeContract, resolveBrandPalette,
+} from './trayo-ui'
+
+// Either slots directly…
+const input = { primary: '#611f69', secondary: '#36c5f0', shell: '#4a154b' }
+// …or a brand theme contract (primary, onPrimary, shell, onShell, background,
+// surface, text, mutedText, accents[]): background/surface/text/mutedText stay
+// the kit's; `notes` says what was not applied.
+// const { input, notes } = fromBrandThemeContract(contract)
+
+const problems = checkBrandPalette(input)   // [] — or messages to hand back to whoever picked
+const palette = resolveBrandPalette(input)
+
+// Once, at the app root:
+document.head.insertAdjacentHTML('beforeend', `<style>${brandPaletteCss(palette, 'html')}</style>`)
+for (const [k, v] of Object.entries(brandAttributes(palette))) document.documentElement.setAttribute(k, v)
+```
+
+What the resolver guarantees, so you never adjust a colour for contrast:
+
+- text on a brand fill reads at 4.5:1, white or ink picked for you (a supplied
+  `onPrimary`/`onShell` is kept only when it reads);
+- accent text and links are a darker step of the brand where the brand itself
+  is too light (yellow, sky blue) — the fill keeps the brand colour;
+- dark mode lifts the fill until it stands out; a black-and-white brand fills
+  with near-white;
+- shell text, hover and selected rows read on the shell.
+
+Without `data-brand` on `<html>` nothing changes. The live demo at
+[ui.trayo.ai/demo](https://ui.trayo.ai/demo) has a brand switcher.
 
 ---
 

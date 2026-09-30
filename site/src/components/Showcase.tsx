@@ -64,6 +64,11 @@ import {
   type CompanyLike,
   type PersonLike,
   cn,
+  brandAttributes,
+  brandPaletteStyle,
+  fromBrandThemeContract,
+  resolveBrandPalette,
+  type BrandThemeContract,
 } from '../../../src'
 
 /* --------------------------------------------------------------- fixtures */
@@ -712,8 +717,64 @@ const BANDS = [
 ] as const
 type Band = (typeof BANDS)[number]['value']
 
+/**
+ * Customer palettes for the brand switcher, in the brand theme contract shape a
+ * brand-research agent writes. The kit maps them onto its slots: page, cards
+ * and text stay Trayo's; primary, accents and (Slack) the top bar change.
+ */
+const DEMO_BRANDS: Record<Exclude<DemoBrand, 'trayo'>, BrandThemeContract> = {
+  paypal: {
+    primary: '#002991', onPrimary: '#ffffff', shell: '#ffffff', onShell: '#001435',
+    background: '#ffffff', surface: '#f5f7fa', text: '#001435', mutedText: '#545d68',
+    accents: ['#3fb6ff'],
+  },
+  slack: {
+    primary: '#611f69', onPrimary: '#ffffff', shell: '#4a154b', onShell: '#ffffff',
+    background: '#ffffff', surface: '#f8f8f8', text: '#1d1c1d', mutedText: '#616061',
+    accents: ['#36c5f0', '#2eb67d', '#ecb22e', '#e01e5a'],
+  },
+  stripe: {
+    primary: '#543afc', onPrimary: '#ffffff', shell: '#ffffff', onShell: '#0a2540',
+    background: '#ffffff', surface: '#f6f9fc', text: '#0a2540', mutedText: '#425466',
+  },
+  apple: {
+    primary: '#000000', onPrimary: '#ffffff', shell: '#f5f5f7', onShell: '#1d1d1f',
+    background: '#ffffff', surface: '#f5f5f7', text: '#1d1d1f', mutedText: '#6e6e73',
+  },
+}
+type DemoBrand = 'trayo' | 'paypal' | 'slack' | 'stripe' | 'apple'
+const BRAND_OPTIONS: { value: DemoBrand; label: string }[] = [
+  { value: 'trayo', label: 'Trayo' },
+  { value: 'paypal', label: 'PayPal' },
+  { value: 'slack', label: 'Slack' },
+  { value: 'stripe', label: 'Stripe' },
+  { value: 'apple', label: 'Apple' },
+]
+
+/**
+ * Applies a demo brand the way an app does: the resolved tokens and the
+ * data-brand attributes on <html>, so portaled popovers follow too.
+ */
+function useDemoBrand(brand: DemoBrand) {
+  useEffect(() => {
+    if (brand === 'trayo') return
+    const root = document.documentElement
+    const palette = resolveBrandPalette(fromBrandThemeContract(DEMO_BRANDS[brand]).input)
+    const attrs = brandAttributes(palette)
+    const style = brandPaletteStyle(palette)
+    for (const [k, v] of Object.entries(attrs)) root.setAttribute(k, v)
+    for (const [k, v] of Object.entries(style)) root.style.setProperty(k, v)
+    return () => {
+      for (const k of Object.keys(attrs)) root.removeAttribute(k)
+      for (const k of Object.keys(style)) root.style.removeProperty(k)
+    }
+  }, [brand])
+}
+
 export function Showcase({ compact = false }: { compact?: boolean } = {}) {
   const [dark, setDark] = useState(false)
+  const [brand, setBrand] = useState<DemoBrand>('trayo')
+  useDemoBrand(brand)
   const [selected, setSelected] = useState<Set<string>>(new Set(['p-2']))
   const [sort, setSort] = useState<SortState>({ key: 'score', dir: 'desc' })
   const [band, setBand] = useState<Band>('all')
@@ -731,7 +792,7 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
         brand={
           <>
             <span>
-              Trayo <span className='text-accent-brand'>GTM UI</span>
+              Trayo <span className='text-accent-text'>GTM UI</span>
             </span>
             <Badge variant='soft'>demo</Badge>
           </>
@@ -744,7 +805,18 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
             </AppShellNavLink>
           </>
         }
-        actions={<ThemeSwitch dark={dark} onChange={setDark} />}
+        actions={
+          <>
+            <SegmentedControl
+              size='sm'
+              aria-label='Customer brand'
+              value={brand}
+              onValueChange={setBrand}
+              options={BRAND_OPTIONS}
+            />
+            <ThemeSwitch dark={dark} onChange={setDark} />
+          </>
+        }
       >
         <Toaster />
         <PageContainer width='wide' className={compact ? 'py-6' : undefined}>
