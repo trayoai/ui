@@ -905,7 +905,9 @@
     0 22px 60px -26px rgb(var(--brand-primary-dark-rgb, var(--brand-primary-rgb, 132 92 255)) / 0.55);
   --gradient-brand: var(--brand-gradient-dark, linear-gradient(135deg, var(--accent-brand) 0%, var(--accent-brand) 100%));
   --shell-glow-cool-rgb: var(--brand-primary-dark-rgb, var(--brand-primary-rgb, 132 92 255));
-  --chart-1: var(--accent-brand);
+  /* The accent text tone: clears 4.5:1 on every dark surface, the card
+     included (the fill only guarantees 3:1 on the shell). */
+  --chart-1: var(--accent-text);
   --chart-seq-1: var(--brand-seq-dark-1, #6850ab);
   --chart-seq-2: var(--brand-seq-dark-2, #8161d4);
   --chart-seq-3: var(--brand-seq-dark-3, #9978f5);
@@ -978,6 +980,14 @@
   --secondary: var(--surface-row);
   --ring: var(--accent-text);
   --sidebar-ring: var(--ring);
+}
+
+/* The region's own background is the opaque shell: the resolver checks shell
+   text against the shell itself, so a translucent bar (the top bar is /80 with
+   a blur) would let the page lift it and cost contrast. */
+[data-brand-shell] [data-shell-region],
+[data-brand-shell][data-shell-region] {
+  background-color: var(--brand-shell);
 }
 
 /* Inline surfaces inside a shell region (the sidebar's user menu renders in

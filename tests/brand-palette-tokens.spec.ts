@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 import { describe, expect, it } from 'vitest'
@@ -164,6 +164,32 @@ describe('shell region restates every token that aliases what it overrides', () 
       if (region.has(token)) continue
       const aliases = overridden.some((t) => value.includes(`var(${t})`) || value.includes(`var(${t},`))
       if (aliases) expect(region.has(token), `${token} (${value}) not restated`).toBe(true)
+    }
+  })
+})
+
+describe('what renders is what the resolver checked', () => {
+  it('a shell region paints the opaque shell, not a translucent page tint', () => {
+    expect(css).toMatch(
+      /\[data-brand-shell\] \[data-shell-region\],\n\[data-brand-shell\]\[data-shell-region\] \{\n  background-color: var\(--brand-shell\);\n\}/
+    )
+  })
+
+  it('dark chart-1 is the accent text tone (4.5:1 on the dark card), not the fill', () => {
+    expect(brandDark.get('--chart-1')).toBe('var(--accent-text)')
+  })
+
+  it('no kit component puts a hard-coded white label on a brand fill', () => {
+    const walk = (dir: string): string[] =>
+      readdirSync(dir).flatMap((f) => {
+        const p = resolve(dir, f)
+        return statSync(p).isDirectory() ? walk(p) : p.endsWith('.tsx') ? [p] : []
+      })
+    for (const file of walk(resolve(__dirname, '../src/components'))) {
+      const src = readFileSync(file, 'utf8')
+      for (const m of src.matchAll(/'[^']*bg-accent-brand[^']*'/g)) {
+        expect(m[0], file).not.toMatch(/\btext-white\b/)
+      }
     }
   })
 })
