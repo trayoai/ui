@@ -776,8 +776,9 @@ function useDemoBrand(brand: DemoBrand, full: boolean) {
 export function Showcase({ compact = false }: { compact?: boolean } = {}) {
   const [dark, setDark] = useState(false)
   const [brand, setBrand] = useState<DemoBrand>('trayo')
-  // Full: the contract's background/surface/text too (the complete override).
-  const [fullBrand, setFullBrand] = useState(false)
+  // Full (the default for a customer build): the company's surfaces too.
+  // Off = accent-only, the page stays Trayo's cream.
+  const [fullBrand, setFullBrand] = useState(true)
   useDemoBrand(brand, fullBrand)
   const [selected, setSelected] = useState<Set<string>>(new Set(['p-2']))
   const [sort, setSort] = useState<SortState>({ key: 'score', dir: 'desc' })

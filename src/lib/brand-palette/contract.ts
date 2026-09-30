@@ -29,17 +29,18 @@ export interface BrandThemeContract {
   primaryDark?: string | null
 }
 
-/** The page-and-text fields; applied only with `surfaces: 'brand'`. */
+/** The page-and-text fields; left out with `surfaces: 'trayo'`. */
 export const CONTRACT_SURFACE_FIELDS = ['background', 'surface', 'text', 'mutedText'] as const
 
 export interface ContractOptions {
   /**
-   * `'trayo'` (default): the page, cards and text stay Trayo's, so a branded
-   * app still reads as Trayo UI; only the accent, charts and chrome change.
-   * `'brand'`: the complete override — the contract's background, surface,
-   * text and mutedText are applied too.
+   * `'brand'` (default): the company's styling is the canvas — the contract's
+   * background, surface, text and mutedText apply, and Trayo contributes the
+   * language (components, type, radius, grain, motion, status colours).
+   * `'trayo'`: accent-only — the page, cards and text stay Trayo's cream;
+   * only the accent, charts and chrome take the brand.
    */
-  surfaces?: 'trayo' | 'brand'
+  surfaces?: 'brand' | 'trayo'
 }
 
 export interface ContractMapping {
@@ -54,15 +55,15 @@ export interface ContractMapping {
  * - `primary`, `onPrimary`, `shell`, `onShell`, `accents`, `primaryDark` →
  *   the same slots (the resolver keeps the `on*` colours only when they are
  *   readable, and turns accents into chart series 2–5);
- * - `background`, `surface`, `text`, `mutedText` → the same slots with
- *   `surfaces: 'brand'`; not applied by default, so the page stays Trayo's.
+ * - `background`, `surface`, `text`, `mutedText` → the same slots (the
+ *   default); `surfaces: 'trayo'` leaves them out so the page stays Trayo's.
  *
  * A light shell (the brand's navigation is white) is left out so the Trayo
  * top bar stays; the resolver would reject it.
  */
 export function fromBrandThemeContract(
   contract: BrandThemeContract,
-  { surfaces = 'trayo' }: ContractOptions = {}
+  { surfaces = 'brand' }: ContractOptions = {}
 ): ContractMapping {
   const notes: string[] = []
   const norm = (value: string | null | undefined) => {

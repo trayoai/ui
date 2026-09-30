@@ -133,9 +133,9 @@ the wrong place or not at all. Nothing errors at build time.
     Write (or receive) the brand theme contract — `primary` is the colour the
     company is known for, not the first colour a logo API lists; `shell` only
     if its product chrome is coloured; `accents[]` for chart series 2–5 — and
-    map it with `fromBrandThemeContract(contract, { surfaces })`: `'trayo'`
-    keeps the kit's page, cards and text (the default), `'brand'` is the
-    complete override. Run `checkBrandPalette`, then `resolveBrandPalette`,
+    map it with `fromBrandThemeContract(contract)`. The company's styling is
+    the canvas (page, cards, text too); the kit supplies the language. Pass
+    `{ surfaces: 'trayo' }` only when the page should stay the kit's cream. Run `checkBrandPalette`, then `resolveBrandPalette`,
     put `brandPaletteCss(palette, 'html')` in a `<style>` and
     `brandAttributes` on `<html>` (README "Customer brand"). Never hand-set
     `--brand-*` or `--accent-*`, and never adjust a colour for contrast — the

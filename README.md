@@ -587,16 +587,17 @@ is what holds the aesthetic together.
 
 ## Customer brand
 
-Building an app for a specific company? Give it that company's colours. Two
-depths:
+Building an app for a specific company? Give it that company's styling and let
+the kit supply the language. Two depths:
 
-- **Accent** (default): the kit keeps its own surfaces — cream page, cards,
-  type, radius, status colours, the warm glow — and takes the brand on buttons,
-  links, focus rings, selection, the brand gradient, the charts and, when the
-  brand has one, the top bar. It still reads as Trayo UI.
-- **Complete override** (`surfaces: 'brand'`): the page, cards and text take the
-  brand's colours too. Dark mode keeps the kit's dark ladder tinted with the
-  brand's hue.
+- **Brand** (default): the company's colours are the canvas — page, cards,
+  text, buttons, links, focus rings, selection, the brand gradient, the charts
+  and, when the brand has one, the top bar. Trayo contributes what makes it
+  recognisably Trayo: the components, pill buttons, type roles, radius, grain,
+  motion and status colours. Dark mode keeps the kit's dark ladder tinted with
+  the brand's hue.
+- **Accent only** (`surfaces: 'trayo'`): the page, cards and text stay the
+  kit's cream; only the accent, charts and chrome take the brand.
 
 You choose **what** the colours are; the kit works out **how** to use them.
 Colour lists from logo APIs come by prominence, not role (PayPal's starts with
@@ -610,7 +611,7 @@ that prompt):
 | `onPrimary` | optional | Text on primary; kept only when it reads at 4.5:1. |
 | `shell` / `onShell` | optional | The brand's own product chrome (Slack's aubergine) — paints the `AppShell` top bar. Omit when that chrome is white. |
 | `accents[]` | optional | Chart series 2–5, in order (missing ones filled from the kit's series, skipping hues already taken); the first is also the decorative secondary (gradient end, mesh). |
-| `background` `surface` `text` `mutedText` | optional | The complete override: page, cards, main and supporting text. Applied only with `surfaces: 'brand'`. |
+| `background` `surface` `text` `mutedText` | optional | Page, cards, main and supporting text. Left out with `surfaces: 'trayo'`. |
 | `primaryDark` | optional | The dark-mode fill, for an official dark colour or a black-and-white brand. |
 
 ```tsx
@@ -620,9 +621,9 @@ import {
 
 // Either slots directly…
 const input = { primary: '#611f69', shell: '#4a154b', accents: ['#36c5f0', '#2eb67d'] }
-// …or the agent's brand theme contract. Default keeps the kit's page, cards
-// and text (`notes` says so); `{ surfaces: 'brand' }` is the complete override.
-// const { input, notes } = fromBrandThemeContract(contract, { surfaces: 'brand' })
+// …or the agent's brand theme contract. Default applies the company's page,
+// cards and text too; `{ surfaces: 'trayo' }` keeps the kit's cream instead.
+// const { input, notes } = fromBrandThemeContract(contract)
 
 const problems = checkBrandPalette(input)   // [] — or messages to hand back to whoever picked
 const palette = resolveBrandPalette(input)
@@ -642,9 +643,9 @@ What the resolver guarantees, so you never adjust a colour for contrast:
   with near-white;
 - shell text, hover and selected rows read on the shell;
 - accents become chart series that clear 3:1 on the card, light and dark;
-- with the complete override, text clears 7:1 and supporting text 4.5:1 on
-  every brand surface, borders and the hover row are derived, and the checks
-  above run against the brand's surfaces instead of the kit's.
+- on the brand's surfaces, text clears 7:1 and supporting text 4.5:1, borders
+  and the hover row are derived, and every check above runs against those
+  surfaces instead of the kit's.
 
 Without `data-brand` on `<html>` nothing changes. The live demo at
 [ui.trayo.ai/demo](https://ui.trayo.ai/demo) has a brand switcher.

@@ -30,14 +30,18 @@ describe('fromBrandThemeContract', () => {
       primaryDark: null,
       accents: ['#36c5f0', '#2eb67d', '#ecb22e', '#e01e5a'],
       shell: '#4a154b',
-      onShell: '#ffffff'
+      onShell: '#ffffff',
+      background: '#ffffff',
+      surface: '#f8f8f8',
+      text: '#1d1c1d',
+      mutedText: '#616061'
     })
     expect(checkBrandPalette(input)).toEqual([])
     expect(resolveBrandPalette(input).tokens['--brand-shell']).toBe('#4a154b')
   })
 
-  it('keeps Trayo page, cards and text by default, and says so', () => {
-    const { notes } = fromBrandThemeContract(slack)
+  it("surfaces: 'trayo' keeps Trayo page, cards and text, and says so", () => {
+    const { notes } = fromBrandThemeContract(slack, { surfaces: 'trayo' })
     for (const field of CONTRACT_SURFACE_FIELDS) {
       expect(notes.some((n) => n.startsWith(`${field} `))).toBe(true)
     }
@@ -77,8 +81,8 @@ describe('fromBrandThemeContract', () => {
     ).toBeNull()
   })
 
-  it("surfaces: 'brand' passes the page and text through (the complete override)", () => {
-    const { input, notes } = fromBrandThemeContract(slack, { surfaces: 'brand' })
+  it('passes the page and text through by default: the company styling is the canvas', () => {
+    const { input, notes } = fromBrandThemeContract(slack)
     expect(input).toMatchObject({
       background: '#ffffff',
       surface: '#f8f8f8',
@@ -91,8 +95,8 @@ describe('fromBrandThemeContract', () => {
     expect(p.tokens['--brand-surface']).toBe('#f8f8f8')
   })
 
-  it("surfaces: 'trayo' (default) drops them and says so", () => {
-    const { input, notes } = fromBrandThemeContract(slack)
+  it("surfaces: 'trayo' drops them and says so", () => {
+    const { input, notes } = fromBrandThemeContract(slack, { surfaces: 'trayo' })
     expect(input.background).toBeUndefined()
     for (const f of CONTRACT_SURFACE_FIELDS) expect(notes.some((n) => n.startsWith(`${f} `))).toBe(true)
   })
