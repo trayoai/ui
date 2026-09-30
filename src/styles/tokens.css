@@ -822,10 +822,19 @@
      the first one logo.dev lists. Fills primary buttons; drives links, focus
      rings, selected states, tints and accent borders. A black-and-white brand
      uses its black; never invent a hue.
+   @slot --brand-on-primary / --brand-on-shell (optional) Text on the
+     primary fill and inside the shell. Kept only when they read at 4.5:1;
+     derived otherwise.
    @slot --brand-secondary (optional) A second brand colour, decoration only:
      the brand gradient's end and the mesh's second cool layer.
    @slot --brand-primary-dark (optional) Dark-mode fill, only for an official
      dark colour or a black-and-white brand (near-white). Derived otherwise.
+   @slot --brand-background --brand-surface --brand-text --brand-text-secondary
+     (optional, together) The complete override: the page, cards and text take
+     the brand's colours when <html> also carries data-brand-surfaces. Omit
+     them and the page stays Trayo's cream.
+   @slot --brand-chart-2..5 (optional) The brand's accents as chart series
+     2–5; series 1 is primary.
    @slot --brand-shell (optional) The brand's own product chrome (Slack's
      aubergine). Paints the AppShell top bar and any [data-shell-region]
      when <html> also carries data-brand-shell; text, hover, selection,
@@ -873,6 +882,14 @@
      yellow brand); the intensity ramp takes the brand's hue. Series 2-5 stay
      Trayo's. Fallbacks are Trayo's ramp. */
   --chart-1: var(--brand-ring, var(--brand-primary));
+  /* Series 2–5 are the brand's accents (contract accents[]), each checked at
+     3:1 on the card. The resolver fills missing series from Trayo's palette
+     (skipping a hue already taken) whenever the brand has accents or its own
+     surfaces; the fallbacks here only serve a brand with neither. */
+  --chart-2: var(--brand-chart-2, #0d9488);
+  --chart-3: var(--brand-chart-3, #d97706);
+  --chart-4: var(--brand-chart-4, #e11d48);
+  --chart-5: var(--brand-chart-5, #2563eb);
   --chart-seq-1: var(--brand-seq-1, #b9acf2);
   --chart-seq-2: var(--brand-seq-2, #a087ef);
   --chart-seq-3: var(--brand-seq-3, #8860ea);
@@ -908,11 +925,135 @@
   /* The accent text tone: clears 4.5:1 on every dark surface, the card
      included (the fill only guarantees 3:1 on the shell). */
   --chart-1: var(--accent-text);
+  --chart-2: var(--brand-chart-dark-2, #00a38f);
+  --chart-3: var(--brand-chart-dark-3, #cb7f00);
+  --chart-4: var(--brand-chart-dark-4, #e14660);
+  --chart-5: var(--brand-chart-dark-5, #3986e4);
   --chart-seq-1: var(--brand-seq-dark-1, #6850ab);
   --chart-seq-2: var(--brand-seq-dark-2, #8161d4);
   --chart-seq-3: var(--brand-seq-dark-3, #9978f5);
   --chart-seq-4: var(--brand-seq-dark-4, #af99fb);
   --chart-seq-5: var(--brand-seq-dark-5, #c6bafa);
+}
+
+/* Complete override: the page, cards and text take the brand's colours
+   (contract background/surface/text/mutedText, resolved with the well, hover
+   row, raised surface, text scale and borders derived). Every token that
+   aliases one of these is restated — they resolve where they are declared.
+   Grain, shadows, radius, status colours and the warm glow stay Trayo's. */
+[data-brand-surfaces],
+[data-brand-surfaces] .light,
+.light[data-brand-surfaces] {
+  --color-app-shell: var(--brand-background);
+  --color-app-card: var(--brand-surface);
+  --color-app-well: var(--brand-well);
+  --color-app-row: var(--brand-row);
+  --color-app-raised: var(--brand-raised);
+  --gradient-shell: linear-gradient(160deg, var(--brand-background) 0%, var(--brand-background) 100%);
+  --gradient-card: linear-gradient(160deg, var(--brand-raised) 0%, var(--brand-row) 100%);
+  --gradient-card-hover: linear-gradient(160deg, var(--brand-raised) 0%, var(--brand-surface) 40%, var(--brand-row) 100%);
+  --text-primary: var(--brand-text);
+  --text-secondary: var(--brand-text-secondary);
+  --text-muted: var(--brand-text-muted);
+  --border-subtle: var(--brand-border-subtle);
+  --border-strong: var(--brand-border-strong);
+  --surface-shell: var(--color-app-shell);
+  --surface-card: var(--color-app-card);
+  --surface-well: var(--color-app-well);
+  --surface-row: var(--color-app-row);
+  --surface-popover: var(--color-app-raised);
+  --surface-field: var(--color-app-raised);
+  --text-secondary-card: var(--text-secondary);
+  --text-muted-card: var(--text-muted);
+  --text-secondary-raised: var(--text-secondary);
+  --text-muted-raised: var(--text-muted);
+  --seg-track-line: var(--border-subtle);
+  --seg-text-idle: var(--text-secondary);
+  --foreground: var(--text-primary);
+  --card-foreground: var(--text-primary);
+  --popover-foreground: var(--text-primary);
+  --secondary-foreground: var(--text-primary);
+  --muted-foreground: var(--text-muted);
+  --accent-foreground: var(--text-primary);
+  --border: var(--border-subtle);
+  --input: var(--border-subtle);
+  --surface-dialog: var(--surface-shell);
+  --surface-dropzone: var(--surface-card);
+  --surface-hover: var(--surface-well);
+  --seg-track: var(--surface-well);
+  --seg-thumb: var(--surface-card);
+  --shadow-tile-overlap: 0 0 0 2px var(--surface-card), 0 0 0 2.5px rgba(28, 26, 23, 0.16), inset 0 0 0 1px rgba(28, 26, 23, 0.08);
+  --shadow-face-overlap: 0 0 0 2px var(--surface-card);
+  --background: var(--surface-shell);
+  --card: var(--surface-card);
+  --popover: var(--surface-card);
+  --muted: var(--surface-well);
+  --accent: var(--surface-well);
+}
+
+/* Dark: Trayo's dark ladder tinted with the brand's hue. Text, borders and
+   every alias the light block above sets are restated with .dark's own values
+   (:root's for a token .dark never redeclares; the contract has no dark
+   colours): the light block matches this element too and, being later at
+   equal specificity, would otherwise win. */
+.dark[data-brand-surfaces],
+.dark [data-brand-surfaces],
+[data-brand-surfaces] .dark {
+  --color-app-shell: var(--brand-background-dark);
+  --color-app-card: var(--brand-surface-dark);
+  --color-app-well: var(--brand-well-dark);
+  --color-app-row: var(--brand-row-dark);
+  --color-app-raised: var(--brand-raised-dark);
+  --gradient-shell: linear-gradient(160deg, var(--brand-surface-dark) 0%, var(--brand-background-dark) 100%);
+  --gradient-card: linear-gradient(160deg, var(--color-app-raised) 0%, var(--color-app-well) 100%);
+  --gradient-card-hover: linear-gradient(160deg, var(--color-app-row) 0%, var(--color-app-card) 100%);
+  --text-primary: #EAECF1;
+  --text-secondary: #A4ACC2;
+  --text-muted: #7F8AA9;
+  --border-subtle: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.19);
+  --surface-shell: var(--color-app-shell);
+  --surface-card: var(--color-app-card);
+  --surface-well: var(--color-app-well);
+  --surface-row: var(--color-app-row);
+  --surface-popover: var(--color-app-raised);
+  --surface-field: var(--surface-well);
+  --text-secondary-card: var(--text-secondary);
+  --text-muted-card: var(--text-muted);
+  --text-secondary-raised: #B7BDCF;
+  --text-muted-raised: #A3ABC2;
+  --seg-track-line: var(--border-subtle);
+  --seg-text-idle: #C7CCDA;
+  --foreground: var(--text-primary);
+  --card-foreground: var(--text-primary);
+  --popover-foreground: var(--text-primary);
+  --secondary-foreground: var(--text-primary);
+  --muted-foreground: var(--text-muted);
+  --accent-foreground: var(--text-primary);
+  --border: var(--border-subtle);
+  --input: var(--border-subtle);
+  --surface-dialog: var(--surface-popover);
+  --surface-dropzone: var(--surface-row);
+  --surface-hover: var(--surface-row);
+  --seg-track: var(--surface-row);
+  --seg-thumb: #444D65;
+  --shadow-tile-overlap: 0 0 0 2px var(--surface-card), 0 0 0 2.5px rgba(255, 255, 255, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  --shadow-face-overlap: 0 0 0 2px var(--surface-card);
+  --background: var(--surface-shell);
+  --card: var(--surface-card);
+  --popover: var(--surface-popover);
+  --muted: var(--surface-well);
+  --accent: rgba(255, 255, 255, 0.06);
+  --sidebar: var(--surface-card);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-accent: var(--surface-row);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-hover: var(--surface-row);
+  --sidebar-border: var(--border-subtle);
+  --surface-sidebar: var(--surface-card);
+  --surface-chip-warm: var(--surface-well);
+  --secondary: var(--surface-row);
+  --tooltip-foreground: var(--text-primary);
 }
 
 /* Brand shell region: the sidebar (and any element marked

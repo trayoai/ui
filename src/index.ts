@@ -167,6 +167,7 @@ export {
   BRAND_ATTRIBUTE,
   BRAND_SHELL_ATTRIBUTE,
   BRAND_SLOTS,
+  BRAND_SURFACES_ATTRIBUTE,
   SHELL_REGION_ATTRIBUTE,
   brandAttributes,
   brandPaletteCss,
@@ -182,6 +183,7 @@ export type {
   BrandSlotName,
   BrandThemeContract,
   ContractMapping,
+  ContractOptions,
   ResolvedBrandPalette,
 } from './lib/brand-palette'
 

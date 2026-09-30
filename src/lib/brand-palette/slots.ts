@@ -5,13 +5,27 @@
  * is derived by `resolveBrandPalette`, so every app with the same slots looks
  * the same.
  *
- * This object is the contract. It is written for the agent that fills it:
- * `role` says where the colour shows, `choose` says how to pick it from the
- * company's colours (logo.dev lists them by prominence, not by role), and
- * tokens.css names the same slots in its `[data-brand]` block.
+ * The slots are the fields of the brand theme contract (the JSON a
+ * brand-research agent writes: primary, onPrimary, shell, onShell,
+ * background, surface, text, mutedText, accents), plus `primaryDark`. This
+ * object is the contract's documentation: `role` says where a colour shows,
+ * `choose` says how to pick it from the company's colours (logo APIs list
+ * them by prominence, not by role), and tokens.css names the same slots in
+ * its `[data-brand]` blocks.
  */
 
-export type BrandSlotName = 'primary' | 'secondary' | 'primaryDark' | 'shell'
+export type BrandSlotName =
+  | 'primary'
+  | 'onPrimary'
+  | 'secondary'
+  | 'primaryDark'
+  | 'shell'
+  | 'onShell'
+  | 'background'
+  | 'surface'
+  | 'text'
+  | 'mutedText'
+  | 'accents'
 
 export interface BrandSlot {
   /** CSS custom property the resolved value lands in. */
@@ -27,18 +41,26 @@ export const BRAND_SLOTS: Readonly<Record<BrandSlotName, BrandSlot>> = {
     required: true,
     role:
       'The colour people associate with the company. Fills primary buttons; drives links, focus rings, ' +
-      'selected states, tinted backgrounds and borders. Covers about 5% of the screen.',
+      'selected states, tinted backgrounds, accent borders and chart series 1. Covers about 5% of the screen.',
     choose:
       "Pick the colour the brand is known for, not the first colour listed: PayPal's logo.dev list starts " +
       'with #000000, but its brand is the blue. Skip white, off-white and pale tints of another colour. ' +
       'If the brand has no hue (Apple, Notion: black, white, greys), use its black; do not invent a hue.'
+  },
+  onPrimary: {
+    cssVar: '--brand-on-primary',
+    required: false,
+    role: 'Text and icons on a primary fill.',
+    choose:
+      "Usually #ffffff, or the brand's ink on a light primary. It is kept only when it reads at 4.5:1 on " +
+      'primary; otherwise white or ink is chosen for you, so do not adjust it for contrast.'
   },
   secondary: {
     cssVar: '--brand-secondary',
     required: false,
     role:
       'A second brand colour for decoration only: the end of the brand gradient and the cool layer of ' +
-      'the brand mesh. Never used for text or controls.',
+      'the brand mesh. Never used for text or controls. Taken from the first accent when not set.',
     choose:
       "Another colour from the brand's own palette that is clearly different from primary (PayPal's navy " +
       'next to its blue). Omit it rather than repeat primary or use a tint of it.'
@@ -61,6 +83,54 @@ export const BRAND_SLOTS: Readonly<Record<BrandSlotName, BrandSlot>> = {
     choose:
       "Use the colour the company's own product paints its navigation or header with (Slack #4a154b). Omit " +
       'it when that chrome is white or light: the Trayo top bar stays then.'
+  },
+  onShell: {
+    cssVar: '--brand-on-shell',
+    required: false,
+    role: 'Text inside the shell.',
+    choose: 'Usually #ffffff on a dark shell. Kept only when it reads at 4.5:1 on shell; derived otherwise.'
+  },
+  background: {
+    cssVar: '--brand-background',
+    required: false,
+    role:
+      "The page canvas, when the app should take the brand's surfaces instead of Trayo's cream (a complete " +
+      'override). The well, hover row and page gradient are derived from it; dark mode takes its hue on ' +
+      "Trayo's dark ladder.",
+    choose:
+      "The brand's own page background, light (#ffffff for most). Omit background, surface, text and " +
+      "mutedText together to keep Trayo's surfaces and only brand the accent and chrome."
+  },
+  surface: {
+    cssVar: '--brand-surface',
+    required: false,
+    role: 'Cards and panels on the page. The raised popover surface is derived from it.',
+    choose:
+      "The brand's card colour, at least as light as background. Defaults to background lifted slightly."
+  },
+  text: {
+    cssVar: '--brand-text',
+    required: false,
+    role: 'Main readable text on the brand surfaces. Borders are derived from it.',
+    choose:
+      "The brand's ink (#1d1c1d for Slack). It is darkened if it does not read at 4.5:1 on every surface."
+  },
+  mutedText: {
+    cssVar: '--brand-text-secondary',
+    required: false,
+    role: 'Supporting text; the muted (meta) tone is derived as a lighter step of it.',
+    choose: "The brand's secondary text colour. Darkened if it does not read at 4.5:1 on every surface."
+  },
+  accents: {
+    cssVar: '--brand-chart-2',
+    required: false,
+    role:
+      'Colours for charts and small highlights, in order: they become chart series 2, 3, 4 and 5 after ' +
+      "primary (series 1); missing ones are filled from Trayo's series, skipping hues already taken. The " +
+      'first accent is also the secondary when none is set.',
+    choose:
+      "The brand's other palette colours, distinct from each other and from primary (Slack's blue, green, " +
+      'yellow, red). Skip white, black and greys. Up to four are used.'
   }
 }
 
@@ -68,10 +138,12 @@ export const BRAND_SLOTS: Readonly<Record<BrandSlotName, BrandSlot>> = {
 export const BRAND_ATTRIBUTE = 'data-brand'
 /** Set beside `data-brand` when the palette has a shell; paints shell regions. */
 export const BRAND_SHELL_ATTRIBUTE = 'data-brand-shell'
+/** Set beside `data-brand` when the palette overrides the page surfaces and text. */
+export const BRAND_SURFACES_ATTRIBUTE = 'data-brand-surfaces'
 /** Marks an element (the AppShell top bar, a sidebar) that takes the brand shell colour. */
 export const SHELL_REGION_ATTRIBUTE = 'data-shell-region'
 
-/** Every custom property `resolveBrandPalette` emits, in emit order. */
+/** Custom properties every palette emits, in emit order. */
 export const BRAND_TOKENS = [
   '--brand-primary',
   '--brand-primary-rgb',
@@ -118,16 +190,55 @@ export const BRAND_SHELL_TOKENS = [
 
 export type BrandShellToken = (typeof BRAND_SHELL_TOKENS)[number]
 
+/** Emitted only when the palette overrides the surfaces (has a background). */
+export const BRAND_SURFACE_TOKENS = [
+  '--brand-background',
+  '--brand-surface',
+  '--brand-well',
+  '--brand-row',
+  '--brand-raised',
+  '--brand-text',
+  '--brand-text-secondary',
+  '--brand-text-muted',
+  '--brand-border-subtle',
+  '--brand-border-strong',
+  '--brand-background-dark',
+  '--brand-surface-dark',
+  '--brand-well-dark',
+  '--brand-row-dark',
+  '--brand-raised-dark'
+] as const
+
+export type BrandSurfaceToken = (typeof BRAND_SURFACE_TOKENS)[number]
+
+/** Emitted per accent given: series 2–5, light and dark. */
+export const BRAND_CHART_TOKENS = [
+  '--brand-chart-2',
+  '--brand-chart-3',
+  '--brand-chart-4',
+  '--brand-chart-5',
+  '--brand-chart-dark-2',
+  '--brand-chart-dark-3',
+  '--brand-chart-dark-4',
+  '--brand-chart-dark-5'
+] as const
+
+export type BrandChartToken = (typeof BRAND_CHART_TOKENS)[number]
+
 /**
- * Instructions for an agent that picks the slots, built from `BRAND_SLOTS` so
- * the prompt and the contract cannot drift. Append the company's name, domain
- * and logo.dev colours when calling it.
+ * Instructions for an agent that researches a company's brand and writes its
+ * theme contract, built from `BRAND_SLOTS` so the prompt and the contract
+ * cannot drift. Append the company's name, domain, description and any
+ * colours a logo API returned when calling it.
  */
 export function brandSlotsAgentGuide(): string {
   const lines = [
-    "Choose brand slots for a Trayo UI app from the company's colours.",
-    'Answer with JSON: {"primary": "#rrggbb", "secondary": "#rrggbb" | null, "primaryDark": "#rrggbb" | null, "shell": "#rrggbb" | null, "rationale": "<one sentence>"}.',
-    'Use only hex colours. Contrast, tints, text colours and dark mode are derived for you; do not adjust colours for contrast.',
+    "Write the brand theme contract for a Trayo UI app from the company's colours.",
+    'Answer with JSON, hex colours only:',
+    '{"primary": "#rrggbb", "onPrimary": "#rrggbb", "shell": "#rrggbb" | null, "onShell": "#rrggbb" | null,',
+    ' "background": "#rrggbb", "surface": "#rrggbb", "text": "#rrggbb", "mutedText": "#rrggbb",',
+    ' "accents": ["#rrggbb", ...], "primaryDark": "#rrggbb" | null, "rationale": "<one sentence>"}',
+    'Contrast, tints, hover states, borders and dark mode are derived for you; never adjust a colour for contrast.',
     ''
   ]
   for (const [name, slot] of Object.entries(BRAND_SLOTS)) {
@@ -137,7 +248,7 @@ export function brandSlotsAgentGuide(): string {
   }
   lines.push(
     '',
-    'Never use brand colours for status (success, warning, danger), the page and card surfaces, body text or charts; Trayo keeps those.'
+    "Status colours (success, warning, danger), typography, radius and the warm glow stay Trayo's in every brand."
   )
   return lines.join('\n')
 }

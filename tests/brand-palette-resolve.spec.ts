@@ -3,8 +3,12 @@ import { describe, expect, it } from 'vitest'
 import { contrast, parseHex, toOklch } from '../src/lib/brand-palette/color'
 import {
   BRAND_SHELL_TOKENS,
+  BRAND_SLOTS,
+  BRAND_SURFACE_TOKENS,
   BRAND_TOKENS,
   brandAttributes,
+  brandSlotsAgentGuide,
+  type BrandChartToken,
   NON_TEXT_CONTRAST,
   TEXT_CONTRAST,
   TRAYO_SURFACES,
@@ -267,6 +271,7 @@ describe('shell slot', () => {
   it('brandPaletteCss and brandPaletteStyle include the shell tokens when present', () => {
     expect(brandPaletteCss(slack)).toContain('  --brand-shell: #4a154b;')
     expect(Object.keys(brandPaletteStyle(slack))).toEqual([...BRAND_TOKENS, ...BRAND_SHELL_TOKENS])
+    expect(Object.keys(brandPaletteStyle(resolveBrandPalette(BRANDS.paypal)))).toEqual([...BRAND_TOKENS])
   })
 })
 
@@ -332,5 +337,183 @@ describe('chart ramp', () => {
   it('is grey for a black-and-white brand', () => {
     const p = resolveBrandPalette(BRANDS.apple)
     for (let i = 1; i <= 5; i++) expect(step(p, i).c).toBeLessThan(0.01)
+  })
+})
+
+describe('complete override — surfaces', () => {
+  const slack = {
+    primary: '#611f69',
+    background: '#ffffff',
+    surface: '#f8f8f8',
+    text: '#1d1c1d',
+    mutedText: '#616061'
+  }
+  const p = resolveBrandPalette(slack)
+  const t = p.tokens
+  const lightSurfaces = [
+    '--brand-background',
+    '--brand-surface',
+    '--brand-well',
+    '--brand-row',
+    '--brand-raised'
+  ].map((k) => t[k as keyof typeof t]!)
+
+  it('emits the surface tokens only with a background, and the attribute with them', () => {
+    for (const token of BRAND_SURFACE_TOKENS) expect(t[token]).toBeDefined()
+    expect(resolveBrandPalette(BRANDS.paypal).tokens['--brand-background']).toBeUndefined()
+    expect(brandAttributes(p)).toEqual({ 'data-brand': '', 'data-brand-surfaces': '' })
+    expect(p.slots).toMatchObject({
+      background: '#ffffff',
+      surface: '#f8f8f8',
+      text: '#1d1c1d',
+      mutedText: '#616061'
+    })
+  })
+
+  it('text reads on every brand surface: 7:1 primary, 4.5:1 secondary, 3:1 muted', () => {
+    for (const bg of lightSurfaces) {
+      expect(contrast(rgb(t['--brand-text']!), rgb(bg))).toBeGreaterThanOrEqual(7)
+      expect(contrast(rgb(t['--brand-text-secondary']!), rgb(bg))).toBeGreaterThanOrEqual(TEXT_CONTRAST)
+      expect(contrast(rgb(t['--brand-text-muted']!), rgb(bg))).toBeGreaterThanOrEqual(NON_TEXT_CONTRAST)
+    }
+  })
+
+  it('accent text and the ring are checked against the brand surfaces, not Trayo cream', () => {
+    const y = resolveBrandPalette({ ...slack, primary: '#ffe01b' }).tokens
+    for (const bg of ['#ffffff', '#f8f8f8']) {
+      expect(contrast(rgb(y['--brand-accent-text']), rgb(bg))).toBeGreaterThanOrEqual(TEXT_CONTRAST)
+      expect(contrast(rgb(y['--brand-ring']), rgb(bg))).toBeGreaterThanOrEqual(NON_TEXT_CONTRAST)
+    }
+  })
+
+  it('a light mutedText is darkened until it reads, and says so', () => {
+    const q = resolveBrandPalette({ ...slack, mutedText: '#bbbbbb' })
+    expect(contrast(rgb(q.tokens['--brand-text-secondary']!), rgb('#ffffff'))).toBeGreaterThanOrEqual(
+      TEXT_CONTRAST
+    )
+    expect(q.adjustments.join(' ')).toMatch(/mutedText #bbbbbb is under 4.5:1/)
+  })
+
+  it('surface and text default from background when omitted', () => {
+    const q = resolveBrandPalette({ primary: '#002991', background: '#f4f7fb' })
+    expect(q.slots.background).toBe('#f4f7fb')
+    expect(toOklch(rgb(q.slots.surface!)).l).toBeGreaterThan(toOklch(rgb('#f4f7fb')).l)
+    expect(contrast(rgb(q.tokens['--brand-text']!), rgb('#f4f7fb'))).toBeGreaterThanOrEqual(7)
+  })
+
+  it('dark mode keeps Trayo lightness steps and takes the brand hue at low chroma', () => {
+    const tinted = resolveBrandPalette({ primary: '#002991', background: '#eef3ff', text: '#001435' }).tokens
+    for (const [token, trayo] of [
+      ['--brand-background-dark', TRAYO_SURFACES.dark.shell],
+      ['--brand-surface-dark', TRAYO_SURFACES.dark.card],
+      ['--brand-raised-dark', TRAYO_SURFACES.dark.raised]
+    ] as const) {
+      const c = toOklch(rgb(tinted[token]!))
+      expect(Math.abs(c.l - toOklch(rgb(trayo)).l)).toBeLessThan(0.02)
+      // The cap is 0.02; rounding to 8-bit hex adds up to ~0.002.
+      expect(c.c).toBeLessThanOrEqual(0.025)
+      expect(contrast(rgb(TRAYO_SURFACES.dark.text), rgb(tinted[token]!))).toBeGreaterThanOrEqual(7)
+    }
+    const grey = resolveBrandPalette({ primary: '#000000', background: '#ffffff', text: '#111111' }).tokens
+    expect(grey['--brand-background-dark']).toBe(TRAYO_SURFACES.dark.shell)
+  })
+
+  it('rejects a dark background: the override is a light theme', () => {
+    expect(checkBrandPalette({ primary: '#fff000', background: '#1d1c1d' })).toEqual([
+      expect.objectContaining({ slot: 'background', message: expect.stringMatching(/not a light colour/) })
+    ])
+  })
+})
+
+const TRAYO_SERIES_BLUE = '#2563eb'
+
+describe('accents → chart series', () => {
+  const p = resolveBrandPalette({
+    primary: '#611f69',
+    accents: ['#36c5f0', '#2eb67d', '#ecb22e', '#e01e5a', '#123456']
+  })
+
+  it('uses up to four accents as series 2–5, visible (3:1) on the light and dark card', () => {
+    for (const n of [2, 3, 4, 5]) {
+      const light = p.tokens[`--brand-chart-${n}` as BrandChartToken]!
+      const dark = p.tokens[`--brand-chart-dark-${n}` as BrandChartToken]!
+      expect(contrast(rgb(light), rgb(TRAYO_SURFACES.light.card))).toBeGreaterThanOrEqual(NON_TEXT_CONTRAST)
+      expect(contrast(rgb(dark), rgb(TRAYO_SURFACES.dark.card))).toBeGreaterThanOrEqual(NON_TEXT_CONTRAST)
+    }
+    expect(p.slots.accents).toHaveLength(5)
+    expect(p.tokens['--brand-chart-6' as BrandChartToken]).toBeUndefined()
+  })
+
+  it('a pale accent is darkened for the light card and noted; a dark one is lifted for the dark card', () => {
+    const q = resolveBrandPalette({ primary: '#611f69', accents: ['#ecb22e', '#0a2540'] })
+    expect(q.tokens['--brand-chart-2']).not.toBe('#ecb22e')
+    expect(q.adjustments.join(' ')).toMatch(/accent #ecb22e is under 3:1 on the light card/)
+    expect(q.tokens['--brand-chart-dark-3']).not.toBe('#0a2540')
+  })
+
+  it('the first accent is the secondary unless one is given; no accents → no chart tokens', () => {
+    expect(p.slots.secondary).toBe('#36c5f0')
+    expect(
+      resolveBrandPalette({ primary: '#611f69', secondary: '#e01e5a', accents: ['#36c5f0'] }).slots.secondary
+    ).toBe('#e01e5a')
+    expect(resolveBrandPalette(BRANDS.paypal).tokens['--brand-chart-2']).toBeUndefined()
+  })
+
+  it('fills missing series from Trayo palette without repeating a chosen hue', () => {
+    // Regression: one blue accent plus Trayo's blue fallback made series 2 and 5 identical.
+    const q = resolveBrandPalette({ primary: '#611f69', accents: ['#2563eb'] })
+    const light = [2, 3, 4, 5].map((n) => q.tokens[`--brand-chart-${n}` as BrandChartToken]!)
+    expect(new Set(light).size).toBe(4)
+    expect(light[0]).toBe('#2563eb')
+    expect(light.slice(1)).not.toContain(TRAYO_SERIES_BLUE)
+    const dark = [2, 3, 4, 5].map((n) => q.tokens[`--brand-chart-dark-${n}` as BrandChartToken]!)
+    expect(new Set(dark).size).toBe(4)
+  })
+
+  it('checks filled-in series against the brand card under the complete override', () => {
+    // Regression: Trayo amber (#d97706) is 2.07:1 on a #d0d0d0 card.
+    const q = resolveBrandPalette({ primary: '#611f69', background: '#cccccc' })
+    const card = q.tokens['--brand-surface']!
+    for (const n of [2, 3, 4, 5]) {
+      expect(
+        contrast(rgb(q.tokens[`--brand-chart-${n}` as BrandChartToken]!), rgb(card))
+      ).toBeGreaterThanOrEqual(NON_TEXT_CONTRAST)
+      expect(
+        contrast(
+          rgb(q.tokens[`--brand-chart-dark-${n}` as BrandChartToken]!),
+          rgb(q.tokens['--brand-surface-dark']!)
+        )
+      ).toBeGreaterThanOrEqual(NON_TEXT_CONTRAST)
+    }
+    expect(q.adjustments.join(' ')).toMatch(/series #d97706 is under 3:1 on the light card/)
+  })
+
+  it('rejects a non-hex accent', () => {
+    expect(checkBrandPalette({ primary: '#611f69', accents: ['blue'] })).toEqual([
+      expect.objectContaining({ slot: 'accents' })
+    ])
+  })
+})
+
+describe('brandSlotsAgentGuide', () => {
+  it('asks for the brand theme contract shape and documents every slot', () => {
+    const guide = brandSlotsAgentGuide()
+    for (const f of [
+      '"primary"',
+      '"onPrimary"',
+      '"shell"',
+      '"onShell"',
+      '"background"',
+      '"surface"',
+      '"text"',
+      '"mutedText"',
+      '"accents"'
+    ]) {
+      expect(guide).toContain(f)
+    }
+    for (const name of Object.keys(BRAND_SLOTS)) {
+      expect(guide).toMatch(new RegExp(`^${name} \\((required|optional)\\)`, 'm'))
+    }
+    expect(guide).toMatch(/never adjust a colour for contrast/)
   })
 })

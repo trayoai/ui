@@ -4,6 +4,7 @@ import { isLightShell, type BrandPaletteInput } from './resolve'
 /**
  * The palette a brand-research agent writes for a company (the brand theme
  * contract): eight named colours plus optional accents, all hex.
+ * `brandSlotsAgentGuide()` is the prompt that produces it.
  */
 export interface BrandThemeContract {
   /** Buttons and brand emphasis. */
@@ -24,10 +25,22 @@ export interface BrandThemeContract {
   mutedText: string
   /** Optional colours for charts and small highlights. */
   accents?: string[]
+  /** Optional: the brand's own dark-mode fill. */
+  primaryDark?: string | null
 }
 
-/** Contract fields Trayo UI keeps its own values for (the Trayo look). */
-export const CONTRACT_FIELDS_NOT_APPLIED = ['background', 'surface', 'text', 'mutedText'] as const
+/** The page-and-text fields; applied only with `surfaces: 'brand'`. */
+export const CONTRACT_SURFACE_FIELDS = ['background', 'surface', 'text', 'mutedText'] as const
+
+export interface ContractOptions {
+  /**
+   * `'trayo'` (default): the page, cards and text stay Trayo's, so a branded
+   * app still reads as Trayo UI; only the accent, charts and chrome change.
+   * `'brand'`: the complete override — the contract's background, surface,
+   * text and mutedText are applied too.
+   */
+  surfaces?: 'trayo' | 'brand'
+}
 
 export interface ContractMapping {
   input: BrandPaletteInput
@@ -38,18 +51,21 @@ export interface ContractMapping {
 /**
  * Maps a theme-contract palette onto the brand slots:
  *
- * - `primary`, `onPrimary`, `shell`, `onShell` → the same slots (the resolver
- *   keeps the `on*` colours only when they are readable);
- * - the first accent that differs from primary → `secondary`;
- * - `background`, `surface`, `text`, `mutedText` → not applied: page, cards and
- *   text stay Trayo's, so every branded app still looks like Trayo UI.
+ * - `primary`, `onPrimary`, `shell`, `onShell`, `accents`, `primaryDark` →
+ *   the same slots (the resolver keeps the `on*` colours only when they are
+ *   readable, and turns accents into chart series 2–5);
+ * - `background`, `surface`, `text`, `mutedText` → the same slots with
+ *   `surfaces: 'brand'`; not applied by default, so the page stays Trayo's.
  *
  * A light shell (the brand's navigation is white) is left out so the Trayo
  * top bar stays; the resolver would reject it.
  */
-export function fromBrandThemeContract(contract: BrandThemeContract): ContractMapping {
+export function fromBrandThemeContract(
+  contract: BrandThemeContract,
+  { surfaces = 'trayo' }: ContractOptions = {}
+): ContractMapping {
   const notes: string[] = []
-  const norm = (value: string | undefined) => {
+  const norm = (value: string | null | undefined) => {
     const rgb = value ? parseHex(value) : null
     return rgb ? toHex(rgb) : null
   }
@@ -64,25 +80,33 @@ export function fromBrandThemeContract(contract: BrandThemeContract): ContractMa
   }
 
   const accents = (contract.accents ?? []).map(norm).filter((a): a is string => a !== null)
-  const secondary = accents.find((a) => a !== primary) ?? null
-
-  for (const field of CONTRACT_FIELDS_NOT_APPLIED) {
-    notes.push(`${field} ${contract[field]} is not applied: Trayo UI keeps its own ${field}.`)
-  }
-  if (accents.length > 1) {
-    notes.push(`${accents.length - 1} further accent(s) are not applied: charts keep Trayo's palette.`)
+  if (accents.length > 4) {
+    notes.push(`${accents.length - 4} accent(s) beyond the fourth are not applied: charts have five series.`)
   }
 
-  return {
+  const input: BrandPaletteInput = {
     // An unparseable primary is passed through as-is so checkBrandPalette
     // reports it with the agent's own value.
-    input: {
-      primary: primary ?? contract.primary,
-      onPrimary: contract.onPrimary,
-      secondary,
-      shell: keepShell,
-      onShell: keepShell ? contract.onShell : null
-    },
-    notes
+    primary: primary ?? contract.primary,
+    onPrimary: contract.onPrimary,
+    primaryDark: contract.primaryDark ?? null,
+    accents,
+    shell: keepShell,
+    onShell: keepShell ? contract.onShell : null
   }
+
+  if (surfaces === 'brand') {
+    input.background = contract.background
+    input.surface = contract.surface
+    input.text = contract.text
+    input.mutedText = contract.mutedText
+  } else {
+    for (const field of CONTRACT_SURFACE_FIELDS) {
+      notes.push(
+        `${field} ${contract[field]} is not applied: Trayo UI keeps its own ${field} (surfaces: 'trayo').`
+      )
+    }
+  }
+
+  return { input, notes }
 }

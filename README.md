@@ -351,7 +351,7 @@ Sizes: `xs sm md lg xl 2xl`.
 | Overlays | `Dialog` `Popover` `DropdownMenu` |
 | Feedback | `Toaster` `toast()` `useToast()` |
 | Charts | `ChartLegend` `DataLabel` `CHART_COLORS` `CHART_SEQUENTIAL` `CHART_MUTED` `chartColor` `chartSequential` |
-| Customer brand | `resolveBrandPalette` `checkBrandPalette` `fromBrandThemeContract` `brandPaletteCss` `brandAttributes` `BRAND_SLOTS` (see [Customer brand](#customer-brand)) |
+| Customer brand | `resolveBrandPalette` `checkBrandPalette` `fromBrandThemeContract` `brandSlotsAgentGuide` `brandPaletteCss` `brandAttributes` `BRAND_SLOTS` (see [Customer brand](#customer-brand)) |
 
 ### Page scaffolding
 
@@ -587,25 +587,31 @@ is what holds the aesthetic together.
 
 ## Customer brand
 
-Building an app for a specific company? Give it that company's colours. The kit
-keeps its own look — cream surfaces, type, radius, status colours, the warm glow —
-and takes the brand on the accent (buttons, links, focus rings, selection, the
-brand gradient, chart series 1 and the intensity ramp) and, when the brand has
-one, on the top bar.
+Building an app for a specific company? Give it that company's colours. Two
+depths:
+
+- **Accent** (default): the kit keeps its own surfaces — cream page, cards,
+  type, radius, status colours, the warm glow — and takes the brand on buttons,
+  links, focus rings, selection, the brand gradient, the charts and, when the
+  brand has one, the top bar. It still reads as Trayo UI.
+- **Complete override** (`surfaces: 'brand'`): the page, cards and text take the
+  brand's colours too. Dark mode keeps the kit's dark ladder tinted with the
+  brand's hue.
 
 You choose **what** the colours are; the kit works out **how** to use them.
 Colour lists from logo APIs come by prominence, not role (PayPal's starts with
-black), so pick deliberately:
+black), so pick deliberately. The slots are the fields of the **brand theme
+contract**, the JSON a brand-research agent writes (`brandSlotsAgentGuide()` is
+that prompt):
 
-| Slot | | Role |
+| Field | | Role |
 |---|---|---|
-| `primary` | required | The colour the company is known for. A black-and-white brand uses its black. |
-| `secondary` | optional | A second brand colour for decoration only: gradient end, mesh. |
+| `primary` | required | The colour the company is known for. A black-and-white brand uses its black. Chart series 1. |
+| `onPrimary` | optional | Text on primary; kept only when it reads at 4.5:1. |
+| `shell` / `onShell` | optional | The brand's own product chrome (Slack's aubergine) — paints the `AppShell` top bar. Omit when that chrome is white. |
+| `accents[]` | optional | Chart series 2–5, in order (missing ones filled from the kit's series, skipping hues already taken); the first is also the decorative secondary (gradient end, mesh). |
+| `background` `surface` `text` `mutedText` | optional | The complete override: page, cards, main and supporting text. Applied only with `surfaces: 'brand'`. |
 | `primaryDark` | optional | The dark-mode fill, for an official dark colour or a black-and-white brand. |
-| `shell` | optional | The brand's own product chrome (Slack's aubergine) — paints the `AppShell` top bar. Omit when that chrome is white. |
-
-`BRAND_SLOTS` has the same roles in full; `brandSlotsAgentGuide()` is a prompt
-built from it.
 
 ```tsx
 import {
@@ -613,11 +619,10 @@ import {
 } from './trayo-ui'
 
 // Either slots directly…
-const input = { primary: '#611f69', secondary: '#36c5f0', shell: '#4a154b' }
-// …or a brand theme contract (primary, onPrimary, shell, onShell, background,
-// surface, text, mutedText, accents[]): background/surface/text/mutedText stay
-// the kit's; `notes` says what was not applied.
-// const { input, notes } = fromBrandThemeContract(contract)
+const input = { primary: '#611f69', shell: '#4a154b', accents: ['#36c5f0', '#2eb67d'] }
+// …or the agent's brand theme contract. Default keeps the kit's page, cards
+// and text (`notes` says so); `{ surfaces: 'brand' }` is the complete override.
+// const { input, notes } = fromBrandThemeContract(contract, { surfaces: 'brand' })
 
 const problems = checkBrandPalette(input)   // [] — or messages to hand back to whoever picked
 const palette = resolveBrandPalette(input)
@@ -635,7 +640,11 @@ What the resolver guarantees, so you never adjust a colour for contrast:
   is too light (yellow, sky blue) — the fill keeps the brand colour;
 - dark mode lifts the fill until it stands out; a black-and-white brand fills
   with near-white;
-- shell text, hover and selected rows read on the shell.
+- shell text, hover and selected rows read on the shell;
+- accents become chart series that clear 3:1 on the card, light and dark;
+- with the complete override, text clears 7:1 and supporting text 4.5:1 on
+  every brand surface, borders and the hover row are derived, and the checks
+  above run against the brand's surfaces instead of the kit's.
 
 Without `data-brand` on `<html>` nothing changes. The live demo at
 [ui.trayo.ai/demo](https://ui.trayo.ai/demo) has a brand switcher.

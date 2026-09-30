@@ -129,15 +129,18 @@ the wrong place or not at all. Nothing errors at build time.
     destructive | destructive-outline | destructive-quiet`. `ghost`, `outline`,
     `link` and `primary` are remapped with a dev warning; write the real name.
 
-17. **Building for a specific company? Use its brand, through the slots.**
-    Pick `primary` (the colour the company is known for — not the first colour
-    a logo API lists), optional `secondary`, and `shell` if its product chrome
-    is coloured; or map a brand theme contract with `fromBrandThemeContract`.
-    Run `checkBrandPalette`, then `resolveBrandPalette`, put
-    `brandPaletteCss(palette, 'html')` in a `<style>` and `brandAttributes`
-    on `<html>` (README "Customer brand"). Never hand-set `--brand-*` or
-    `--accent-*`, and never adjust a colour for contrast — the resolver does.
-    Surfaces, text, status colours and chart series 2–5 stay the kit's.
+17. **Building for a specific company? Use its brand, through the contract.**
+    Write (or receive) the brand theme contract — `primary` is the colour the
+    company is known for, not the first colour a logo API lists; `shell` only
+    if its product chrome is coloured; `accents[]` for chart series 2–5 — and
+    map it with `fromBrandThemeContract(contract, { surfaces })`: `'trayo'`
+    keeps the kit's page, cards and text (the default), `'brand'` is the
+    complete override. Run `checkBrandPalette`, then `resolveBrandPalette`,
+    put `brandPaletteCss(palette, 'html')` in a `<style>` and
+    `brandAttributes` on `<html>` (README "Customer brand"). Never hand-set
+    `--brand-*` or `--accent-*`, and never adjust a colour for contrast — the
+    resolver does. Status colours, type, radius and the warm glow stay the
+    kit's in every brand.
 
 The files are yours once copied, so editing them is allowed. Prefer extending a
 variant over forking a component, and keep the token vocabulary intact.

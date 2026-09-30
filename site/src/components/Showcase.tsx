@@ -755,11 +755,13 @@ const BRAND_OPTIONS: { value: DemoBrand; label: string }[] = [
  * Applies a demo brand the way an app does: the resolved tokens and the
  * data-brand attributes on <html>, so portaled popovers follow too.
  */
-function useDemoBrand(brand: DemoBrand) {
+function useDemoBrand(brand: DemoBrand, full: boolean) {
   useEffect(() => {
     if (brand === 'trayo') return
     const root = document.documentElement
-    const palette = resolveBrandPalette(fromBrandThemeContract(DEMO_BRANDS[brand]).input)
+    const palette = resolveBrandPalette(
+      fromBrandThemeContract(DEMO_BRANDS[brand], { surfaces: full ? 'brand' : 'trayo' }).input
+    )
     const attrs = brandAttributes(palette)
     const style = brandPaletteStyle(palette)
     for (const [k, v] of Object.entries(attrs)) root.setAttribute(k, v)
@@ -768,13 +770,15 @@ function useDemoBrand(brand: DemoBrand) {
       for (const k of Object.keys(attrs)) root.removeAttribute(k)
       for (const k of Object.keys(style)) root.style.removeProperty(k)
     }
-  }, [brand])
+  }, [brand, full])
 }
 
 export function Showcase({ compact = false }: { compact?: boolean } = {}) {
   const [dark, setDark] = useState(false)
   const [brand, setBrand] = useState<DemoBrand>('trayo')
-  useDemoBrand(brand)
+  // Full: the contract's background/surface/text too (the complete override).
+  const [fullBrand, setFullBrand] = useState(false)
+  useDemoBrand(brand, fullBrand)
   const [selected, setSelected] = useState<Set<string>>(new Set(['p-2']))
   const [sort, setSort] = useState<SortState>({ key: 'score', dir: 'desc' })
   const [band, setBand] = useState<Band>('all')
@@ -814,6 +818,15 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
               onValueChange={setBrand}
               options={BRAND_OPTIONS}
             />
+            <label className='flex items-center gap-1.5 text-sm text-text-secondary'>
+              <Switch
+                checked={fullBrand}
+                onCheckedChange={setFullBrand}
+                disabled={brand === 'trayo'}
+                aria-label='Brand surfaces too'
+              />
+              Full
+            </label>
             <ThemeSwitch dark={dark} onChange={setDark} />
           </>
         }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  CONTRACT_FIELDS_NOT_APPLIED,
+  CONTRACT_SURFACE_FIELDS,
   checkBrandPalette,
   fromBrandThemeContract,
   resolveBrandPalette,
@@ -27,7 +27,8 @@ describe('fromBrandThemeContract', () => {
     expect(input).toEqual({
       primary: '#611f69',
       onPrimary: '#ffffff',
-      secondary: '#36c5f0',
+      primaryDark: null,
+      accents: ['#36c5f0', '#2eb67d', '#ecb22e', '#e01e5a'],
       shell: '#4a154b',
       onShell: '#ffffff'
     })
@@ -35,12 +36,15 @@ describe('fromBrandThemeContract', () => {
     expect(resolveBrandPalette(input).tokens['--brand-shell']).toBe('#4a154b')
   })
 
-  it('keeps Trayo page, cards and text, and says so', () => {
+  it('keeps Trayo page, cards and text by default, and says so', () => {
     const { notes } = fromBrandThemeContract(slack)
-    for (const field of CONTRACT_FIELDS_NOT_APPLIED) {
+    for (const field of CONTRACT_SURFACE_FIELDS) {
       expect(notes.some((n) => n.startsWith(`${field} `))).toBe(true)
     }
-    expect(notes.join(' ')).toMatch(/3 further accent\(s\) are not applied/)
+    expect(notes.join(' ')).not.toMatch(/accent/)
+    expect(
+      fromBrandThemeContract({ ...slack, accents: [...slack.accents!, '#123456'] }).notes.join(' ')
+    ).toMatch(/1 accent\(s\) beyond the fourth/)
   })
 
   it('drops a light shell or one that is the page colour', () => {
@@ -55,11 +59,42 @@ describe('fromBrandThemeContract', () => {
     }
   })
 
-  it('skips an accent equal to primary, and has no secondary without accents', () => {
-    expect(fromBrandThemeContract({ ...slack, accents: ['#611f69', '#2eb67d'] }).input.secondary).toBe(
-      '#2eb67d'
+  it('accents become chart series 2–5; the first is the secondary; primary and neutrals are skipped', () => {
+    const p = resolveBrandPalette(fromBrandThemeContract(slack).input)
+    expect(p.tokens['--brand-chart-2']).toBeDefined()
+    expect(p.tokens['--brand-chart-5']).toBeDefined()
+    expect(p.slots.secondary).toBe('#36c5f0')
+    const q = resolveBrandPalette(
+      fromBrandThemeContract({ ...slack, accents: ['#611f69', '#777777', '#2eb67d'] }).input
     )
-    expect(fromBrandThemeContract({ ...slack, accents: undefined }).input.secondary).toBeNull()
+    expect(q.slots.accents).toEqual(['#2eb67d'])
+    expect(q.slots.secondary).toBe('#2eb67d')
+    // Series 3–5 are filled from Trayo's palette once a brand has any accent.
+    expect(q.tokens['--brand-chart-3']).toBeDefined()
+    expect(q.tokens['--brand-chart-3']).not.toBe(q.tokens['--brand-chart-2'])
+    expect(
+      resolveBrandPalette(fromBrandThemeContract({ ...slack, accents: undefined }).input).slots.secondary
+    ).toBeNull()
+  })
+
+  it("surfaces: 'brand' passes the page and text through (the complete override)", () => {
+    const { input, notes } = fromBrandThemeContract(slack, { surfaces: 'brand' })
+    expect(input).toMatchObject({
+      background: '#ffffff',
+      surface: '#f8f8f8',
+      text: '#1d1c1d',
+      mutedText: '#616061'
+    })
+    expect(notes.join(' ')).not.toMatch(/not applied/)
+    const p = resolveBrandPalette(input)
+    expect(p.slots.background).toBe('#ffffff')
+    expect(p.tokens['--brand-surface']).toBe('#f8f8f8')
+  })
+
+  it("surfaces: 'trayo' (default) drops them and says so", () => {
+    const { input, notes } = fromBrandThemeContract(slack)
+    expect(input.background).toBeUndefined()
+    for (const f of CONTRACT_SURFACE_FIELDS) expect(notes.some((n) => n.startsWith(`${f} `))).toBe(true)
   })
 
   it('passes an unreadable primary through so the check reports the agent value', () => {

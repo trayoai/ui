@@ -3,7 +3,14 @@ import { resolve } from 'node:path'
 
 import { describe, expect, it } from 'vitest'
 
-import { BRAND_SHELL_TOKENS, BRAND_SLOTS, BRAND_TOKENS, TRAYO_SURFACES } from '../src/lib/brand-palette'
+import {
+  BRAND_CHART_TOKENS,
+  BRAND_SHELL_TOKENS,
+  BRAND_SLOTS,
+  BRAND_SURFACE_TOKENS,
+  BRAND_TOKENS,
+  TRAYO_SURFACES
+} from '../src/lib/brand-palette'
 
 /**
  * The brand-slot contract between tokens.css (what Trayo UI reads) and
@@ -31,15 +38,22 @@ const brandDark = block(/\.dark\[data-brand\],/)
 
 describe('brand slots — tokens.css ⇄ lib/brand-palette', () => {
   it('documents every slot with an @slot annotation', () => {
+    const docs = css.slice(0, css.indexOf('[data-brand],'))
     for (const slot of Object.values(BRAND_SLOTS)) {
-      expect(css).toContain(`@slot ${slot.cssVar}`)
+      // The four surface slots share one annotation; chart-2 stands for 2..5.
+      const name = slot.cssVar.replace(/^--brand-chart-2$/, '--brand-chart-2..5')
+      expect(docs, `${slot.cssVar} undocumented`).toMatch(
+        new RegExp(`@slot [^\n]*${name.replace(/[.]/g, '\\.')}`)
+      )
     }
   })
 
   it('reads only tokens the resolver emits, and uses every one of them', () => {
     const brandBlocks = stripComments(css.slice(css.indexOf('[data-brand],'), css.indexOf('@theme inline {')))
     const read = new Set([...brandBlocks.matchAll(/var\((--brand-[\w-]+)/g)].map((m) => m[1]))
-    expect([...read].sort()).toEqual([...BRAND_TOKENS, ...BRAND_SHELL_TOKENS].sort())
+    expect([...read].sort()).toEqual(
+      [...BRAND_TOKENS, ...BRAND_SHELL_TOKENS, ...BRAND_SURFACE_TOKENS, ...BRAND_CHART_TOKENS].sort()
+    )
   })
 
   it.each([
@@ -191,5 +205,71 @@ describe('what renders is what the resolver checked', () => {
         expect(m[0], file).not.toMatch(/\btext-white\b/)
       }
     }
+  })
+})
+
+describe('complete override — [data-brand-surfaces]', () => {
+  const surfacesLight = block(/\[data-brand-surfaces\],/)
+  const surfacesDark = block(/\.dark\[data-brand-surfaces\],/)
+
+  it('sets the surface ladder, text scale and borders from the surface tokens (light)', () => {
+    for (const [token, from] of [
+      ['--color-app-shell', '--brand-background'],
+      ['--color-app-card', '--brand-surface'],
+      ['--color-app-well', '--brand-well'],
+      ['--color-app-row', '--brand-row'],
+      ['--color-app-raised', '--brand-raised'],
+      ['--text-primary', '--brand-text'],
+      ['--text-secondary', '--brand-text-secondary'],
+      ['--text-muted', '--brand-text-muted'],
+      ['--border-subtle', '--brand-border-subtle'],
+      ['--border-strong', '--brand-border-strong']
+    ]) {
+      expect(surfacesLight.get(token), token).toBe(`var(${from})`)
+    }
+  })
+
+  it('dark tints only the ladder and restates text and borders with .dark values', () => {
+    expect(surfacesDark.get('--color-app-shell')).toBe('var(--brand-background-dark)')
+    expect(surfacesDark.get('--text-primary')).toBe(dark.get('--text-primary'))
+    expect(surfacesDark.get('--border-subtle')).toBe(dark.get('--border-subtle'))
+  })
+
+  it('dark re-declares every token the light override sets, so the light block cannot win in dark', () => {
+    // Both blocks match <html class="dark" data-brand-surfaces>; the light one
+    // is later at equal specificity. Regression: dark text on dark cards (1.15:1).
+    for (const token of surfacesLight.keys()) {
+      expect(surfacesDark.has(token), `${token} not restated for dark`).toBe(true)
+      if (!token.startsWith('--color-app-') && token !== '--gradient-shell') {
+        expect(surfacesDark.get(token), token).toBe(dark.get(token) ?? root.get(token))
+      }
+    }
+  })
+
+  it.each([
+    ['light', surfacesLight, [root, light]],
+    ['dark', surfacesDark, [dark]]
+  ] as const)('%s restates every token that aliases one it overrides', (_n, blockMap, scopes) => {
+    const set = [...blockMap.keys()]
+    for (const scope of scopes) {
+      for (const [token, value] of scope) {
+        if (blockMap.has(token)) continue
+        const aliases = set.some((t) => value.includes(`var(${t})`) || value.includes(`var(${t},`))
+        if (aliases) expect(blockMap.has(token), `${token} (${value}) not restated`).toBe(true)
+      }
+    }
+  })
+
+  it('chart series 2–5 come from the accents with Trayo fallbacks', () => {
+    for (const n of [2, 3, 4, 5]) {
+      expect(brandLight.get(`--chart-${n}`)).toMatch(
+        new RegExp(`^var\\(--brand-chart-${n}, #[0-9a-f]{6}\\)$`)
+      )
+      expect(brandDark.get(`--chart-${n}`)).toMatch(
+        new RegExp(`^var\\(--brand-chart-dark-${n}, #[0-9a-f]{6}\\)$`)
+      )
+    }
+    expect(brandLight.get('--chart-2')).toContain(root.get('--chart-2'))
+    expect(brandDark.get('--chart-2')).toContain(dark.get('--chart-2'))
   })
 })
