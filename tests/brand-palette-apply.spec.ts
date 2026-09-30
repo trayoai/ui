@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   applyBrand,
   checkDialect,
+  resolveBrandPalette,
   DIALECT_PRESETS,
   dialectAgentGuide,
   dialectAttributes,
@@ -96,6 +97,24 @@ describe('applyBrand', () => {
     const p = applyBrand(doc, { primary: '#611f69', background: '#ffffff' }, { canvas: 'vibrant' })
     expect(styles[0].textContent).toContain('--brand-background:')
     expect(p.slots.background).not.toBe('#ffffff')
+  })
+
+  it('a raw palette that also looks like a contract keeps its raw-only fields', () => {
+    // Regression: emphasis 'quiet' was dropped on the way through the contract mapper.
+    const { doc } = fakeDocument()
+    const raw = {
+      ...slack,
+      shell: undefined,
+      onShell: undefined,
+      emphasis: 'quiet' as const,
+      secondary: '#e01e5a',
+      canvas: 'vibrant' as const
+    }
+    const viaApply = applyBrand(doc, raw)
+    const direct = resolveBrandPalette(raw)
+    expect(viaApply.slots.shell).toBeNull()
+    expect(viaApply.slots.secondary).toBe('#e01e5a')
+    expect(viaApply.tokens).toEqual(direct.tokens)
   })
 
   it('throws, applying nothing, on a bad contract', () => {

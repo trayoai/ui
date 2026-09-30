@@ -49,8 +49,13 @@ export function applyBrand(
   contract: BrandThemeContract | BrandPaletteInput,
   { theme = 'auto', dialect, canvas, ...contractOptions }: ApplyBrandOptions = {}
 ): ResolvedBrandPalette {
-  const input = isContract(contract)
-    ? fromBrandThemeContract(contract, contractOptions).input
+  // A raw BrandPaletteInput can carry every contract field too; mapping it
+  // through the contract must not lose the fields only the raw shape has.
+  const input: BrandPaletteInput = isContract(contract)
+    ? {
+        ...fromBrandThemeContract(contract, contractOptions).input,
+        ...pick(contract as BrandPaletteInput, ['secondary', 'emphasis', 'canvas'])
+      }
     : { ...contract }
   if (canvas) input.canvas = canvas
   const problems = checkBrandPalette(input)
@@ -86,6 +91,12 @@ export const BRAND_ROOT_ATTRIBUTES = [
   BRAND_SHELL_ATTRIBUTE,
   BRAND_SURFACES_ATTRIBUTE
 ] as const
+
+function pick<T extends object, K extends keyof T>(obj: T, keys: K[]): Partial<Pick<T, K>> {
+  const out: Partial<Pick<T, K>> = {}
+  for (const k of keys) if (obj[k] !== undefined) out[k] = obj[k]
+  return out
+}
 
 function isContract(value: BrandThemeContract | BrandPaletteInput): value is BrandThemeContract {
   return 'background' in value && 'text' in value && 'onPrimary' in value

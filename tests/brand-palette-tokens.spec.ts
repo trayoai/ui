@@ -315,3 +315,24 @@ describe('containers and dialects', () => {
     }
   })
 })
+
+describe('dialect rules keep interaction states', () => {
+  const rules = css.slice(css.indexOf('DIALECTS —'), css.indexOf('@theme inline {'))
+  it('zebra and cards fills leave hover and selected rows to the table', () => {
+    expect(rules).toMatch(
+      /zebra'\] \[data-slot='table-body'\] \[data-slot='table-row'\]:nth-child\(even\):not\(:hover\):not\(\[data-state='selected'\]\)/
+    )
+    expect(rules).toMatch(
+      /cards'\] \[data-slot='table-body'\] \[data-slot='table-row'\]\[data-state='selected'\]/
+    )
+  })
+  it('soft and outline buttons draw a focus ring', () => {
+    expect(rules).toMatch(/button='soft'\] \[data-slot='button'\]\.bg-accent-brand:focus-visible/)
+    expect(rules).toMatch(/button='outline'\] \[data-slot='button'\]\.bg-accent-brand:focus-visible/)
+  })
+  it('dense sets the cell height, not extra padding', () => {
+    expect(rules).toMatch(
+      /dense'\] \[data-slot='table-cell'\] \{ height: 2\.25rem; padding-top: 0; padding-bottom: 0; \}/
+    )
+  })
+})
