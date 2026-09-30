@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
+import { parseHex, toOklch } from '../src/lib/brand-palette/color'
+
+const rgb = (hex: string) => parseHex(hex)!
+
 import {
   CONTRACT_SURFACE_FIELDS,
   checkBrandPalette,
@@ -91,8 +95,10 @@ describe('fromBrandThemeContract', () => {
     })
     expect(notes.join(' ')).not.toMatch(/not applied/)
     const p = resolveBrandPalette(input)
-    expect(p.slots.background).toBe('#ffffff')
-    expect(p.tokens['--brand-surface']).toBe('#f8f8f8')
+    // A white page takes the brand's hue as a soft tint; cards a fainter one.
+    expect(p.slots.background).not.toBe('#ffffff')
+    expect(toOklch(rgb(p.slots.background!)).c).toBeGreaterThanOrEqual(0.02)
+    expect(p.tokens['--brand-surface']).not.toBe('#f8f8f8')
   })
 
   it("surfaces: 'trayo' drops them and says so", () => {

@@ -362,12 +362,10 @@ describe('complete override — surfaces', () => {
     for (const token of BRAND_SURFACE_TOKENS) expect(t[token]).toBeDefined()
     expect(resolveBrandPalette(BRANDS.paypal).tokens['--brand-background']).toBeUndefined()
     expect(brandAttributes(p)).toEqual({ 'data-brand': '', 'data-brand-surfaces': '' })
-    expect(p.slots).toMatchObject({
-      background: '#ffffff',
-      surface: '#f8f8f8',
-      text: '#1d1c1d',
-      mutedText: '#616061'
-    })
+    expect(p.slots).toMatchObject({ text: '#1d1c1d', mutedText: '#616061' })
+    // The white page and neutral card are tinted with the brand hue (tested below).
+    expect(p.slots.background).toMatch(/^#[0-9a-f]{6}$/)
+    expect(p.slots.surface).toMatch(/^#[0-9a-f]{6}$/)
   })
 
   it('text reads on every brand surface: 7:1 primary, 4.5:1 secondary, 3:1 muted', () => {
@@ -395,10 +393,10 @@ describe('complete override — surfaces', () => {
   })
 
   it('surface and text default from background when omitted', () => {
-    const q = resolveBrandPalette({ primary: '#002991', background: '#f4f7fb' })
-    expect(q.slots.background).toBe('#f4f7fb')
-    expect(toOklch(rgb(q.slots.surface!)).l).toBeGreaterThan(toOklch(rgb('#f4f7fb')).l)
-    expect(contrast(rgb(q.tokens['--brand-text']!), rgb('#f4f7fb'))).toBeGreaterThanOrEqual(7)
+    const q = resolveBrandPalette({ primary: '#002991', background: '#eef3ff' })
+    expect(q.slots.background).toBe('#eef3ff')
+    expect(toOklch(rgb(q.slots.surface!)).l).toBeGreaterThan(toOklch(rgb('#eef3ff')).l)
+    expect(contrast(rgb(q.tokens['--brand-text']!), rgb('#eef3ff'))).toBeGreaterThanOrEqual(7)
   })
 
   it('dark mode keeps Trayo lightness steps and takes the brand hue at low chroma', () => {
@@ -409,13 +407,58 @@ describe('complete override — surfaces', () => {
       ['--brand-raised-dark', TRAYO_SURFACES.dark.raised]
     ] as const) {
       const c = toOklch(rgb(tinted[token]!))
-      expect(Math.abs(c.l - toOklch(rgb(trayo)).l)).toBeLessThan(0.02)
-      // The cap is 0.02; rounding to 8-bit hex adds up to ~0.002.
-      expect(c.c).toBeLessThanOrEqual(0.025)
+      const trayoL = toOklch(rgb(trayo)).l
+      expect(Math.abs(c.l - trayoL)).toBeLessThan(0.02)
+      // As much of the 0.045 chroma as sRGB allows for this hue at this
+      // lightness (navy at L≈0.2 clips near 0.015), never Trayo's grey.
+      const reachable = toOklch(fromOklch({ l: trayoL, c: 0.045, h: toOklch(rgb('#eef3ff')).h })).c
+      expect(c.c).toBeGreaterThanOrEqual(Math.min(0.045, reachable) - 0.004)
+      expect(c.c).toBeGreaterThanOrEqual(0.01)
+      expect(c.c).toBeLessThanOrEqual(0.05)
       expect(contrast(rgb(TRAYO_SURFACES.dark.text), rgb(tinted[token]!))).toBeGreaterThanOrEqual(7)
     }
     const grey = resolveBrandPalette({ primary: '#000000', background: '#ffffff', text: '#111111' }).tokens
     expect(grey['--brand-background-dark']).toBe(TRAYO_SURFACES.dark.shell)
+  })
+
+  it('a neutral background takes the primary hue as a soft tint, so brands never share a canvas', () => {
+    // Regression (Ohad, 2026-09-30): every demo contract says #ffffff, so all
+    // the screenshots had the same white page.
+    const paypal = resolveBrandPalette({ primary: '#002991', background: '#ffffff', surface: '#f5f7fa' })
+    const slack = resolveBrandPalette({ primary: '#611f69', background: '#ffffff', surface: '#f8f8f8' })
+    for (const [p, hue] of [
+      [paypal, toOklch(rgb('#002991')).h],
+      [slack, toOklch(rgb('#611f69')).h]
+    ] as const) {
+      const bg = toOklch(rgb(p.slots.background!))
+      // As much of the 0.024 chroma as sRGB allows at this lightness for
+      // this hue (navy near white clips well under it), never a flat white.
+      const reachable = toOklch(fromOklch({ l: 0.965, c: 0.024, h: hue })).c
+      expect(bg.c).toBeGreaterThanOrEqual(Math.min(0.024, reachable) - 0.003)
+      expect(bg.c).toBeGreaterThanOrEqual(0.008)
+      expect(bg.l).toBeLessThanOrEqual(0.966)
+      expect(Math.abs(bg.h - hue)).toBeLessThan(8)
+      // Cards stay a lighter, fainter step above the page.
+      const card = toOklch(rgb(p.slots.surface!))
+      expect(card.l).toBeGreaterThan(bg.l + 0.01)
+      expect(card.c).toBeLessThan(bg.c)
+      expect(p.adjustments.join(' ')).toMatch(/canvas takes the brand's hue/)
+      // Text still reads on the tinted ladder.
+      for (const t of ['--brand-background', '--brand-surface', '--brand-well', '--brand-raised'] as const) {
+        expect(contrast(rgb(p.tokens['--brand-text']!), rgb(p.tokens[t]!))).toBeGreaterThanOrEqual(7)
+      }
+    }
+    expect(paypal.slots.background).not.toBe(slack.slots.background)
+  })
+
+  it('a chromatic background is kept as given; a black-and-white brand keeps its white', () => {
+    expect(resolveBrandPalette({ primary: '#002991', background: '#eef3ff' }).slots.background).toBe(
+      '#eef3ff'
+    )
+    const apple = resolveBrandPalette({ primary: '#000000', background: '#ffffff', surface: '#f5f5f7' })
+    expect(apple.slots.background).toBe('#ffffff')
+    expect(apple.slots.surface).toBe('#f5f5f7')
+    expect(apple.tokens['--brand-background-dark']).toBe(TRAYO_SURFACES.dark.shell)
   })
 
   it('rejects a dark background: the override is a light theme', () => {

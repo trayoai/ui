@@ -63,8 +63,16 @@ const SEQ_REFERENCE_CHROMA = 0.2
 const LIGHT_SHELL_L = 0.93
 /** OKLCH lightness under which a page background is not a light theme. */
 const LIGHT_PAGE_L = 0.8
-/** Most chroma a dark-mode surface keeps of the brand's hue. */
-const DARK_SURFACE_CHROMA = 0.02
+/**
+ * The canvas carries the brand: a neutral page (most contracts say #ffffff)
+ * takes the primary's hue as a soft tint so two brands never share a
+ * background, and dark surfaces tint the same way, more visibly.
+ */
+const CANVAS_CHROMA = 0.024 // sRGB allows less for some hues this light; fromOklch clips
+const CANVAS_MAX_L = 0.965
+const DARK_SURFACE_CHROMA = 0.045
+/** A surface with less chroma than this is neutral and eligible for the tint. */
+const NEUTRAL_SURFACE_CHROMA = 0.01
 /** Series 2–5 come from the accents, then from Trayo's own series. */
 const CHART_SERIES = 4
 /**
@@ -256,7 +264,9 @@ export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPale
   // ── Surfaces: Trayo's, or the brand's when it overrides them ──────────
   const trayoLight = mapValues(TRAYO_SURFACES.light, (v) => parseHex(v)!)
   const trayoDark = mapValues(TRAYO_SURFACES.dark, (v) => parseHex(v)!)
-  const override = input.background ? resolveSurfaces(input, trayoLight, trayoDark, adjustments) : null
+  const override = input.background
+    ? resolveSurfaces(input, primary, trayoLight, trayoDark, adjustments)
+    : null
   const L: Surfaces = override?.light ?? trayoLight
   const D: Surfaces = override?.dark ?? trayoDark
 
@@ -447,17 +457,42 @@ function uniqueAccents(values: readonly string[], primary: RGB): RGB[] {
  */
 function resolveSurfaces(
   input: BrandPaletteInput,
+  primary: RGB,
   trayoLight: Surfaces,
   trayoDark: Surfaces,
   adjustments: string[]
 ): { light: Surfaces; dark: Surfaces; tokens: Record<BrandSurfaceToken, string> } {
-  const shell = parseHex(input.background!)!
+  const given = parseHex(input.background!)!
+  const givenL = toOklch(given)
+  // The hue the canvas carries: the page's own when it has one, else the
+  // primary's. A black-and-white brand has neither and keeps its white.
+  const canvasHue =
+    givenL.c >= NEUTRAL_SURFACE_CHROMA ? givenL.h : !isNeutral(primary) ? toOklch(primary).h : null
+  const tintCanvas = canvasHue !== null && givenL.c < NEUTRAL_SURFACE_CHROMA
+  const shell = tintCanvas
+    ? quantize(fromOklch({ l: Math.min(givenL.l, CANVAS_MAX_L), c: CANVAS_CHROMA, h: canvasHue }))
+    : given
   const shellL = toOklch(shell)
+  if (tintCanvas) {
+    adjustments.push(
+      `background ${hexOf(given)} has no hue; the canvas takes the brand's hue as a soft tint, ${hexOf(shell)}.`
+    )
+  }
   // Cards sit a step above the page (Trayo: #fdf9ee → #fffdf8). A surface
-  // given darker than the page is kept; the ladder is what the brand says.
-  const card = input.surface
-    ? parseHex(input.surface)!
-    : quantize(fromOklch({ ...shellL, l: shellL.l + 0.012 }))
+  // given darker than the page is kept; the ladder is what the brand says —
+  // except a neutral card on a tinted canvas, which takes a fainter tint and
+  // stays a step lighter than the page.
+  const givenCard = input.surface ? parseHex(input.surface)! : null
+  const card =
+    givenCard && !(tintCanvas && toOklch(givenCard).c < NEUTRAL_SURFACE_CHROMA)
+      ? givenCard
+      : quantize(
+          fromOklch({
+            l: Math.max(givenCard ? toOklch(givenCard).l : 0, shellL.l + 0.012),
+            c: tintCanvas ? CANVAS_CHROMA / 2 : shellL.c,
+            h: shellL.h
+          })
+        )
   const cardL = toOklch(card)
   const raised = quantize(fromOklch({ ...cardL, l: Math.min(1, cardL.l + 0.015) }))
   const well = quantize(fromOklch({ ...shellL, l: shellL.l - 0.02 }))
@@ -484,12 +519,13 @@ function resolveSurfaces(
     surfaces.every((bg) => contrast(c, bg) >= NON_TEXT_CONTRAST)
   )
 
-  // Dark: Trayo's ladder, tinted with the brand's hue (from the page, else
-  // the ink) at a chroma that keeps the kit's dark text readable everywhere.
-  const tint = [shellL, toOklch(text)].find((c) => c.c >= 0.01)
+  // Dark: Trayo's ladder, tinted with the brand's hue (the canvas hue, else
+  // the ink's) at a chroma that keeps the kit's dark text readable everywhere.
+  const tint =
+    canvasHue !== null ? { h: canvasHue } : [toOklch(text)].find((c) => c.c >= NEUTRAL_SURFACE_CHROMA)
   const darkOf = (trayo: RGB) => {
     const t = toOklch(trayo)
-    return tint ? quantize(fromOklch({ l: t.l, c: Math.min(t.c, DARK_SURFACE_CHROMA), h: tint.h })) : trayo
+    return tint ? quantize(fromOklch({ l: t.l, c: DARK_SURFACE_CHROMA, h: tint.h })) : trayo
   }
   const dark: Surfaces = {
     shell: darkOf(trayoDark.shell),
