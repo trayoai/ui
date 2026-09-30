@@ -80,3 +80,20 @@
   --font-sans: var(--font-body);
   --radius: 0.75rem;
 }
+
+/* The lab panel is a Surface too; dialects (card/tile axes) must not restyle
+   it, or the controls stop being a fixed baseline. */
+[data-sig-controls][data-slot='surface'] {
+  background-image: var(--gradient-card) !important;
+  background-color: transparent !important;
+  box-shadow: var(--shadow-card) !important;
+  border: 0 !important;
+  --text-primary: var(--page-text-primary, #1c1a17);
+  --text-secondary: var(--page-text-secondary, #6b6253);
+  --text-muted: var(--page-text-muted, #9a9180);
+}
+[data-sig-controls] [data-slot='button'].bg-accent-brand {
+  background-color: var(--accent-brand) !important;
+  color: var(--accent-brand-foreground) !important;
+  box-shadow: none !important;
+}
