@@ -20,7 +20,9 @@ import {
   StatTile,
   Surface,
   Switch,
+  Toaster,
   cn,
+  toast,
   type Column,
   type CompanyLike,
   type PersonLike
@@ -117,6 +119,10 @@ const ACCOUNTS: AccountRow[] = [
 
 const STAGE_VARIANT = { Prospect: 'soft', Engaged: 'accent', 'Meeting booked': 'success' } as const
 
+/** Every action on the sample screen is a stub; it says so with a preview toast. */
+const preview = (title: string) => () =>
+  toast({ variant: 'preview', title, description: 'Preview — nothing was sent.' })
+
 const COLUMNS: Column<AccountRow>[] = [
   { id: 'account', header: 'Account', accessor: (r) => <Company company={r.company} size='md' />, className: 'min-w-[260px]' },
   {
@@ -146,7 +152,7 @@ const COLUMNS: Column<AccountRow>[] = [
     id: 'action',
     header: '',
     accessor: () => (
-      <Button variant='secondary' size='sm'>
+      <Button variant='secondary' size='sm' onClick={preview('Research account')}>
         Research <Sparkles />
       </Button>
     ),
@@ -223,6 +229,7 @@ export function SignatureLab() {
           </div>
         }
       >
+        <Toaster />
         <PageContainer width='wide' className='flex flex-col gap-8'>
           {/* The lab's own controls: outside the experiment, so they keep the
               kit's pills whatever the toggles do. */}
@@ -295,10 +302,10 @@ export function SignatureLab() {
             subtitle='62 accounts in your ICP, sorted by fit score.'
             actions={
               <>
-                <Button variant='secondary'>
+                <Button variant='secondary' onClick={preview('Import accounts')}>
                   <Upload /> Import
                 </Button>
-                <Button>
+                <Button onClick={preview('Add accounts')}>
                   <Plus /> Add accounts
                 </Button>
               </>
@@ -322,8 +329,10 @@ export function SignatureLab() {
               <Surface key={p.id} className='flex flex-col gap-3 p-4'>
                 <Person person={{ ...p, company: COMPANIES[i].name }} size='lg' showContact />
                 <div className='flex gap-2'>
-                  <Button size='sm'>Reach out</Button>
-                  <Button size='sm' variant='tertiary'>
+                  <Button size='sm' onClick={preview(`Reach out to ${p.name}`)}>
+                    Reach out
+                  </Button>
+                  <Button size='sm' variant='tertiary' onClick={preview(`Snoozed ${p.name}`)}>
                     Not now
                   </Button>
                 </div>
@@ -336,7 +345,11 @@ export function SignatureLab() {
               icon={<Inbox />}
               title='No replies yet'
               description='Outreach went to 9 people this morning. Replies land here as they come in.'
-              action={<Button variant='secondary'>View sequence</Button>}
+              action={
+                <Button variant='secondary' onClick={preview('View sequence')}>
+                  View sequence
+                </Button>
+              }
             />
             <Callout tone='note' title='How this was built'>
               Accounts come from <code>GET /v1/accounts</code>, ranked by fit; signals from <code>/v1/find</code>. Rows are
