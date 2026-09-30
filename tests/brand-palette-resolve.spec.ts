@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { contrast, parseHex, toOklch } from '../src/lib/brand-palette/color'
+import { contrast, fromOklch, parseHex, toHex, toOklch } from '../src/lib/brand-palette/color'
 import {
   BRAND_SHELL_TOKENS,
   BRAND_SLOTS,
@@ -486,6 +486,23 @@ describe('accents → chart series', () => {
       ).toBeGreaterThanOrEqual(NON_TEXT_CONTRAST)
     }
     expect(q.adjustments.join(' ')).toMatch(/series #d97706 is under 3:1 on the light card/)
+  })
+
+  it('always fills four distinct series, whatever hue the primary takes', () => {
+    // Regression: a teal primary removed Trayo's teal from the pool and series
+    // 5 was left to the CSS fallback, duplicating series 4.
+    for (let h = 0; h < 360; h += 30) {
+      const primary = toHex(fromOklch({ l: 0.5, c: 0.15, h }))
+      const q = resolveBrandPalette({ primary, background: '#bfbfbf', surface: '#bfbfbf' })
+      const light = [2, 3, 4, 5].map((n) => q.tokens[`--brand-chart-${n}` as BrandChartToken])
+      expect(light.every(Boolean), primary).toBe(true)
+      expect(new Set(light).size, primary).toBe(4)
+      for (const c of light) {
+        expect(contrast(rgb(c!), rgb(q.tokens['--brand-surface']!)), primary).toBeGreaterThanOrEqual(
+          NON_TEXT_CONTRAST
+        )
+      }
+    }
   })
 
   it('rejects a non-hex accent', () => {

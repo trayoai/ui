@@ -67,11 +67,22 @@ const LIGHT_PAGE_L = 0.8
 const DARK_SURFACE_CHROMA = 0.02
 /** Series 2–5 come from the accents, then from Trayo's own series. */
 const CHART_SERIES = 4
-/** Trayo's categorical series 2–5 (tokens.css CHART PALETTE), light and dark. */
-const TRAYO_SERIES = {
-  light: ['#0d9488', '#d97706', '#e11d48', '#2563eb'],
-  dark: ['#00a38f', '#cb7f00', '#e14660', '#3986e4']
-} as const
+/**
+ * Candidates for chart series a brand leaves unfilled: Trayo's own series
+ * 2–5 first (tokens.css CHART PALETTE), then four more hues spread around
+ * the wheel, so four slots can always be filled after the hues a brand's
+ * primary and accents already take are skipped. Light and dark pairs.
+ */
+const SERIES_POOL = [
+  ['#0d9488', '#00a38f'], // teal
+  ['#d97706', '#cb7f00'], // amber
+  ['#e11d48', '#e14660'], // rose
+  ['#2563eb', '#3986e4'], // blue
+  ['#7c3aed', '#a78bfa'], // violet
+  ['#ea580c', '#fb923c'], // orange
+  ['#65a30d', '#a3e635'], // lime
+  ['#db2777', '#f472b6'] // pink
+] as const
 /** Two chart colours closer in hue than this read as the same series. */
 const SERIES_HUE_GAP = 18
 
@@ -355,13 +366,21 @@ export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPale
   if (accents.length || override) {
     const chosen: RGB[] = [primary, ...accents.slice(0, CHART_SERIES)]
     const nearChosen = (rgb: RGB) => chosen.some((c) => sameHue(c, rgb))
-    const pool = TRAYO_SERIES.light
-      .map((hex, i) => [parseHex(hex)!, parseHex(TRAYO_SERIES.dark[i])!] as const)
-      .filter(([light]) => !nearChosen(light))
+    const pool = SERIES_POOL.map(([l, d]) => [parseHex(l)!, parseHex(d)!] as const).filter(
+      ([light]) => !nearChosen(light)
+    )
     for (let n = 2; n <= CHART_SERIES + 1; n++) {
       const given = accents[n - 2]
-      const filled = given ? null : pool.shift()
-      if (!given && !filled) break
+      // Last resort (a brand taking most of the wheel): the primary's hue
+      // rotated by fifths, the same colour in both themes before the checks.
+      const rotated = quantize(
+        fromOklch({
+          ...toOklch(primary),
+          c: Math.max(toOklch(primary).c, 0.12),
+          h: (hue + 72 * (n - 1)) % 360
+        })
+      )
+      const filled = given ? null : (pool.shift() ?? ([rotated, rotated] as const))
       const lightSource = given ?? filled![0]
       const darkSource = given ?? filled![1]
       if (filled) chosen.push(filled[0])
