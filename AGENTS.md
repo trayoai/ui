@@ -136,9 +136,13 @@ the wrong place or not at all. Nothing errors at build time.
     map it with `fromBrandThemeContract(contract)`. The company's styling is
     the canvas (page, cards, text too); the kit supplies the language. Pass
     `{ surfaces: 'trayo' }` only when the page should stay the kit's cream. Run `checkBrandPalette`, then `resolveBrandPalette`,
-    put `brandPaletteCss(palette, 'html')` in a `<style>`, `brandAttributes`
-    on `<html>`, and `class="dark"` there when `palette.theme` is `'dark'`
-    (README "Customer brand"). Never hand-set
+    then call `applyBrand(document, contract, { theme, dialect })` once at
+    the app root — it writes the stylesheet, the attributes and the dark
+    class (README "Customer brand"). Pick ONE dialect for the whole app
+    (`plain` | `editorial` | `tinted` | `compact`, or an object) and never
+    mix its options within a screen. For the brand on a surface — a selected
+    row, a stat strip, a side panel — use `bg-container
+    text-container-foreground`, never a hand-mixed tint. Never hand-set
     `--brand-*` or `--accent-*`, and never adjust a colour for contrast — the
     resolver does. Status colours, type, radius and the warm glow stay the
     kit's in every brand.

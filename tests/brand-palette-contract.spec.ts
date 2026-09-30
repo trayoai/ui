@@ -62,7 +62,9 @@ describe('fromBrandThemeContract', () => {
       const { input, notes } = fromBrandThemeContract({ ...slack, shell, background: '#f7f7f7' })
       expect(input.shell).toBeNull()
       expect(input.onShell).toBeNull()
-      expect(notes.join(' ')).toMatch(/it is left out \(with emphasis 'bold' the bar takes a deep step of the primary/)
+      expect(notes.join(' ')).toMatch(
+        /it is left out \(with emphasis 'bold' the bar takes a deep step of the primary/
+      )
       expect(() => resolveBrandPalette(input)).not.toThrow()
     }
   })

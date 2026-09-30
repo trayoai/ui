@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { contrast, fromOklch, parseHex, toHex, toOklch } from '../src/lib/brand-palette/color'
 import {
+  BRAND_CONTAINER_TOKENS,
   BRAND_MESH_TOKENS,
   BRAND_SHELL_TOKENS,
   BRAND_SLOTS,
@@ -57,7 +58,7 @@ describe.each(Object.entries(BRANDS))('resolveBrandPalette — %s', (_name, inpu
 
   it('emits every token (plus the derived bar and brand mesh, bold being the default)', () => {
     expect(Object.keys(tokens).sort()).toEqual(
-      [...BRAND_TOKENS, ...BRAND_SHELL_TOKENS, ...BRAND_MESH_TOKENS].sort()
+      [...BRAND_TOKENS, ...BRAND_CONTAINER_TOKENS, ...BRAND_SHELL_TOKENS, ...BRAND_MESH_TOKENS].sort()
     )
   })
 
@@ -305,6 +306,41 @@ describe('dark ladder (bold) follows Material tones in the brand hue', () => {
   })
 })
 
+describe('containers (Material tone 90 / on 10; dark 30 / 90)', () => {
+  it.each(['#002991', '#611f69', '#543afc', '#ffe01b', '#000000'])(
+    '%s: readable, in the brand hue',
+    (primary) => {
+      const t = resolveBrandPalette({ primary }).tokens
+      for (const token of BRAND_CONTAINER_TOKENS) expect(t[token]).toMatch(/^#[0-9a-f]{6}$/)
+      expect(contrast(rgb(t['--brand-on-container']), rgb(t['--brand-container']))).toBeGreaterThanOrEqual(7)
+      expect(
+        contrast(rgb(t['--brand-on-container-dark']), rgb(t['--brand-container-dark']))
+      ).toBeGreaterThanOrEqual(7)
+      expect(
+        contrast(rgb(t['--brand-on-container-tertiary']), rgb(t['--brand-container-tertiary']))
+      ).toBeGreaterThanOrEqual(7)
+      expect(toOklch(rgb(t['--brand-container'])).l).toBeCloseTo(0.9, 1)
+      expect(toOklch(rgb(t['--brand-container-dark'])).l).toBeCloseTo(0.35, 1)
+      if (toOklch(rgb(primary)).c > 0.04) {
+        const d = Math.abs(toOklch(rgb(t['--brand-container'])).h - toOklch(rgb(primary)).h)
+        expect(Math.min(d, 360 - d)).toBeLessThan(10)
+      }
+    }
+  )
+})
+
+describe('canvas strength', () => {
+  it("'vibrant' tints a neutral page more than 'soft', still 7:1 for text", () => {
+    const soft = resolveBrandPalette({ primary: '#611f69', background: '#ffffff' })
+    const vivid = resolveBrandPalette({ primary: '#611f69', background: '#ffffff', canvas: 'vibrant' })
+    expect(toOklch(rgb(vivid.slots.background!)).c).toBeGreaterThan(toOklch(rgb(soft.slots.background!)).c)
+    expect(toOklch(rgb(vivid.slots.background!)).l).toBeLessThan(toOklch(rgb(soft.slots.background!)).l)
+    expect(contrast(rgb(vivid.tokens['--brand-text']!), rgb(vivid.slots.background!))).toBeGreaterThanOrEqual(
+      7
+    )
+  })
+})
+
 describe('shell slot', () => {
   const slack = resolveBrandPalette({ primary: '#611f69', shell: '#4a154b', secondary: '#36c5f0' })
   const t = slack.tokens
@@ -372,12 +408,13 @@ describe('shell slot', () => {
     expect(brandPaletteCss(slack)).toContain('  --brand-shell: #4a154b;')
     expect(Object.keys(brandPaletteStyle(slack))).toEqual([
       ...BRAND_TOKENS,
+      ...BRAND_CONTAINER_TOKENS,
       ...BRAND_SHELL_TOKENS,
       ...BRAND_MESH_TOKENS
     ])
     expect(
       Object.keys(brandPaletteStyle(resolveBrandPalette({ ...BRANDS.paypal, emphasis: 'quiet' })))
-    ).toEqual([...BRAND_TOKENS])
+    ).toEqual([...BRAND_TOKENS, ...BRAND_CONTAINER_TOKENS])
   })
 })
 

@@ -3,8 +3,10 @@ import { resolve } from 'node:path'
 
 import { describe, expect, it } from 'vitest'
 
+import { DIALECT_AXES } from '../src/lib/brand-palette'
 import {
   BRAND_CHART_TOKENS,
+  BRAND_CONTAINER_TOKENS,
   BRAND_MESH_TOKENS,
   BRAND_SHELL_TOKENS,
   BRAND_SLOTS,
@@ -58,7 +60,8 @@ describe('brand slots — tokens.css ⇄ lib/brand-palette', () => {
         ...BRAND_SHELL_TOKENS,
         ...BRAND_SURFACE_TOKENS,
         ...BRAND_CHART_TOKENS,
-        ...BRAND_MESH_TOKENS
+        ...BRAND_MESH_TOKENS,
+        ...BRAND_CONTAINER_TOKENS
       ].sort()
     )
   })
@@ -289,5 +292,26 @@ describe('mesh warm layers', () => {
     const mesh = css.slice(css.indexOf('.brand-mesh::before'), css.indexOf('@keyframes brand-mesh-flow'))
     expect(mesh).not.toMatch(/rgba\((255, 161, 130|255, 123, 49|253, 220, 152)/)
     expect(brandLight.get('--mesh-warm-rgb')).toBe('var(--brand-mesh-warm-rgb, 255 161 130)')
+  })
+})
+
+describe('containers and dialects', () => {
+  it('container tokens have Trayo defaults, brand overrides and utilities', () => {
+    expect(root.get('--container')).toMatch(/^#/)
+    expect(dark.get('--container')).toMatch(/^#/)
+    expect(brandLight.get('--container')).toBe('var(--brand-container, var(--accent-soft))')
+    expect(brandDark.get('--container')).toBe('var(--brand-container-dark, var(--accent-soft))')
+    expect(css).toMatch(/--color-container: var\(--container\);/)
+    expect(css).toMatch(/--color-container-foreground: var\(--container-foreground\);/)
+  })
+
+  it('every dialect option except default has a rule', () => {
+    const rules = css.slice(css.indexOf('DIALECTS —'), css.indexOf('@theme inline {'))
+    for (const [axis, def] of Object.entries(DIALECT_AXES)) {
+      for (const opt of def.options) {
+        if (opt === 'default') continue
+        expect(rules, `${axis}=${opt}`).toContain(`[data-dialect-${axis}='${opt}']`)
+      }
+    }
   })
 })
