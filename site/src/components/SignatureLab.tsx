@@ -23,13 +23,15 @@ import {
   Toaster,
   cn,
   toast,
+  applyBrand,
+  DIALECT_PRESETS,
   fromBrandThemeContract,
   resolveBrandPalette,
   type Column,
   type CompanyLike,
   type PersonLike
 } from '../../../src'
-import { BRAND_OPTIONS, DEMO_BRANDS, ThemeSwitch, useDemoBrand, type DemoBrand } from './Showcase'
+import { BRAND_OPTIONS, DEMO_BRANDS, ThemeSwitch, type DemoBrand } from './Showcase'
 
 /**
  * The signature lab.
@@ -94,6 +96,31 @@ const COVERS: { value: Cover; label: string }[] = [
   { value: 'band', label: 'Solid band' },
   { value: 'plain', label: 'Plain' }
 ]
+
+/**
+ * Looks: where the brand's colour mass goes. Ohad's point: dozens of recipes
+ * must look materially different with the brand used strongly, not only via
+ * light/dark. Each look composes a cover, a layout, a canvas strength and a
+ * dialect; the generator rotates through them the way it rotates themes.
+ */
+type Look = 'band' | 'rail' | 'tiles' | 'wash' | 'split'
+type DialectName = keyof typeof DIALECT_PRESETS
+const LOOKS: Record<Look, { label: string; cover: Cover; layout: 'top' | 'rail'; canvas: 'soft' | 'vibrant'; dialect: DialectName; panel?: boolean }> = {
+  band: { label: 'Band', cover: 'band', layout: 'top', canvas: 'soft', dialect: 'plain' },
+  rail: { label: 'Rail', cover: 'plain', layout: 'rail', canvas: 'soft', dialect: 'plain' },
+  tiles: { label: 'Tiles', cover: 'plain', layout: 'top', canvas: 'soft', dialect: 'tinted' },
+  wash: { label: 'Wash', cover: 'hero', layout: 'top', canvas: 'vibrant', dialect: 'editorial' },
+  split: { label: 'Split', cover: 'band', layout: 'top', canvas: 'soft', dialect: 'compact', panel: true }
+}
+const LOOK_OPTIONS = (Object.keys(LOOKS) as Look[]).map((value) => ({ value, label: LOOKS[value].label }))
+const DIALECT_OPTIONS = (Object.keys(DIALECT_PRESETS) as DialectName[]).map((value) => ({ value, label: value }))
+
+/** Un-brands the document (the Trayo option): what applyBrand set, removed. */
+function clearBrand() {
+  const root = document.documentElement
+  for (const n of root.getAttributeNames()) if (n.startsWith('data-brand') || n.startsWith('data-dialect-')) root.removeAttribute(n)
+  document.getElementById('trayo-brand')?.remove()
+}
 
 /** The theme this brand reads best in, per the palette; light until the kit says otherwise. */
 function recommendedDark(brand: DemoBrand): boolean {
@@ -183,23 +210,41 @@ const COLUMNS: Column<AccountRow>[] = [
 
 /* ------------------------------------------------------------- url state */
 
-function readUrl(): { brand: DemoBrand; dark: boolean | null; cover: Cover; off: SignatureKey[] } {
+function readUrl(): {
+  brand: DemoBrand
+  dark: boolean | null
+  cover: Cover | null
+  look: Look
+  dialect: DialectName | null
+  off: SignatureKey[]
+} {
   const q = new URLSearchParams(window.location.search)
   const brand = BRAND_OPTIONS.some((b) => b.value === q.get('brand')) ? (q.get('brand') as DemoBrand) : 'slack'
   const off = (q.get('off') ?? '')
     .split(',')
     .filter((k): k is SignatureKey => SIGNATURES.some((s) => s.key === k))
-  const cover = COVERS.some((c) => c.value === q.get('cover')) ? (q.get('cover') as Cover) : 'hero'
+  const cover = COVERS.some((c) => c.value === q.get('cover')) ? (q.get('cover') as Cover) : null
+  const look = q.get('look') && q.get('look')! in LOOKS ? (q.get('look') as Look) : 'band'
+  const dialect = q.get('dialect') && q.get('dialect')! in DIALECT_PRESETS ? (q.get('dialect') as DialectName) : null
   // No `dark` param: the brand's own recommendation decides.
   const dark = q.has('dark') ? q.get('dark') === '1' : null
-  return { brand, dark, cover, off }
+  return { brand, dark, cover, look, dialect, off }
 }
 
-function writeUrl(brand: DemoBrand, dark: boolean, cover: Cover, sig: Record<SignatureKey, boolean>) {
+function writeUrl(
+  brand: DemoBrand,
+  dark: boolean,
+  look: Look,
+  cover: Cover,
+  dialect: DialectName,
+  sig: Record<SignatureKey, boolean>
+) {
   const q = new URLSearchParams()
   q.set('brand', brand)
   q.set('dark', dark ? '1' : '0')
-  if (cover !== 'hero') q.set('cover', cover)
+  q.set('look', look)
+  if (cover !== LOOKS[look].cover) q.set('cover', cover)
+  if (dialect !== LOOKS[look].dialect) q.set('dialect', dialect)
   const off = SIGNATURES.filter((s) => !sig[s.key]).map((s) => s.key)
   if (off.length) q.set('off', off.join(','))
   window.history.replaceState(null, '', `?${q.toString()}`)
@@ -211,21 +256,42 @@ export function SignatureLab() {
   const [brand, setBrand] = useState<DemoBrand>('slack')
   const [dark, setDark] = useState(false)
   const [sig, setSig] = useState<Record<SignatureKey, boolean>>(ALL_ON)
-  const [cover, setCover] = useState<Cover>('hero')
+  const [look, setLookState] = useState<Look>('band')
+  const [cover, setCover] = useState<Cover>(LOOKS.band.cover)
+  const [dialect, setDialect] = useState<DialectName>(LOOKS.band.dialect)
   const [ready, setReady] = useState(false)
-  useDemoBrand(brand, true)
+  // A look sets its cover and dialect; either can then be changed on its own.
+  const setLook = (next: Look) => {
+    setLookState(next)
+    setCover(LOOKS[next].cover)
+    setDialect(LOOKS[next].dialect)
+  }
+
+  // Brand the document the way an app does — one call — so the lab shows
+  // exactly what applyBrand produces, dialect and canvas included.
+  useEffect(() => {
+    if (!ready) return
+    if (brand === 'trayo') {
+      clearBrand()
+      document.documentElement.classList.toggle('dark', dark)
+      return
+    }
+    applyBrand(document, DEMO_BRANDS[brand], { theme: dark ? 'dark' : 'light', dialect, canvas: LOOKS[look].canvas })
+  }, [ready, brand, dark, dialect, look])
 
   useEffect(() => {
-    const { brand, dark, cover, off } = readUrl()
+    const { brand, dark, cover, look, dialect, off } = readUrl()
     setBrand(brand)
     setDark(dark ?? recommendedDark(brand))
-    setCover(cover)
+    setLookState(look)
+    setCover(cover ?? LOOKS[look].cover)
+    setDialect(dialect ?? LOOKS[look].dialect)
     setSig({ ...ALL_ON, ...Object.fromEntries(off.map((k) => [k, false])) })
     setReady(true)
   }, [])
   useEffect(() => {
-    if (ready) writeUrl(brand, dark, cover, sig)
-  }, [ready, brand, dark, cover, sig])
+    if (ready) writeUrl(brand, dark, look, cover, dialect, sig)
+  }, [ready, brand, dark, look, cover, dialect, sig])
   // Switching brand follows its theme recommendation; the switch still overrides.
   const pickBrand = (next: DemoBrand) => {
     setBrand(next)
@@ -235,8 +301,10 @@ export function SignatureLab() {
   const toggle = (key: SignatureKey) => (on: boolean) => setSig((s) => ({ ...s, [key]: on }))
   const dataAttrs = Object.fromEntries(SIGNATURES.map((s) => [`data-sig-${s.key}`, sig[s.key] ? 'on' : 'off']))
 
+  const layout = LOOKS[look].layout
+  const showPanel = LOOKS[look].panel === true
   return (
-    <div className={dark ? 'dark' : undefined}>
+    <div>
       <AppShell
         {...dataAttrs}
         width='wide'
@@ -274,7 +342,9 @@ export function SignatureLab() {
                 </p>
               </div>
               <div className='flex flex-wrap items-center gap-2'>
+                <SegmentedControl size='sm' aria-label='Look' value={look} onValueChange={setLook} options={LOOK_OPTIONS} />
                 <SegmentedControl size='sm' aria-label='Cover' value={cover} onValueChange={setCover} options={COVERS} />
+                <SegmentedControl size='sm' aria-label='Dialect' value={dialect} onValueChange={setDialect} options={DIALECT_OPTIONS} />
                 <Button variant='tertiary' size='sm' onClick={() => setSig(ALL_ON)}>
                   All on
                 </Button>
@@ -310,6 +380,28 @@ export function SignatureLab() {
           </Surface>
 
           {/* ---- the experiment: a typical GTM screen under the brand ---- */}
+          <div className={cn('flex gap-6', layout === 'rail' ? 'items-start' : 'flex-col')}>
+          {layout === 'rail' && (
+            <aside
+              data-shell-region=''
+              className='sticky top-20 flex w-56 shrink-0 flex-col gap-1 self-start rounded-[var(--radius)] bg-surface-sidebar p-3 text-text-primary'
+            >
+              <div className='mb-2 px-2 text-name'>Acme GTM</div>
+              {['Accounts', 'People', 'Signals', 'Sequences', 'Reports'].map((item, i) => (
+                <a
+                  key={item}
+                  href='#'
+                  className={cn(
+                    'rounded-full px-3 py-1.5 text-sm font-medium',
+                    i === 0 ? 'bg-accent-soft text-accent-text' : 'text-text-secondary hover:bg-surface-well'
+                  )}
+                >
+                  {item}
+                </a>
+              ))}
+            </aside>
+          )}
+          <div className='flex min-w-0 flex-1 flex-col gap-8'>
           {cover === 'band' && (
             <section className='rounded-[calc(var(--radius)+4px)] bg-accent-brand px-8 py-12 text-accent-brand-foreground'>
               <div className='flex flex-col gap-2'>
@@ -403,6 +495,21 @@ export function SignatureLab() {
               refreshed nightly.
             </Callout>
           </section>
+
+          {showPanel && (
+            <aside className='rounded-[var(--radius)] bg-container-tertiary p-5 text-container-tertiary-foreground'>
+              <div className='text-eyebrow' style={{ color: 'inherit' }}>Signals this week</div>
+              <ul className='mt-2 grid gap-2 md:grid-cols-3'>
+                {['Ramp opened a Berlin office', 'Vercel hired a VP Sales', 'Notion raised a Series D'].map((s) => (
+                  <li key={s} className='rounded-lg bg-container px-3 py-2 text-sm text-container-foreground'>
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            </aside>
+          )}
+          </div>
+          </div>
 
           <footer className='flex items-center justify-between border-t border-border-subtle pt-4 text-meta'>
             <span>Acme GTM · internal</span>
