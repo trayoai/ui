@@ -23,11 +23,13 @@ import {
   Toaster,
   cn,
   toast,
+  fromBrandThemeContract,
+  resolveBrandPalette,
   type Column,
   type CompanyLike,
   type PersonLike
 } from '../../../src'
-import { BRAND_OPTIONS, ThemeSwitch, useDemoBrand, type DemoBrand } from './Showcase'
+import { BRAND_OPTIONS, DEMO_BRANDS, ThemeSwitch, useDemoBrand, type DemoBrand } from './Showcase'
 
 /**
  * The signature lab.
@@ -81,6 +83,24 @@ const SIGNATURES: { key: SignatureKey; label: string; tell: string; note?: strin
 ]
 
 const ALL_ON = Object.fromEntries(SIGNATURES.map((s) => [s.key, true])) as Record<SignatureKey, boolean>
+
+/**
+ * The cover: how the top of the screen carries colour. Same components,
+ * different silhouette — what a thumbnail gallery reads before anything else.
+ */
+type Cover = 'hero' | 'band' | 'plain'
+const COVERS: { value: Cover; label: string }[] = [
+  { value: 'hero', label: 'Mesh hero' },
+  { value: 'band', label: 'Solid band' },
+  { value: 'plain', label: 'Plain' }
+]
+
+/** The theme this brand reads best in, per the palette; light until the kit says otherwise. */
+function recommendedDark(brand: DemoBrand): boolean {
+  if (brand === 'trayo') return false
+  const palette = resolveBrandPalette(fromBrandThemeContract(DEMO_BRANDS[brand]).input)
+  return (palette as { theme?: string }).theme === 'dark'
+}
 
 /* ---------------------------------------------------------------- fixtures */
 
@@ -163,19 +183,23 @@ const COLUMNS: Column<AccountRow>[] = [
 
 /* ------------------------------------------------------------- url state */
 
-function readUrl(): { brand: DemoBrand; dark: boolean; off: SignatureKey[] } {
+function readUrl(): { brand: DemoBrand; dark: boolean | null; cover: Cover; off: SignatureKey[] } {
   const q = new URLSearchParams(window.location.search)
   const brand = BRAND_OPTIONS.some((b) => b.value === q.get('brand')) ? (q.get('brand') as DemoBrand) : 'slack'
   const off = (q.get('off') ?? '')
     .split(',')
     .filter((k): k is SignatureKey => SIGNATURES.some((s) => s.key === k))
-  return { brand, dark: q.get('dark') === '1', off }
+  const cover = COVERS.some((c) => c.value === q.get('cover')) ? (q.get('cover') as Cover) : 'hero'
+  // No `dark` param: the brand's own recommendation decides.
+  const dark = q.has('dark') ? q.get('dark') === '1' : null
+  return { brand, dark, cover, off }
 }
 
-function writeUrl(brand: DemoBrand, dark: boolean, sig: Record<SignatureKey, boolean>) {
+function writeUrl(brand: DemoBrand, dark: boolean, cover: Cover, sig: Record<SignatureKey, boolean>) {
   const q = new URLSearchParams()
   q.set('brand', brand)
-  if (dark) q.set('dark', '1')
+  q.set('dark', dark ? '1' : '0')
+  if (cover !== 'hero') q.set('cover', cover)
   const off = SIGNATURES.filter((s) => !sig[s.key]).map((s) => s.key)
   if (off.length) q.set('off', off.join(','))
   window.history.replaceState(null, '', `?${q.toString()}`)
@@ -187,19 +211,26 @@ export function SignatureLab() {
   const [brand, setBrand] = useState<DemoBrand>('slack')
   const [dark, setDark] = useState(false)
   const [sig, setSig] = useState<Record<SignatureKey, boolean>>(ALL_ON)
+  const [cover, setCover] = useState<Cover>('hero')
   const [ready, setReady] = useState(false)
   useDemoBrand(brand, true)
 
   useEffect(() => {
-    const { brand, dark, off } = readUrl()
+    const { brand, dark, cover, off } = readUrl()
     setBrand(brand)
-    setDark(dark)
+    setDark(dark ?? recommendedDark(brand))
+    setCover(cover)
     setSig({ ...ALL_ON, ...Object.fromEntries(off.map((k) => [k, false])) })
     setReady(true)
   }, [])
   useEffect(() => {
-    if (ready) writeUrl(brand, dark, sig)
-  }, [ready, brand, dark, sig])
+    if (ready) writeUrl(brand, dark, cover, sig)
+  }, [ready, brand, dark, cover, sig])
+  // Switching brand follows its theme recommendation; the switch still overrides.
+  const pickBrand = (next: DemoBrand) => {
+    setBrand(next)
+    setDark(recommendedDark(next))
+  }
 
   const toggle = (key: SignatureKey) => (on: boolean) => setSig((s) => ({ ...s, [key]: on }))
   const dataAttrs = Object.fromEntries(SIGNATURES.map((s) => [`data-sig-${s.key}`, sig[s.key] ? 'on' : 'off']))
@@ -224,7 +255,7 @@ export function SignatureLab() {
         }
         actions={
           <div data-sig-controls='' className='flex items-center gap-2'>
-            <SegmentedControl size='sm' aria-label='Customer brand' value={brand} onValueChange={setBrand} options={BRAND_OPTIONS} />
+            <SegmentedControl size='sm' aria-label='Customer brand' value={brand} onValueChange={pickBrand} options={BRAND_OPTIONS} />
             <ThemeSwitch dark={dark} onChange={setDark} />
           </div>
         }
@@ -242,7 +273,8 @@ export function SignatureLab() {
                   Trayo. Turn them off one at a time, or all at once, and compare. The URL carries the state.
                 </p>
               </div>
-              <div className='flex gap-2'>
+              <div className='flex flex-wrap items-center gap-2'>
+                <SegmentedControl size='sm' aria-label='Cover' value={cover} onValueChange={setCover} options={COVERS} />
                 <Button variant='tertiary' size='sm' onClick={() => setSig(ALL_ON)}>
                   All on
                 </Button>
@@ -278,7 +310,22 @@ export function SignatureLab() {
           </Surface>
 
           {/* ---- the experiment: a typical GTM screen under the brand ---- */}
-          {sig.mesh && (
+          {cover === 'band' && (
+            <section className='rounded-[calc(var(--radius)+4px)] bg-accent-brand px-8 py-12 text-accent-brand-foreground'>
+              <div className='flex flex-col gap-2'>
+                <span className='text-eyebrow opacity-80' style={{ color: 'inherit' }}>
+                  This week
+                </span>
+                <h1 className='text-page-title' style={{ color: 'inherit' }}>
+                  14 accounts moved — 3 booked meetings
+                </h1>
+                <p className='text-body max-w-xl opacity-85' style={{ color: 'inherit' }}>
+                  Signals from job changes, funding and hiring, ranked by fit. Reach out while it is warm.
+                </p>
+              </div>
+            </section>
+          )}
+          {cover === 'hero' && sig.mesh && (
             <BrandMesh
               className='rounded-[calc(var(--radius)+4px)] px-8 py-12'
               // Pinned to Trayo's own mesh colours: this band is the one place
