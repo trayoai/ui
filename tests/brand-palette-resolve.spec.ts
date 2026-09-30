@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import { contrast, fromOklch, parseHex, toHex, toOklch } from '../src/lib/brand-palette/color'
 import {
+  BRAND_CONTAINER_TOKENS,
+  BRAND_MESH_TOKENS,
   BRAND_SHELL_TOKENS,
   BRAND_SLOTS,
   BRAND_SURFACE_TOKENS,
@@ -54,8 +56,10 @@ describe.each(Object.entries(BRANDS))('resolveBrandPalette — %s', (_name, inpu
   const light = TRAYO_SURFACES.light
   const dark = TRAYO_SURFACES.dark
 
-  it('emits every token', () => {
-    expect(Object.keys(tokens).sort()).toEqual([...BRAND_TOKENS].sort())
+  it('emits every token (plus the derived bar and brand mesh, bold being the default)', () => {
+    expect(Object.keys(tokens).sort()).toEqual(
+      [...BRAND_TOKENS, ...BRAND_CONTAINER_TOKENS, ...BRAND_SHELL_TOKENS, ...BRAND_MESH_TOKENS].sort()
+    )
   })
 
   it('keeps the chosen primary as the light fill', () => {
@@ -207,13 +211,143 @@ describe('brand gradient', () => {
   })
 })
 
+describe('emphasis (bold by default)', () => {
+  it('a brand with no shell gets a bar in a deep step of its primary, dark and readable', () => {
+    for (const primary of ['#002991', '#543afc', '#ffe01b', '#36c5f0']) {
+      const p = resolveBrandPalette({ primary })
+      expect(p.slots.shell).not.toBeNull()
+      const shell = toOklch(rgb(p.slots.shell!))
+      expect(shell.l).toBeLessThanOrEqual(0.39)
+      expect(Math.abs(shell.h - toOklch(rgb(primary)).h)).toBeLessThan(6)
+      expect(contrast(rgb(p.tokens['--brand-on-shell']!), rgb(p.slots.shell!))).toBeGreaterThanOrEqual(
+        TEXT_CONTRAST
+      )
+      expect(p.adjustments.join(' ')).toMatch(/no shell given; the bar takes a deep step of the primary/)
+      expect(brandAttributes(p)['data-brand-shell']).toBe('')
+    }
+  })
+
+  it('a black-and-white brand gets its black as the bar; a given shell is kept', () => {
+    expect(resolveBrandPalette({ primary: '#000000' }).slots.shell).toBe('#000000')
+    expect(resolveBrandPalette({ primary: '#611f69', shell: '#4a154b' }).slots.shell).toBe('#4a154b')
+  })
+
+  it('emits the mesh warm layers as brand steps: hue of the primary (and secondary), light', () => {
+    const p = resolveBrandPalette({ primary: '#002991', secondary: '#3fb6ff' })
+    for (const t of BRAND_MESH_TOKENS) expect(p.tokens[t]).toMatch(/^\d{1,3} \d{1,3} \d{1,3}$/)
+    const asRgb = (v: string) => v.split(' ').map((n) => Number(n) / 255) as unknown as ReturnType<typeof rgb>
+    expect(toOklch(asRgb(p.tokens['--brand-mesh-warm-rgb']!)).l).toBeGreaterThan(0.75)
+    expect(
+      Math.abs(toOklch(asRgb(p.tokens['--brand-mesh-warm-rgb']!)).h - toOklch(rgb('#002991')).h)
+    ).toBeLessThan(8)
+    expect(
+      Math.abs(toOklch(asRgb(p.tokens['--brand-mesh-warm-2-rgb']!)).h - toOklch(rgb('#3fb6ff')).h)
+    ).toBeLessThan(8)
+  })
+
+  it("quiet: no derived bar, Trayo's mesh layers", () => {
+    const p = resolveBrandPalette({ primary: '#002991', emphasis: 'quiet' })
+    expect(p.slots.shell).toBeNull()
+    expect(brandAttributes(p)).toEqual({ 'data-brand': '' })
+    for (const t of BRAND_MESH_TOKENS) expect(p.tokens[t]).toBeUndefined()
+  })
+
+  it('recommends the dark theme for a dark primary on a dark bar, light otherwise', () => {
+    expect(resolveBrandPalette({ primary: '#002991' }).theme).toBe('dark') // PayPal navy
+    expect(resolveBrandPalette({ primary: '#611f69', shell: '#4a154b' }).theme).toBe('dark') // Slack
+    expect(resolveBrandPalette({ primary: '#543afc' }).theme).toBe('light') // Stripe
+    expect(resolveBrandPalette({ primary: '#ffe01b' }).theme).toBe('light') // yellow
+    expect(resolveBrandPalette({ primary: '#002991', emphasis: 'quiet' }).theme).toBe('light') // no bar
+  })
+})
+
+describe('tertiary (primary hue + 60°) for one-colour brands', () => {
+  const hueOf = (hex: string) => toOklch(rgb(hex)).h
+  const gap = (a: number, b: number) => Math.min(Math.abs(a - b), 360 - Math.abs(a - b))
+
+  it('ends the brand gradient and colours the second mesh layer when there is no secondary', () => {
+    const p = resolveBrandPalette({ primary: '#002991' })
+    const end = /(#[0-9a-f]{6}) 100%/.exec(p.tokens['--brand-gradient'])![1]
+    expect(gap(hueOf(end), hueOf('#002991'))).toBeGreaterThan(45)
+    expect(gap(hueOf(end), hueOf('#002991'))).toBeLessThan(75)
+    const [r, g, b] = p.tokens['--brand-mesh-warm-2-rgb']!.split(' ').map((n) => Number(n) / 255)
+    expect(gap(toOklch([r, g, b] as unknown as ReturnType<typeof rgb>).h, hueOf('#002991'))).toBeGreaterThan(
+      45
+    )
+  })
+
+  it('leads the chart pool: series 2 of an accent-less brand is in the tertiary hue', () => {
+    const p = resolveBrandPalette({ primary: '#002991', background: '#ffffff' })
+    expect(gap(hueOf(p.tokens['--brand-chart-2']!), (hueOf('#002991') + 60) % 360)).toBeLessThan(10)
+  })
+
+  it('a given secondary still wins; a black-and-white brand has no tertiary', () => {
+    const p = resolveBrandPalette({ primary: '#002991', secondary: '#3fb6ff' })
+    expect(p.tokens['--brand-gradient']).toContain('#3fb6ff')
+    const apple = resolveBrandPalette({ primary: '#000000' })
+    expect(apple.tokens['--brand-gradient']).toMatch(/#000000 0%, #[0-9a-f]{6} 100%/)
+  })
+})
+
+describe('dark ladder (bold) follows Material tones in the brand hue', () => {
+  it('surface 6 → raised 22 as OKLCH lightness, chroma in the brand hue, text still 7:1', () => {
+    const p = resolveBrandPalette({ primary: '#002991', background: '#ffffff' }).tokens
+    const L = (t: string) => toOklch(rgb(p[t as keyof typeof p]!)).l
+    expect(L('--brand-background-dark')).toBeCloseTo(0.19, 1)
+    expect(L('--brand-well-dark')).toBeCloseTo(0.224, 1)
+    expect(L('--brand-surface-dark')).toBeCloseTo(0.24, 1)
+    expect(L('--brand-row-dark')).toBeCloseTo(0.29, 1)
+    expect(L('--brand-raised-dark')).toBeCloseTo(0.33, 1)
+    for (const t of ['--brand-background-dark', '--brand-surface-dark', '--brand-raised-dark'] as const) {
+      expect(contrast(rgb(TRAYO_SURFACES.dark.text), rgb(p[t]!))).toBeGreaterThanOrEqual(7)
+    }
+    const quiet = resolveBrandPalette({ primary: '#002991', background: '#ffffff', emphasis: 'quiet' }).tokens
+    expect(toOklch(rgb(quiet['--brand-raised-dark']!)).l).toBeGreaterThan(0.36)
+  })
+})
+
+describe('containers (Material tone 90 / on 10; dark 30 / 90)', () => {
+  it.each(['#002991', '#611f69', '#543afc', '#ffe01b', '#000000'])(
+    '%s: readable, in the brand hue',
+    (primary) => {
+      const t = resolveBrandPalette({ primary }).tokens
+      for (const token of BRAND_CONTAINER_TOKENS) expect(t[token]).toMatch(/^#[0-9a-f]{6}$/)
+      expect(contrast(rgb(t['--brand-on-container']), rgb(t['--brand-container']))).toBeGreaterThanOrEqual(7)
+      expect(
+        contrast(rgb(t['--brand-on-container-dark']), rgb(t['--brand-container-dark']))
+      ).toBeGreaterThanOrEqual(7)
+      expect(
+        contrast(rgb(t['--brand-on-container-tertiary']), rgb(t['--brand-container-tertiary']))
+      ).toBeGreaterThanOrEqual(7)
+      expect(toOklch(rgb(t['--brand-container'])).l).toBeCloseTo(0.9, 1)
+      expect(toOklch(rgb(t['--brand-container-dark'])).l).toBeCloseTo(0.35, 1)
+      if (toOklch(rgb(primary)).c > 0.04) {
+        const d = Math.abs(toOklch(rgb(t['--brand-container'])).h - toOklch(rgb(primary)).h)
+        expect(Math.min(d, 360 - d)).toBeLessThan(10)
+      }
+    }
+  )
+})
+
+describe('canvas strength', () => {
+  it("'vibrant' tints a neutral page more than 'soft', still 7:1 for text", () => {
+    const soft = resolveBrandPalette({ primary: '#611f69', background: '#ffffff' })
+    const vivid = resolveBrandPalette({ primary: '#611f69', background: '#ffffff', canvas: 'vibrant' })
+    expect(toOklch(rgb(vivid.slots.background!)).c).toBeGreaterThan(toOklch(rgb(soft.slots.background!)).c)
+    expect(toOklch(rgb(vivid.slots.background!)).l).toBeLessThan(toOklch(rgb(soft.slots.background!)).l)
+    expect(contrast(rgb(vivid.tokens['--brand-text']!), rgb(vivid.slots.background!))).toBeGreaterThanOrEqual(
+      7
+    )
+  })
+})
+
 describe('shell slot', () => {
   const slack = resolveBrandPalette({ primary: '#611f69', shell: '#4a154b', secondary: '#36c5f0' })
   const t = slack.tokens
 
   it('emits the shell tokens only when there is a shell', () => {
     for (const token of BRAND_SHELL_TOKENS) expect(t[token]).toMatch(/^#[0-9a-f]{6}$/)
-    const noShell = resolveBrandPalette(BRANDS.paypal)
+    const noShell = resolveBrandPalette({ ...BRANDS.paypal, emphasis: 'quiet' })
     for (const token of BRAND_SHELL_TOKENS) expect(noShell.tokens[token]).toBeUndefined()
     expect(slack.slots.shell).toBe('#4a154b')
     expect(noShell.slots.shell).toBeNull()
@@ -265,13 +399,22 @@ describe('shell slot', () => {
 
   it('brandAttributes adds data-brand-shell only with a shell', () => {
     expect(brandAttributes(slack)).toEqual({ 'data-brand': '', 'data-brand-shell': '' })
-    expect(brandAttributes(resolveBrandPalette(BRANDS.paypal))).toEqual({ 'data-brand': '' })
+    expect(brandAttributes(resolveBrandPalette({ ...BRANDS.paypal, emphasis: 'quiet' }))).toEqual({
+      'data-brand': ''
+    })
   })
 
   it('brandPaletteCss and brandPaletteStyle include the shell tokens when present', () => {
     expect(brandPaletteCss(slack)).toContain('  --brand-shell: #4a154b;')
-    expect(Object.keys(brandPaletteStyle(slack))).toEqual([...BRAND_TOKENS, ...BRAND_SHELL_TOKENS])
-    expect(Object.keys(brandPaletteStyle(resolveBrandPalette(BRANDS.paypal)))).toEqual([...BRAND_TOKENS])
+    expect(Object.keys(brandPaletteStyle(slack))).toEqual([
+      ...BRAND_TOKENS,
+      ...BRAND_CONTAINER_TOKENS,
+      ...BRAND_SHELL_TOKENS,
+      ...BRAND_MESH_TOKENS
+    ])
+    expect(
+      Object.keys(brandPaletteStyle(resolveBrandPalette({ ...BRANDS.paypal, emphasis: 'quiet' })))
+    ).toEqual([...BRAND_TOKENS, ...BRAND_CONTAINER_TOKENS])
   })
 })
 
@@ -361,13 +504,15 @@ describe('complete override — surfaces', () => {
   it('emits the surface tokens only with a background, and the attribute with them', () => {
     for (const token of BRAND_SURFACE_TOKENS) expect(t[token]).toBeDefined()
     expect(resolveBrandPalette(BRANDS.paypal).tokens['--brand-background']).toBeUndefined()
-    expect(brandAttributes(p)).toEqual({ 'data-brand': '', 'data-brand-surfaces': '' })
-    expect(p.slots).toMatchObject({
-      background: '#ffffff',
-      surface: '#f8f8f8',
-      text: '#1d1c1d',
-      mutedText: '#616061'
+    expect(brandAttributes(p)).toEqual({
+      'data-brand': '',
+      'data-brand-shell': '',
+      'data-brand-surfaces': ''
     })
+    expect(p.slots).toMatchObject({ text: '#1d1c1d', mutedText: '#616061' })
+    // The white page and neutral card are tinted with the brand hue (tested below).
+    expect(p.slots.background).toMatch(/^#[0-9a-f]{6}$/)
+    expect(p.slots.surface).toMatch(/^#[0-9a-f]{6}$/)
   })
 
   it('text reads on every brand surface: 7:1 primary, 4.5:1 secondary, 3:1 muted', () => {
@@ -395,27 +540,77 @@ describe('complete override — surfaces', () => {
   })
 
   it('surface and text default from background when omitted', () => {
-    const q = resolveBrandPalette({ primary: '#002991', background: '#f4f7fb' })
-    expect(q.slots.background).toBe('#f4f7fb')
-    expect(toOklch(rgb(q.slots.surface!)).l).toBeGreaterThan(toOklch(rgb('#f4f7fb')).l)
-    expect(contrast(rgb(q.tokens['--brand-text']!), rgb('#f4f7fb'))).toBeGreaterThanOrEqual(7)
+    const q = resolveBrandPalette({ primary: '#002991', background: '#eef3ff' })
+    expect(q.slots.background).toBe('#eef3ff')
+    expect(toOklch(rgb(q.slots.surface!)).l).toBeGreaterThan(toOklch(rgb('#eef3ff')).l)
+    expect(contrast(rgb(q.tokens['--brand-text']!), rgb('#eef3ff'))).toBeGreaterThanOrEqual(7)
   })
 
-  it('dark mode keeps Trayo lightness steps and takes the brand hue at low chroma', () => {
-    const tinted = resolveBrandPalette({ primary: '#002991', background: '#eef3ff', text: '#001435' }).tokens
+  it('quiet: dark mode keeps Trayo lightness steps and takes the brand hue at low chroma', () => {
+    const tinted = resolveBrandPalette({
+      primary: '#002991',
+      background: '#eef3ff',
+      text: '#001435',
+      emphasis: 'quiet'
+    }).tokens
     for (const [token, trayo] of [
       ['--brand-background-dark', TRAYO_SURFACES.dark.shell],
       ['--brand-surface-dark', TRAYO_SURFACES.dark.card],
       ['--brand-raised-dark', TRAYO_SURFACES.dark.raised]
     ] as const) {
       const c = toOklch(rgb(tinted[token]!))
-      expect(Math.abs(c.l - toOklch(rgb(trayo)).l)).toBeLessThan(0.02)
-      // The cap is 0.02; rounding to 8-bit hex adds up to ~0.002.
-      expect(c.c).toBeLessThanOrEqual(0.025)
+      const trayoL = toOklch(rgb(trayo)).l
+      expect(Math.abs(c.l - trayoL)).toBeLessThan(0.02)
+      // As much of the 0.045 chroma as sRGB allows for this hue at this
+      // lightness (navy at L≈0.2 clips near 0.015), never Trayo's grey.
+      const reachable = toOklch(fromOklch({ l: trayoL, c: 0.045, h: toOklch(rgb('#eef3ff')).h })).c
+      expect(c.c).toBeGreaterThanOrEqual(Math.min(0.045, reachable) - 0.004)
+      expect(c.c).toBeGreaterThanOrEqual(0.01)
+      expect(c.c).toBeLessThanOrEqual(0.05)
       expect(contrast(rgb(TRAYO_SURFACES.dark.text), rgb(tinted[token]!))).toBeGreaterThanOrEqual(7)
     }
     const grey = resolveBrandPalette({ primary: '#000000', background: '#ffffff', text: '#111111' }).tokens
     expect(grey['--brand-background-dark']).toBe(TRAYO_SURFACES.dark.shell)
+  })
+
+  it('a neutral background takes the primary hue as a soft tint, so brands never share a canvas', () => {
+    // Regression (Ohad, 2026-09-30): every demo contract says #ffffff, so all
+    // the screenshots had the same white page.
+    const paypal = resolveBrandPalette({ primary: '#002991', background: '#ffffff', surface: '#f5f7fa' })
+    const slack = resolveBrandPalette({ primary: '#611f69', background: '#ffffff', surface: '#f8f8f8' })
+    for (const [p, hue] of [
+      [paypal, toOklch(rgb('#002991')).h],
+      [slack, toOklch(rgb('#611f69')).h]
+    ] as const) {
+      const bg = toOklch(rgb(p.slots.background!))
+      // As much of the 0.024 chroma as sRGB allows at this lightness for
+      // this hue (navy near white clips well under it), never a flat white.
+      const reachable = toOklch(fromOklch({ l: 0.965, c: 0.024, h: hue })).c
+      expect(bg.c).toBeGreaterThanOrEqual(Math.min(0.024, reachable) - 0.003)
+      expect(bg.c).toBeGreaterThanOrEqual(0.008)
+      expect(bg.l).toBeLessThanOrEqual(0.966)
+      expect(Math.abs(bg.h - hue)).toBeLessThan(8)
+      // Cards stay a lighter, fainter step above the page.
+      const card = toOklch(rgb(p.slots.surface!))
+      expect(card.l).toBeGreaterThan(bg.l + 0.01)
+      expect(card.c).toBeLessThan(bg.c)
+      expect(p.adjustments.join(' ')).toMatch(/canvas takes the brand's hue/)
+      // Text still reads on the tinted ladder.
+      for (const t of ['--brand-background', '--brand-surface', '--brand-well', '--brand-raised'] as const) {
+        expect(contrast(rgb(p.tokens['--brand-text']!), rgb(p.tokens[t]!))).toBeGreaterThanOrEqual(7)
+      }
+    }
+    expect(paypal.slots.background).not.toBe(slack.slots.background)
+  })
+
+  it('a chromatic background is kept as given; a black-and-white brand keeps its white', () => {
+    expect(resolveBrandPalette({ primary: '#002991', background: '#eef3ff' }).slots.background).toBe(
+      '#eef3ff'
+    )
+    const apple = resolveBrandPalette({ primary: '#000000', background: '#ffffff', surface: '#f5f5f7' })
+    expect(apple.slots.background).toBe('#ffffff')
+    expect(apple.slots.surface).toBe('#f5f5f7')
+    expect(apple.tokens['--brand-background-dark']).toBe(TRAYO_SURFACES.dark.shell)
   })
 
   it('rejects a dark background: the override is a light theme', () => {

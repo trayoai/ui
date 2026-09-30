@@ -780,6 +780,12 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
   // Off = accent-only, the page stays Trayo's cream.
   const [fullBrand, setFullBrand] = useState(true)
   useDemoBrand(brand, fullBrand)
+  // Each brand reads best in one theme (a dark primary on a dark bar → dark);
+  // follow it on switch, the theme switch still overrides.
+  useEffect(() => {
+    if (brand === 'trayo') return
+    setDark(resolveBrandPalette(fromBrandThemeContract(DEMO_BRANDS[brand]).input).theme === 'dark')
+  }, [brand])
   const [selected, setSelected] = useState<Set<string>>(new Set(['p-2']))
   const [sort, setSort] = useState<SortState>({ key: 'score', dir: 'desc' })
   const [band, setBand] = useState<Band>('all')

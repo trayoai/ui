@@ -190,6 +190,34 @@ export const BRAND_SHELL_TOKENS = [
 
 export type BrandShellToken = (typeof BRAND_SHELL_TOKENS)[number]
 
+/**
+ * Always emitted: the brand's container tone (Material 3's primaryContainer,
+ * tone 90 / on 10; dark 30 / 90) for fills that carry the brand strongly —
+ * tinted cards, stat tiles, table headers, selected rows — plus the tertiary
+ * container for two-tone screens.
+ */
+export const BRAND_CONTAINER_TOKENS = [
+  '--brand-container',
+  '--brand-on-container',
+  '--brand-container-tertiary',
+  '--brand-on-container-tertiary',
+  '--brand-container-dark',
+  '--brand-on-container-dark',
+  '--brand-container-tertiary-dark',
+  '--brand-on-container-tertiary-dark'
+] as const
+
+export type BrandContainerToken = (typeof BRAND_CONTAINER_TOKENS)[number]
+
+/** Emitted with `emphasis: 'bold'` (the default): the mesh band's warm layers in the brand's colours. */
+export const BRAND_MESH_TOKENS = [
+  '--brand-mesh-warm-rgb',
+  '--brand-mesh-warm-2-rgb',
+  '--brand-mesh-warm-3-rgb'
+] as const
+
+export type BrandMeshToken = (typeof BRAND_MESH_TOKENS)[number]
+
 /** Emitted only when the palette overrides the surfaces (has a background). */
 export const BRAND_SURFACE_TOKENS = [
   '--brand-background',

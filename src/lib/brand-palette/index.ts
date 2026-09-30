@@ -2,6 +2,8 @@ export {
   BRAND_ATTRIBUTE,
   BRAND_SHELL_ATTRIBUTE,
   BRAND_CHART_TOKENS,
+  BRAND_CONTAINER_TOKENS,
+  BRAND_MESH_TOKENS,
   BRAND_SHELL_TOKENS,
   BRAND_SLOTS,
   BRAND_SURFACES_ATTRIBUTE,
@@ -10,6 +12,8 @@ export {
   SHELL_REGION_ATTRIBUTE,
   brandSlotsAgentGuide,
   type BrandChartToken,
+  type BrandContainerToken,
+  type BrandMeshToken,
   type BrandShellToken,
   type BrandSlot,
   type BrandSurfaceToken,
@@ -36,4 +40,15 @@ export {
   type ContractMapping,
   type ContractOptions
 } from './contract'
+export {
+  DIALECT_AXES,
+  DIALECT_PRESETS,
+  checkDialect,
+  dialectAgentGuide,
+  dialectAttributes,
+  type Dialect,
+  type DialectAxis,
+  type DialectOption
+} from './dialect'
+export { applyBrand, BRAND_ROOT_ATTRIBUTES, type ApplyBrandOptions, type BrandDocument } from './apply'
 export { contrast, parseHex } from './color'

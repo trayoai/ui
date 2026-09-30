@@ -3,8 +3,11 @@ import { resolve } from 'node:path'
 
 import { describe, expect, it } from 'vitest'
 
+import { DIALECT_AXES } from '../src/lib/brand-palette'
 import {
   BRAND_CHART_TOKENS,
+  BRAND_CONTAINER_TOKENS,
+  BRAND_MESH_TOKENS,
   BRAND_SHELL_TOKENS,
   BRAND_SLOTS,
   BRAND_SURFACE_TOKENS,
@@ -52,7 +55,14 @@ describe('brand slots — tokens.css ⇄ lib/brand-palette', () => {
     const brandBlocks = stripComments(css.slice(css.indexOf('[data-brand],'), css.indexOf('@theme inline {')))
     const read = new Set([...brandBlocks.matchAll(/var\((--brand-[\w-]+)/g)].map((m) => m[1]))
     expect([...read].sort()).toEqual(
-      [...BRAND_TOKENS, ...BRAND_SHELL_TOKENS, ...BRAND_SURFACE_TOKENS, ...BRAND_CHART_TOKENS].sort()
+      [
+        ...BRAND_TOKENS,
+        ...BRAND_SHELL_TOKENS,
+        ...BRAND_SURFACE_TOKENS,
+        ...BRAND_CHART_TOKENS,
+        ...BRAND_MESH_TOKENS,
+        ...BRAND_CONTAINER_TOKENS
+      ].sort()
     )
   })
 
@@ -271,5 +281,58 @@ describe('complete override — [data-brand-surfaces]', () => {
     }
     expect(brandLight.get('--chart-2')).toContain(root.get('--chart-2'))
     expect(brandDark.get('--chart-2')).toContain(dark.get('--chart-2'))
+  })
+})
+
+describe('mesh warm layers', () => {
+  it('route through variables with Trayo defaults, and take the brand under data-brand', () => {
+    expect(root.get('--mesh-warm-rgb')).toBe('255 161 130')
+    expect(root.get('--mesh-warm-2-rgb')).toBe('255 123 49')
+    expect(root.get('--mesh-warm-3-rgb')).toBe('253 220 152')
+    const mesh = css.slice(css.indexOf('.brand-mesh::before'), css.indexOf('@keyframes brand-mesh-flow'))
+    expect(mesh).not.toMatch(/rgba\((255, 161, 130|255, 123, 49|253, 220, 152)/)
+    expect(brandLight.get('--mesh-warm-rgb')).toBe('var(--brand-mesh-warm-rgb, 255 161 130)')
+  })
+})
+
+describe('containers and dialects', () => {
+  it('container tokens have Trayo defaults, brand overrides and utilities', () => {
+    expect(root.get('--container')).toMatch(/^#/)
+    expect(dark.get('--container')).toMatch(/^#/)
+    expect(brandLight.get('--container')).toBe('var(--brand-container, var(--accent-soft))')
+    expect(brandDark.get('--container')).toBe('var(--brand-container-dark, var(--accent-soft))')
+    expect(css).toMatch(/--color-container: var\(--container\);/)
+    expect(css).toMatch(/--color-container-foreground: var\(--container-foreground\);/)
+  })
+
+  it('every dialect option except default has a rule', () => {
+    const rules = css.slice(css.indexOf('DIALECTS —'), css.indexOf('@theme inline {'))
+    for (const [axis, def] of Object.entries(DIALECT_AXES)) {
+      for (const opt of def.options) {
+        if (opt === 'default') continue
+        expect(rules, `${axis}=${opt}`).toContain(`[data-dialect-${axis}='${opt}']`)
+      }
+    }
+  })
+})
+
+describe('dialect rules keep interaction states', () => {
+  const rules = css.slice(css.indexOf('DIALECTS —'), css.indexOf('@theme inline {'))
+  it('zebra and cards fills leave hover and selected rows to the table', () => {
+    expect(rules).toMatch(
+      /zebra'\] \[data-slot='table-body'\] \[data-slot='table-row'\]:nth-child\(even\):not\(:hover\):not\(\[data-state='selected'\]\)/
+    )
+    expect(rules).toMatch(
+      /cards'\] \[data-slot='table-body'\] \[data-slot='table-row'\]\[data-state='selected'\]/
+    )
+  })
+  it('soft and outline buttons draw a focus ring', () => {
+    expect(rules).toMatch(/button='soft'\] \[data-slot='button'\]\.bg-accent-brand:focus-visible/)
+    expect(rules).toMatch(/button='outline'\] \[data-slot='button'\]\.bg-accent-brand:focus-visible/)
+  })
+  it('dense sets the cell height, not extra padding', () => {
+    expect(rules).toMatch(
+      /dense'\] \[data-slot='table-cell'\] \{ height: 2\.25rem; padding-top: 0; padding-bottom: 0; \}/
+    )
   })
 })
