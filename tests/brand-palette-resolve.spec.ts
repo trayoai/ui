@@ -497,6 +497,15 @@ describe('accents → chart series', () => {
       const light = [2, 3, 4, 5].map((n) => q.tokens[`--brand-chart-${n}` as BrandChartToken])
       expect(light.every(Boolean), primary).toBe(true)
       expect(new Set(light).size, primary).toBe(4)
+      // Every filled series keeps at least 18° of hue from the primary and
+      // from each other (Trayo amber vs a nearby orange was 17.2°).
+      const hues = [primary, ...light].map((c) => toOklch(rgb(c!)).h)
+      for (let i = 0; i < hues.length; i++) {
+        for (let j = i + 1; j < hues.length; j++) {
+          const d = Math.abs(hues[i] - hues[j])
+          expect(Math.min(d, 360 - d), `${primary}: series ${i} vs ${j}`).toBeGreaterThanOrEqual(18)
+        }
+      }
       for (const c of light) {
         expect(contrast(rgb(c!), rgb(q.tokens['--brand-surface']!)), primary).toBeGreaterThanOrEqual(
           NON_TEXT_CONTRAST

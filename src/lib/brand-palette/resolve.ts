@@ -79,7 +79,7 @@ const SERIES_POOL = [
   ['#e11d48', '#e14660'], // rose
   ['#2563eb', '#3986e4'], // blue
   ['#7c3aed', '#a78bfa'], // violet
-  ['#ea580c', '#fb923c'], // orange
+  ['#0891b2', '#22d3ee'], // cyan
   ['#65a30d', '#a3e635'], // lime
   ['#db2777', '#f472b6'] // pink
 ] as const
@@ -366,9 +366,13 @@ export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPale
   if (accents.length || override) {
     const chosen: RGB[] = [primary, ...accents.slice(0, CHART_SERIES)]
     const nearChosen = (rgb: RGB) => chosen.some((c) => sameHue(c, rgb))
-    const pool = SERIES_POOL.map(([l, d]) => [parseHex(l)!, parseHex(d)!] as const).filter(
-      ([light]) => !nearChosen(light)
-    )
+    const pool = SERIES_POOL.map(([l, d]) => [parseHex(l)!, parseHex(d)!] as const)
+    // Rechecked at every fill: a candidate that was distinct from the accents
+    // may sit next to a series filled in the step before.
+    const nextFromPool = () => {
+      const i = pool.findIndex(([light]) => !nearChosen(light))
+      return i === -1 ? undefined : pool.splice(i, 1)[0]
+    }
     for (let n = 2; n <= CHART_SERIES + 1; n++) {
       const given = accents[n - 2]
       // Last resort (a brand taking most of the wheel): the primary's hue
@@ -380,7 +384,7 @@ export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPale
           h: (hue + 72 * (n - 1)) % 360
         })
       )
-      const filled = given ? null : (pool.shift() ?? ([rotated, rotated] as const))
+      const filled = given ? null : (nextFromPool() ?? ([rotated, rotated] as const))
       const lightSource = given ?? filled![0]
       const darkSource = given ?? filled![1]
       if (filled) chosen.push(filled[0])
