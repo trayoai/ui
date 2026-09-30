@@ -193,6 +193,11 @@
   --shell-glow-cool-alpha: 0.10;
   --mesh-cool-rgb: 132 92 255;
   --mesh-cool-2-rgb: 205 129 255;
+  /* The mesh's warm layers (salmon, peach, cream). A brand with `emphasis:
+     'bold'` (the default) swaps them for light steps of its own colours. */
+  --mesh-warm-rgb: 255 161 130;
+  --mesh-warm-2-rgb: 255 123 49;
+  --mesh-warm-3-rgb: 253 220 152;
 
   /* Identity avatar gradients. Theme-invariant; white initials sit on top. */
   --gradient-avatar:        linear-gradient(135deg, #6E79D6, #8E5BD0);
@@ -878,6 +883,9 @@
   --shell-glow-cool-rgb: var(--brand-primary-rgb, 123 93 243);
   --mesh-cool-rgb: var(--brand-primary-rgb, 132 92 255);
   --mesh-cool-2-rgb: var(--brand-secondary-rgb, var(--brand-primary-rgb, 205 129 255));
+  --mesh-warm-rgb: var(--brand-mesh-warm-rgb, 255 161 130);
+  --mesh-warm-2-rgb: var(--brand-mesh-warm-2-rgb, 255 123 49);
+  --mesh-warm-3-rgb: var(--brand-mesh-warm-3-rgb, 253 220 152);
   /* Charts: series 1 is the brand (its ring tone, visible on cream even for a
      yellow brand); the intensity ramp takes the brand's hue. Series 2-5 stay
      Trayo's. Fallbacks are Trayo's ramp. */
@@ -1471,9 +1479,9 @@
   background-image:
     radial-gradient(40% 55% at 18% 30%, rgb(var(--mesh-cool-rgb) / 0.42) 0%, rgb(var(--mesh-cool-rgb) / 0) 70%),
     radial-gradient(35% 50% at 48% 12%, rgb(var(--mesh-cool-2-rgb) / 0.40) 0%, rgb(var(--mesh-cool-2-rgb) / 0) 70%),
-    radial-gradient(45% 60% at 80% 28%, rgba(255, 161, 130, 0.55) 0%, rgba(255, 161, 130, 0) 70%),
-    radial-gradient(30% 45% at 92% 70%, rgba(255, 123, 49, 0.30) 0%, rgba(255, 123, 49, 0) 70%),
-    radial-gradient(40% 50% at 35% 80%, rgba(253, 220, 152, 0.50) 0%, rgba(253, 220, 152, 0) 70%);
+    radial-gradient(45% 60% at 80% 28%, rgb(var(--mesh-warm-rgb) / 0.55) 0%, rgb(var(--mesh-warm-rgb) / 0) 70%),
+    radial-gradient(30% 45% at 92% 70%, rgb(var(--mesh-warm-2-rgb) / 0.30) 0%, rgb(var(--mesh-warm-2-rgb) / 0) 70%),
+    radial-gradient(40% 50% at 35% 80%, rgb(var(--mesh-warm-3-rgb) / 0.50) 0%, rgb(var(--mesh-warm-3-rgb) / 0) 70%);
   will-change: transform;
   animation: brand-mesh-flow 14s ease-in-out infinite alternate;
 }
@@ -1485,7 +1493,7 @@
   inset: -20%;
   background-image:
     radial-gradient(30% 45% at 70% 60%, rgb(var(--mesh-cool-rgb) / 0.30) 0%, rgb(var(--mesh-cool-rgb) / 0) 70%),
-    radial-gradient(35% 45% at 25% 55%, rgba(255, 161, 130, 0.35) 0%, rgba(255, 161, 130, 0) 70%),
+    radial-gradient(35% 45% at 25% 55%, rgb(var(--mesh-warm-rgb) / 0.35) 0%, rgb(var(--mesh-warm-rgb) / 0) 70%),
     radial-gradient(25% 35% at 55% 35%, rgb(var(--mesh-cool-2-rgb) / 0.30) 0%, rgb(var(--mesh-cool-2-rgb) / 0) 70%);
   will-change: transform;
   animation: brand-mesh-counterflow 18s ease-in-out infinite alternate;

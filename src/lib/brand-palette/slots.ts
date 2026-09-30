@@ -190,6 +190,15 @@ export const BRAND_SHELL_TOKENS = [
 
 export type BrandShellToken = (typeof BRAND_SHELL_TOKENS)[number]
 
+/** Emitted with `emphasis: 'bold'` (the default): the mesh band's warm layers in the brand's colours. */
+export const BRAND_MESH_TOKENS = [
+  '--brand-mesh-warm-rgb',
+  '--brand-mesh-warm-2-rgb',
+  '--brand-mesh-warm-3-rgb'
+] as const
+
+export type BrandMeshToken = (typeof BRAND_MESH_TOKENS)[number]
+
 /** Emitted only when the palette overrides the surfaces (has a background). */
 export const BRAND_SURFACE_TOKENS = [
   '--brand-background',

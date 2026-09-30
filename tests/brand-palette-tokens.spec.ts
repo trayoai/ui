@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   BRAND_CHART_TOKENS,
+  BRAND_MESH_TOKENS,
   BRAND_SHELL_TOKENS,
   BRAND_SLOTS,
   BRAND_SURFACE_TOKENS,
@@ -52,7 +53,13 @@ describe('brand slots — tokens.css ⇄ lib/brand-palette', () => {
     const brandBlocks = stripComments(css.slice(css.indexOf('[data-brand],'), css.indexOf('@theme inline {')))
     const read = new Set([...brandBlocks.matchAll(/var\((--brand-[\w-]+)/g)].map((m) => m[1]))
     expect([...read].sort()).toEqual(
-      [...BRAND_TOKENS, ...BRAND_SHELL_TOKENS, ...BRAND_SURFACE_TOKENS, ...BRAND_CHART_TOKENS].sort()
+      [
+        ...BRAND_TOKENS,
+        ...BRAND_SHELL_TOKENS,
+        ...BRAND_SURFACE_TOKENS,
+        ...BRAND_CHART_TOKENS,
+        ...BRAND_MESH_TOKENS
+      ].sort()
     )
   })
 
@@ -271,5 +278,16 @@ describe('complete override — [data-brand-surfaces]', () => {
     }
     expect(brandLight.get('--chart-2')).toContain(root.get('--chart-2'))
     expect(brandDark.get('--chart-2')).toContain(dark.get('--chart-2'))
+  })
+})
+
+describe('mesh warm layers', () => {
+  it('route through variables with Trayo defaults, and take the brand under data-brand', () => {
+    expect(root.get('--mesh-warm-rgb')).toBe('255 161 130')
+    expect(root.get('--mesh-warm-2-rgb')).toBe('255 123 49')
+    expect(root.get('--mesh-warm-3-rgb')).toBe('253 220 152')
+    const mesh = css.slice(css.indexOf('.brand-mesh::before'), css.indexOf('@keyframes brand-mesh-flow'))
+    expect(mesh).not.toMatch(/rgba\((255, 161, 130|255, 123, 49|253, 220, 152)/)
+    expect(brandLight.get('--mesh-warm-rgb')).toBe('var(--brand-mesh-warm-rgb, 255 161 130)')
   })
 })

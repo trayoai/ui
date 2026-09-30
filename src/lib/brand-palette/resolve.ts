@@ -16,6 +16,7 @@ import {
   BRAND_SHELL_ATTRIBUTE,
   BRAND_SURFACES_ATTRIBUTE,
   type BrandChartToken,
+  type BrandMeshToken,
   type BrandShellToken,
   type BrandSurfaceToken,
   type BrandToken
@@ -91,6 +92,12 @@ const SERIES_POOL = [
   ['#65a30d', '#a3e635'], // lime
   ['#db2777', '#f472b6'] // pink
 ] as const
+/** The bar a brand gets when its contract has no coloured shell: a deep step of the primary. */
+const DERIVED_SHELL_L = { min: 0.24, max: 0.38 }
+const DERIVED_SHELL_MAX_CHROMA = 0.16
+/** A brand whose primary and shell are both this dark reads best in the dark theme. */
+const DARK_THEME_PRIMARY_L = 0.5
+const DARK_THEME_SHELL_L = 0.35
 /** Two chart colours closer in hue than this read as the same series. */
 const SERIES_HUE_GAP = 18
 
@@ -116,6 +123,13 @@ export interface BrandPaletteInput {
   mutedText?: string | null
   /** Chart series 2–5 (and the secondary, when none is set), in order. */
   accents?: readonly string[] | null
+  /**
+   * `'bold'` (default): a brand with no coloured shell gets a bar in a deep
+   * step of its primary, and the mesh band takes the brand's colours — the
+   * large areas that make one branded app look unlike the next at a glance.
+   * `'quiet'`: no derived bar; the mesh keeps Trayo's warm layers.
+   */
+  emphasis?: 'bold' | 'quiet'
 }
 
 export interface BrandPaletteProblem {
@@ -136,9 +150,11 @@ export interface ResolvedBrandPalette {
     mutedText: string | null
     accents: string[]
   }
-  /** Shell, surface and chart tokens are present only when their slots are. */
+  /** The theme this brand reads best in; the app sets `class="dark"` when 'dark'. */
+  theme: 'light' | 'dark'
+  /** Shell, surface, chart and mesh tokens are present only when their slots are. */
   tokens: Record<BrandToken, string> &
-    Partial<Record<BrandShellToken | BrandSurfaceToken | BrandChartToken, string>>
+    Partial<Record<BrandShellToken | BrandSurfaceToken | BrandChartToken | BrandMeshToken, string>>
   /**
    * Where a derived colour had to move away from the slot to stay readable,
    * in words an agent or a reviewer can act on. Informational: the tokens are
@@ -415,8 +431,33 @@ export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPale
   }
 
   // ── Shell (same in both themes: it is the brand's own chrome) ─────────
-  const shell = input.shell ? parseHex(input.shell)! : null
+  const bold = input.emphasis !== 'quiet'
+  let shell = input.shell ? parseHex(input.shell)! : null
+  if (!shell && bold) {
+    shell = derivedShell(primary)
+    adjustments.push(`no shell given; the bar takes a deep step of the primary, ${hexOf(shell)}.`)
+  }
   if (shell) Object.assign(tokens, resolveShell(shell, input.onShell, L.text, adjustments))
+
+  // ── Mesh band in the brand's colours (bold): the warm layers, which stay
+  // Trayo's peach/salmon/cream otherwise, become light steps of the brand. ──
+  if (bold) {
+    const p = toOklch(primary)
+    const warm = (l: number, c: number, dh = 0) =>
+      toRgbChannels(quantize(fromOklch({ l, c: Math.min(p.c, c), h: (p.h + dh + 360) % 360 })))
+    const second = secondary ? toOklch(secondary) : null
+    tokens['--brand-mesh-warm-rgb'] = warm(0.8, 0.14)
+    tokens['--brand-mesh-warm-2-rgb'] = second
+      ? toRgbChannels(quantize(fromOklch({ l: 0.72, c: Math.min(second.c, 0.16), h: second.h })))
+      : warm(0.72, 0.16, 40)
+    tokens['--brand-mesh-warm-3-rgb'] = warm(0.9, 0.06, -20)
+  }
+
+  // ── Theme: a dark primary on a dark bar reads best dark; the gallery mixes. ──
+  const theme: ResolvedBrandPalette['theme'] =
+    toOklch(primary).l < DARK_THEME_PRIMARY_L && shell && toOklch(shell).l < DARK_THEME_SHELL_L
+      ? 'dark'
+      : 'light'
 
   if (override) Object.assign(tokens, override.tokens)
 
@@ -432,9 +473,23 @@ export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPale
       mutedText: override ? override.tokens['--brand-text-secondary'] : null,
       accents: accents.map(hexOf)
     },
+    theme,
     tokens,
     adjustments
   }
+}
+
+/** A bar for a brand that gave none: a deep step of the primary (its black, for a black-and-white brand). */
+function derivedShell(primary: RGB): RGB {
+  const p = toOklch(primary)
+  if (isNeutral(primary)) return quantize(fromOklch({ l: Math.min(p.l, DERIVED_SHELL_L.min), c: 0, h: 0 }))
+  return quantize(
+    fromOklch({
+      l: Math.min(Math.max(p.l, DERIVED_SHELL_L.min), DERIVED_SHELL_L.max),
+      c: Math.min(p.c, DERIVED_SHELL_MAX_CHROMA),
+      h: p.h
+    })
+  )
 }
 
 /** Parsed accents, without duplicates, white/black/greys, or the primary. */

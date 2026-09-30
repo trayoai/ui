@@ -41,6 +41,8 @@ export interface ContractOptions {
    * only the accent, charts and chrome take the brand.
    */
   surfaces?: 'brand' | 'trayo'
+  /** Passed through to the resolver; see `BrandPaletteInput.emphasis`. */
+  emphasis?: 'bold' | 'quiet'
 }
 
 export interface ContractMapping {
@@ -63,7 +65,7 @@ export interface ContractMapping {
  */
 export function fromBrandThemeContract(
   contract: BrandThemeContract,
-  { surfaces = 'brand' }: ContractOptions = {}
+  { surfaces = 'brand', emphasis }: ContractOptions = {}
 ): ContractMapping {
   const notes: string[] = []
   const norm = (value: string | null | undefined) => {
@@ -77,7 +79,9 @@ export function fromBrandThemeContract(
   let keepShell = shell
   if (shell && (shell === background || isLightShell(parseHex(shell)!))) {
     keepShell = null
-    notes.push(`shell ${shell} is light or the same as the page, so the Trayo top bar is kept.`)
+    notes.push(
+      `shell ${shell} is light or the same as the page; it is left out (with emphasis 'bold' the bar takes a deep step of the primary instead).`
+    )
   }
 
   const accents = (contract.accents ?? []).map(norm).filter((a): a is string => a !== null)
@@ -95,6 +99,7 @@ export function fromBrandThemeContract(
     shell: keepShell,
     onShell: keepShell ? contract.onShell : null
   }
+  if (emphasis) input.emphasis = emphasis
 
   if (surfaces === 'brand') {
     input.background = contract.background

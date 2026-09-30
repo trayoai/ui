@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { contrast, fromOklch, parseHex, toHex, toOklch } from '../src/lib/brand-palette/color'
 import {
+  BRAND_MESH_TOKENS,
   BRAND_SHELL_TOKENS,
   BRAND_SLOTS,
   BRAND_SURFACE_TOKENS,
@@ -54,8 +55,10 @@ describe.each(Object.entries(BRANDS))('resolveBrandPalette — %s', (_name, inpu
   const light = TRAYO_SURFACES.light
   const dark = TRAYO_SURFACES.dark
 
-  it('emits every token', () => {
-    expect(Object.keys(tokens).sort()).toEqual([...BRAND_TOKENS].sort())
+  it('emits every token (plus the derived bar and brand mesh, bold being the default)', () => {
+    expect(Object.keys(tokens).sort()).toEqual(
+      [...BRAND_TOKENS, ...BRAND_SHELL_TOKENS, ...BRAND_MESH_TOKENS].sort()
+    )
   })
 
   it('keeps the chosen primary as the light fill', () => {
@@ -207,13 +210,63 @@ describe('brand gradient', () => {
   })
 })
 
+describe('emphasis (bold by default)', () => {
+  it('a brand with no shell gets a bar in a deep step of its primary, dark and readable', () => {
+    for (const primary of ['#002991', '#543afc', '#ffe01b', '#36c5f0']) {
+      const p = resolveBrandPalette({ primary })
+      expect(p.slots.shell).not.toBeNull()
+      const shell = toOklch(rgb(p.slots.shell!))
+      expect(shell.l).toBeLessThanOrEqual(0.39)
+      expect(Math.abs(shell.h - toOklch(rgb(primary)).h)).toBeLessThan(6)
+      expect(contrast(rgb(p.tokens['--brand-on-shell']!), rgb(p.slots.shell!))).toBeGreaterThanOrEqual(
+        TEXT_CONTRAST
+      )
+      expect(p.adjustments.join(' ')).toMatch(/no shell given; the bar takes a deep step of the primary/)
+      expect(brandAttributes(p)['data-brand-shell']).toBe('')
+    }
+  })
+
+  it('a black-and-white brand gets its black as the bar; a given shell is kept', () => {
+    expect(resolveBrandPalette({ primary: '#000000' }).slots.shell).toBe('#000000')
+    expect(resolveBrandPalette({ primary: '#611f69', shell: '#4a154b' }).slots.shell).toBe('#4a154b')
+  })
+
+  it('emits the mesh warm layers as brand steps: hue of the primary (and secondary), light', () => {
+    const p = resolveBrandPalette({ primary: '#002991', secondary: '#3fb6ff' })
+    for (const t of BRAND_MESH_TOKENS) expect(p.tokens[t]).toMatch(/^\d{1,3} \d{1,3} \d{1,3}$/)
+    const asRgb = (v: string) => v.split(' ').map((n) => Number(n) / 255) as unknown as ReturnType<typeof rgb>
+    expect(toOklch(asRgb(p.tokens['--brand-mesh-warm-rgb']!)).l).toBeGreaterThan(0.75)
+    expect(
+      Math.abs(toOklch(asRgb(p.tokens['--brand-mesh-warm-rgb']!)).h - toOklch(rgb('#002991')).h)
+    ).toBeLessThan(8)
+    expect(
+      Math.abs(toOklch(asRgb(p.tokens['--brand-mesh-warm-2-rgb']!)).h - toOklch(rgb('#3fb6ff')).h)
+    ).toBeLessThan(8)
+  })
+
+  it("quiet: no derived bar, Trayo's mesh layers", () => {
+    const p = resolveBrandPalette({ primary: '#002991', emphasis: 'quiet' })
+    expect(p.slots.shell).toBeNull()
+    expect(brandAttributes(p)).toEqual({ 'data-brand': '' })
+    for (const t of BRAND_MESH_TOKENS) expect(p.tokens[t]).toBeUndefined()
+  })
+
+  it('recommends the dark theme for a dark primary on a dark bar, light otherwise', () => {
+    expect(resolveBrandPalette({ primary: '#002991' }).theme).toBe('dark') // PayPal navy
+    expect(resolveBrandPalette({ primary: '#611f69', shell: '#4a154b' }).theme).toBe('dark') // Slack
+    expect(resolveBrandPalette({ primary: '#543afc' }).theme).toBe('light') // Stripe
+    expect(resolveBrandPalette({ primary: '#ffe01b' }).theme).toBe('light') // yellow
+    expect(resolveBrandPalette({ primary: '#002991', emphasis: 'quiet' }).theme).toBe('light') // no bar
+  })
+})
+
 describe('shell slot', () => {
   const slack = resolveBrandPalette({ primary: '#611f69', shell: '#4a154b', secondary: '#36c5f0' })
   const t = slack.tokens
 
   it('emits the shell tokens only when there is a shell', () => {
     for (const token of BRAND_SHELL_TOKENS) expect(t[token]).toMatch(/^#[0-9a-f]{6}$/)
-    const noShell = resolveBrandPalette(BRANDS.paypal)
+    const noShell = resolveBrandPalette({ ...BRANDS.paypal, emphasis: 'quiet' })
     for (const token of BRAND_SHELL_TOKENS) expect(noShell.tokens[token]).toBeUndefined()
     expect(slack.slots.shell).toBe('#4a154b')
     expect(noShell.slots.shell).toBeNull()
@@ -265,13 +318,21 @@ describe('shell slot', () => {
 
   it('brandAttributes adds data-brand-shell only with a shell', () => {
     expect(brandAttributes(slack)).toEqual({ 'data-brand': '', 'data-brand-shell': '' })
-    expect(brandAttributes(resolveBrandPalette(BRANDS.paypal))).toEqual({ 'data-brand': '' })
+    expect(brandAttributes(resolveBrandPalette({ ...BRANDS.paypal, emphasis: 'quiet' }))).toEqual({
+      'data-brand': ''
+    })
   })
 
   it('brandPaletteCss and brandPaletteStyle include the shell tokens when present', () => {
     expect(brandPaletteCss(slack)).toContain('  --brand-shell: #4a154b;')
-    expect(Object.keys(brandPaletteStyle(slack))).toEqual([...BRAND_TOKENS, ...BRAND_SHELL_TOKENS])
-    expect(Object.keys(brandPaletteStyle(resolveBrandPalette(BRANDS.paypal)))).toEqual([...BRAND_TOKENS])
+    expect(Object.keys(brandPaletteStyle(slack))).toEqual([
+      ...BRAND_TOKENS,
+      ...BRAND_SHELL_TOKENS,
+      ...BRAND_MESH_TOKENS
+    ])
+    expect(
+      Object.keys(brandPaletteStyle(resolveBrandPalette({ ...BRANDS.paypal, emphasis: 'quiet' })))
+    ).toEqual([...BRAND_TOKENS])
   })
 })
 
@@ -361,7 +422,11 @@ describe('complete override — surfaces', () => {
   it('emits the surface tokens only with a background, and the attribute with them', () => {
     for (const token of BRAND_SURFACE_TOKENS) expect(t[token]).toBeDefined()
     expect(resolveBrandPalette(BRANDS.paypal).tokens['--brand-background']).toBeUndefined()
-    expect(brandAttributes(p)).toEqual({ 'data-brand': '', 'data-brand-surfaces': '' })
+    expect(brandAttributes(p)).toEqual({
+      'data-brand': '',
+      'data-brand-shell': '',
+      'data-brand-surfaces': ''
+    })
     expect(p.slots).toMatchObject({ text: '#1d1c1d', mutedText: '#616061' })
     // The white page and neutral card are tinted with the brand hue (tested below).
     expect(p.slots.background).toMatch(/^#[0-9a-f]{6}$/)
