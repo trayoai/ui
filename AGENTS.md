@@ -140,9 +140,10 @@ the wrong place or not at all. Nothing errors at build time.
     at the app root — it writes the stylesheet, the attributes and the dark
     class (README "Customer brand"). The brand is its COLOURS only: never
     change fonts, type roles, radius, spacing or the components for a brand.
-    Vary where the colour goes (`fills`: none | tiles | cards | all; `lead`:
-    primary | secondary | tertiary; the theme) — once per app, never per
-    screen. For the brand on a surface use `bg-container
+    Vary where the colour goes — `fills` (none | tiles | cards | all),
+    `lead` (primary | secondary | tertiary), `page` (default | canvas |
+    inverse), the theme, `<AppShell rail>` and a `<BrandBand>` headline —
+    once per app, never per screen. For the brand on a surface use `bg-container
     text-container-foreground`, never a hand-mixed tint. Never hand-set
     `--brand-*` or `--accent-*`, and never adjust a colour for contrast — the
     resolver does. Status colours, type, radius and the warm glow stay the

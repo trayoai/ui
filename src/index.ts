@@ -51,6 +51,7 @@ export {
 export {
   AppShell,
   AppShellNavLink,
+  BrandBand,
   BrandMesh,
   EmptyState,
   GradientText,

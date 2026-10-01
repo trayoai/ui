@@ -30,6 +30,13 @@ export interface ApplyBrandOptions extends ContractOptions {
   fills?: Fills | keyof typeof FILL_PRESETS
   /** Which of the brand's colours leads; see `BrandPaletteInput.lead`. */
   lead?: BrandPaletteInput['lead']
+  /**
+   * The page's colour: `'default'` (the brand canvas), `'canvas'` (the whole
+   * page in the brand's container tone, cards stay light) or `'inverse'`
+   * (the page framed in the brand's shell colour, content on its usual sheet
+   * inside). Colour only; sets `data-page` on `<html>`.
+   */
+  page?: 'default' | 'canvas' | 'inverse'
   /** The canvas tint strength; see `BrandPaletteInput.canvas`. */
   canvas?: BrandPaletteInput['canvas']
 }
@@ -49,7 +56,7 @@ const STYLE_ID = 'trayo-brand'
 export function applyBrand(
   doc: BrandDocument,
   contract: BrandThemeContract | BrandPaletteInput,
-  { theme = 'auto', fills, lead, canvas, ...contractOptions }: ApplyBrandOptions = {}
+  { theme = 'auto', fills, lead, canvas, page, ...contractOptions }: ApplyBrandOptions = {}
 ): ResolvedBrandPalette {
   // A raw BrandPaletteInput can carry every contract field too; mapping it
   // through the contract must not lose the fields only the raw shape has.
@@ -69,7 +76,8 @@ export function applyBrand(
 
   const root = doc.documentElement
   for (const name of root.getAttributeNames()) {
-    if (name.startsWith('data-brand') || name.startsWith('data-fill-')) root.removeAttribute(name)
+    if (name.startsWith('data-brand') || name.startsWith('data-fill-') || name === 'data-page')
+      root.removeAttribute(name)
   }
   const existing = doc.getElementById(STYLE_ID)
   const css = brandPaletteCss(palette, 'html')
@@ -84,6 +92,7 @@ export function applyBrand(
   root.classList.toggle('dark', theme === 'dark' || (theme === 'auto' && palette.theme === 'dark'))
   const fillList = typeof fills === 'string' ? FILL_PRESETS[fills] : fills
   if (fillList) for (const [k, v] of Object.entries(fillsAttributes(fillList))) root.setAttribute(k, v)
+  if (page && page !== 'default') root.setAttribute('data-page', page)
   return palette
 }
 

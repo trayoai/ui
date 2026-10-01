@@ -92,6 +92,16 @@ describe('applyBrand', () => {
     expect(led.adjustments.join(' ')).toMatch(/lead 'secondary': #36c5f0 leads/)
   })
 
+  it('page: sets data-page for canvas/inverse, nothing for default, cleared on the next call', () => {
+    const { doc, attrs } = fakeDocument()
+    applyBrand(doc, slack, { page: 'inverse' })
+    expect(attrs.get('data-page')).toBe('inverse')
+    applyBrand(doc, slack, { page: 'canvas' })
+    expect(attrs.get('data-page')).toBe('canvas')
+    applyBrand(doc, slack, { page: 'default' })
+    expect(attrs.has('data-page')).toBe(false)
+  })
+
   it('is idempotent: a second call replaces the stylesheet and attributes', () => {
     const { doc, attrs, styles } = fakeDocument()
     applyBrand(doc, slack)

@@ -312,7 +312,23 @@ describe('containers and dialects', () => {
   })
 
   it('fills change colour only: no shadow, radius, border-width or font in their rules', () => {
-    const rules = css.slice(css.indexOf('FILLS —'), css.indexOf('@theme inline {'))
+    const rules = css.slice(css.indexOf('FILLS —'), css.indexOf('PAGE COLOUR —'))
     expect(rules).not.toMatch(/box-shadow|border-radius|border-width|font-|padding|height/)
+  })
+})
+
+describe('page colour and brand band', () => {
+  const rules = css.slice(css.indexOf('PAGE COLOUR —'), css.indexOf('@theme inline {'))
+  it('canvas and inverse have rules; inverse frames the content column', () => {
+    expect(rules).toContain("[data-page='canvas'] .app-shell-bg")
+    expect(rules).toContain("[data-page='inverse'] .app-shell-bg [data-slot='page-container']")
+  })
+  it('page rules change colour and the frame only — no type', () => {
+    expect(rules).not.toMatch(/font-|letter-spacing|text-transform/)
+  })
+  it('text in a BrandBand takes the brand foreground', () => {
+    expect(rules).toMatch(
+      /\[data-slot='brand-band'\] \{[^}]*--text-primary: var\(--accent-brand-foreground\)/
+    )
   })
 })

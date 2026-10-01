@@ -1295,6 +1295,45 @@
   --text-muted: var(--container-foreground); --text-secondary: var(--container-foreground);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   PAGE COLOUR — `data-page` on <html> (applyBrand's `page`). Colour only.
+   canvas: the whole page in the brand's container tone; cards stay light.
+   inverse: the page framed in the brand's shell colour, the content column
+   on its usual sheet inside — every component keeps its tested colours.
+   ═══════════════════════════════════════════════════════════════════════ */
+[data-page='canvas'] .app-shell-bg {
+  background-color: var(--container);
+  background-image: var(--shell-grain), linear-gradient(var(--container), var(--container));
+}
+[data-page='inverse'] .app-shell-bg {
+  background-color: var(--brand-shell, var(--accent-brand));
+  background-image: var(--shell-grain);
+}
+[data-page='inverse'] .app-shell-bg [data-slot='page-container'] {
+  width: calc(100% - 2rem);
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  border-radius: calc(var(--radius) + 8px);
+  background-color: var(--surface-shell);
+  background-image: var(--shell-grain), var(--gradient-shell);
+}
+@media (min-width: 768px) {
+  [data-page='inverse'] .app-shell-bg [data-slot='page-container'] {
+    width: calc(100% - 7rem);
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+  }
+}
+
+/* BrandBand: text in the band takes the brand's readable foreground,
+   whatever role class it carries (4.5:1 on the fill, from the resolver). */
+[data-slot='brand-band'] {
+  --text-primary: var(--accent-brand-foreground);
+  --text-secondary: var(--accent-brand-foreground);
+  --text-muted: var(--accent-brand-foreground);
+  --accent-text: var(--accent-brand-foreground);
+}
+
 @theme inline {
   /* Clash Display — optional display face for a wordmark. Not bundled: load it
      yourself (e.g. a <link> in index.html) if you use `font-clash`. */

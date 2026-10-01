@@ -621,6 +621,11 @@ console.log(palette.theme, palette.adjustments)
 
 **Lead.** Which of the brand's colours leads: `lead: 'primary'` (default), `'secondary'` (the brand's second colour fills the buttons and the bar; its first becomes the decoration) or `'tertiary'`. The same palette in a different hierarchy, so two apps for one company can differ.
 
+**Page colour and layout.** Three more colour-only levers, so dozens of branded apps don't share a silhouette:
+- `applyBrand(…, { page: 'canvas' })` paints the whole page in the brand's container tone (cards stay light); `page: 'inverse'` frames the page in the brand's shell colour with the content on its usual sheet inside.
+- `<AppShell rail={…}>` adds a left rail of `<AppShellNavLink>`s in the same shell colour as the top bar.
+- `<BrandBand>` is a headline band in the brand's own colour; text inside takes the brand's readable foreground.
+
 **What a brand never changes:** fonts and the type roles, radius, spacing, the components themselves, pill buttons, the faces and the grain. The brand is its colours — the 8–10 in the contract and what the kit derives from them — placed differently per app (looks, fills, lead, theme). That is the whole design: one product, the customer's colours.
 
 You choose **what** the colours are; the kit works out **how** to use them.
