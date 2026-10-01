@@ -2,16 +2,15 @@ import { describe, expect, it } from 'vitest'
 
 import {
   applyBrand,
-  checkDialect,
+  checkFills,
+  FILL_PRESETS,
+  fillsAttributes,
   resolveBrandPalette,
-  DIALECT_PRESETS,
-  dialectAgentGuide,
-  dialectAttributes,
   type BrandDocument,
   type BrandThemeContract
 } from '../src/lib/brand-palette'
 
-/** The five things applyBrand touches on a document, recorded. */
+/** The things applyBrand touches on a document, recorded. */
 function fakeDocument() {
   const attrs = new Map<string, string>()
   const classes = new Set<string>()
@@ -72,15 +71,25 @@ describe('applyBrand', () => {
     expect(b.classes.has('dark')).toBe(true)
   })
 
-  it('dialect: a preset name or an object becomes data-dialect-* attributes; default axes are omitted', () => {
+  it('fills: a preset name or a list becomes data-fill-* attributes, cleared on the next call', () => {
     const { doc, attrs } = fakeDocument()
-    applyBrand(doc, slack, { dialect: 'editorial' })
-    expect(attrs.get('data-dialect-callout')).toBe('bar-left')
-    expect(attrs.get('data-dialect-table')).toBe('zebra')
-    applyBrand(doc, slack, { dialect: { card: 'tinted', button: 'default' } })
-    expect(attrs.get('data-dialect-card')).toBe('tinted')
-    expect(attrs.has('data-dialect-button')).toBe(false)
-    expect(attrs.has('data-dialect-callout')).toBe(false) // the previous dialect was cleared
+    applyBrand(doc, slack, { fills: 'tiles' })
+    expect(attrs.has('data-fill-tiles')).toBe(true)
+    expect(attrs.has('data-fill-table-head')).toBe(true)
+    expect(attrs.has('data-fill-cards')).toBe(false)
+    applyBrand(doc, slack, { fills: ['cards'] })
+    expect(attrs.has('data-fill-cards')).toBe(true)
+    expect(attrs.has('data-fill-tiles')).toBe(false)
+    applyBrand(doc, slack)
+    expect([...attrs.keys()].some((k) => k.startsWith('data-fill-'))).toBe(false)
+  })
+
+  it('lead: the secondary leads and the former primary becomes the decoration', () => {
+    const { doc } = fakeDocument()
+    const led = applyBrand(doc, slack, { lead: 'secondary' })
+    expect(led.slots.primary).toBe('#36c5f0')
+    expect(led.slots.secondary).toBe('#611f69')
+    expect(led.adjustments.join(' ')).toMatch(/lead 'secondary': #36c5f0 leads/)
   })
 
   it('is idempotent: a second call replaces the stylesheet and attributes', () => {
@@ -92,15 +101,7 @@ describe('applyBrand', () => {
     expect(attrs.has('data-brand-shell')).toBe(false)
   })
 
-  it('accepts raw slots and the canvas option', () => {
-    const { doc, styles } = fakeDocument()
-    const p = applyBrand(doc, { primary: '#611f69', background: '#ffffff' }, { canvas: 'vibrant' })
-    expect(styles[0].textContent).toContain('--brand-background:')
-    expect(p.slots.background).not.toBe('#ffffff')
-  })
-
   it('a raw palette that also looks like a contract keeps its raw-only fields', () => {
-    // Regression: emphasis 'quiet' was dropped on the way through the contract mapper.
     const { doc } = fakeDocument()
     const raw = {
       ...slack,
@@ -108,13 +109,21 @@ describe('applyBrand', () => {
       onShell: undefined,
       emphasis: 'quiet' as const,
       secondary: '#e01e5a',
-      canvas: 'vibrant' as const
+      canvas: 'vibrant' as const,
+      lead: 'secondary' as const
     }
     const viaApply = applyBrand(doc, raw)
     const direct = resolveBrandPalette(raw)
     expect(viaApply.slots.shell).toBeNull()
-    expect(viaApply.slots.secondary).toBe('#e01e5a')
+    expect(viaApply.slots.primary).toBe('#e01e5a')
     expect(viaApply.tokens).toEqual(direct.tokens)
+  })
+
+  it('accepts raw slots and the canvas option', () => {
+    const { doc, styles } = fakeDocument()
+    const p = applyBrand(doc, { primary: '#611f69', background: '#ffffff' }, { canvas: 'vibrant' })
+    expect(styles[0].textContent).toContain('--brand-background:')
+    expect(p.slots.background).not.toBe('#ffffff')
   })
 
   it('throws, applying nothing, on a bad contract', () => {
@@ -125,21 +134,19 @@ describe('applyBrand', () => {
   })
 })
 
-describe('dialect', () => {
-  it('presets are valid and attributes omit defaults', () => {
-    for (const [name, d] of Object.entries(DIALECT_PRESETS)) expect(checkDialect(d), name).toEqual([])
-    expect(dialectAttributes(DIALECT_PRESETS.plain)).toEqual({})
-    expect(dialectAttributes(DIALECT_PRESETS.tinted)).toMatchObject({ 'data-dialect-card': 'tinted' })
+describe('fills', () => {
+  it('presets are valid; attributes are one per target', () => {
+    for (const [name, f] of Object.entries(FILL_PRESETS)) expect(checkFills(f), name).toEqual([])
+    expect(fillsAttributes(FILL_PRESETS.none)).toEqual({})
+    expect(fillsAttributes(FILL_PRESETS.all)).toEqual({
+      'data-fill-cards': '',
+      'data-fill-tiles': '',
+      'data-fill-table-head': ''
+    })
   })
 
-  it('rejects unknown axes and options', () => {
-    expect(checkDialect({ card: 'shiny' as never })).toEqual([expect.objectContaining({ axis: 'card' })])
-    expect(checkDialect({ hat: 'tall' } as never)).toEqual([expect.objectContaining({ axis: 'hat' })])
-  })
-
-  it('the agent guide lists every axis and option', () => {
-    const g = dialectAgentGuide()
-    expect(g).toContain('callout: default | bar-left | bar-right | filled | outlined')
-    expect(g).toContain('tile: default | tinted | big-number')
+  it('rejects an unknown target and skips it in attributes', () => {
+    expect(checkFills(['rows' as never])).toEqual([expect.objectContaining({ target: 'rows' })])
+    expect(fillsAttributes(['rows' as never, 'tiles'])).toEqual({ 'data-fill-tiles': '' })
   })
 })

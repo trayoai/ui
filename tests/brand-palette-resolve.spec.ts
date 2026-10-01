@@ -341,6 +341,48 @@ describe('canvas strength', () => {
   })
 })
 
+describe('lead: the same colours in a different hierarchy', () => {
+  it("'secondary' leads with the brand's second colour; primary becomes the decoration", () => {
+    const base = { primary: '#002991', secondary: '#3fb6ff', onPrimary: '#ffffff' }
+    const led = resolveBrandPalette({ ...base, lead: 'secondary' })
+    expect(led.slots.primary).toBe('#3fb6ff')
+    expect(led.slots.secondary).toBe('#002991')
+    // onPrimary belonged to navy; text on the new sky-blue lead is derived (ink).
+    expect(led.tokens['--brand-on-primary']).toBe(TRAYO_SURFACES.light.text)
+    expect(led.tokens['--brand-gradient']).toContain('#002991')
+    expect(led.adjustments.join(' ')).toMatch(/lead 'secondary'/)
+  })
+
+  it("'secondary' falls back to the first accent, then to primary with a note", () => {
+    expect(
+      resolveBrandPalette({ primary: '#002991', accents: ['#2eb67d'], lead: 'secondary' }).slots.primary
+    ).toBe('#2eb67d')
+    const none = resolveBrandPalette({ primary: '#002991', lead: 'secondary' })
+    expect(none.slots.primary).toBe('#002991')
+    expect(none.adjustments.join(' ')).toMatch(/no usable colour/)
+  })
+
+  it("'tertiary' leads with the primary's hue + 60°", () => {
+    const led = resolveBrandPalette({ primary: '#002991', lead: 'tertiary' })
+    const d = Math.abs(toOklch(rgb(led.slots.primary)).h - ((toOklch(rgb('#002991')).h + 60) % 360))
+    expect(Math.min(d, 360 - d)).toBeLessThan(8)
+    expect(led.slots.secondary).toBe('#002991')
+    expect(resolveBrandPalette({ primary: '#000000', lead: 'tertiary' }).slots.primary).toBe('#000000')
+  })
+
+  it('every lead keeps the contrast guarantees', () => {
+    for (const lead of ['primary', 'secondary', 'tertiary'] as const) {
+      const p = resolveBrandPalette({ primary: '#002991', secondary: '#3fb6ff', background: '#ffffff', lead })
+      expect(
+        contrast(rgb(p.tokens['--brand-on-primary']), rgb(p.tokens['--brand-primary']))
+      ).toBeGreaterThanOrEqual(TEXT_CONTRAST)
+      expect(
+        contrast(rgb(p.tokens['--brand-accent-text']), rgb(p.tokens['--brand-surface']!))
+      ).toBeGreaterThanOrEqual(TEXT_CONTRAST)
+    }
+  })
+})
+
 describe('shell slot', () => {
   const slack = resolveBrandPalette({ primary: '#611f69', shell: '#4a154b', secondary: '#36c5f0' })
   const t = slack.tokens

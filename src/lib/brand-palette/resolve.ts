@@ -156,6 +156,15 @@ export interface BrandPaletteInput {
    * "vibrant" neutrals). A chromatic background is kept as given either way.
    */
   canvas?: 'soft' | 'vibrant'
+  /**
+   * Which of the brand's colours leads the palette — fills the buttons and
+   * the bar, drives links and the mesh. `'primary'` (default); `'secondary'`
+   * swaps primary and secondary (the brand's second colour leads, its first
+   * becomes the decoration); `'tertiary'` leads with the derived tertiary
+   * hue. The same colours in a different hierarchy, so two apps for one
+   * company can differ without a different palette.
+   */
+  lead?: 'primary' | 'secondary' | 'tertiary'
 }
 
 export interface BrandPaletteProblem {
@@ -292,12 +301,13 @@ export function checkBrandPalette(input: BrandPaletteInput): BrandPaletteProblem
  * Turns the slots into every token Trayo UI's `[data-brand]` blocks read.
  * Throws on slots `checkBrandPalette` rejects.
  */
-export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPalette {
-  const problems = checkBrandPalette(input)
+export function resolveBrandPalette(given: BrandPaletteInput): ResolvedBrandPalette {
+  const problems = checkBrandPalette(given)
   if (problems.length) {
     throw new Error(`Invalid brand palette: ${problems.map((p) => p.message).join(' ')}`)
   }
   const adjustments: string[] = []
+  const input = reorderForLead(given, adjustments)
   const primary = parseHex(input.primary)!
   const primaryDarkSlot = input.primaryDark ? parseHex(input.primaryDark)! : null
   const accents = uniqueAccents(input.accents ?? [], primary)
@@ -568,6 +578,39 @@ function derivedShell(primary: RGB): RGB {
       h: p.h
     })
   )
+}
+
+/**
+ * The lead colour becomes `primary`; the former primary becomes the secondary
+ * (decoration). A supplied `onPrimary` belonged to the old primary and is
+ * dropped so the text on the new lead is derived.
+ */
+function reorderForLead(input: BrandPaletteInput, adjustments: string[]): BrandPaletteInput {
+  const lead = input.lead ?? 'primary'
+  if (lead === 'primary') return input
+  const primary = parseHex(input.primary)!
+  const secondary = input.secondary ? parseHex(input.secondary) : null
+  const firstAccent = (input.accents ?? [])
+    .map((a) => parseHex(a))
+    .find((a) => a && !same(a, primary) && !isNeutral(a))
+  let next: RGB | null = null
+  if (lead === 'secondary') next = secondary ?? firstAccent ?? null
+  else if (!isNeutral(primary)) {
+    const p = toOklch(primary)
+    next = quantize(
+      fromOklch({
+        l: Math.min(Math.max(p.l, 0.45), 0.6),
+        c: Math.min(p.c, TERTIARY_MAX_CHROMA),
+        h: (p.h + TERTIARY_HUE_SHIFT) % 360
+      })
+    )
+  }
+  if (!next || toOklch(next).l > 0.96) {
+    adjustments.push(`lead '${lead}' has no usable colour for this brand; primary leads.`)
+    return input
+  }
+  adjustments.push(`lead '${lead}': ${hexOf(next)} leads; ${hexOf(primary)} becomes the secondary.`)
+  return { ...input, primary: hexOf(next), secondary: hexOf(primary), onPrimary: null, primaryDark: null }
 }
 
 /** Parsed accents, without duplicates, white/black/greys, or the primary. */

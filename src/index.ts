@@ -177,11 +177,10 @@ export {
   fromBrandThemeContract,
   resolveBrandPalette,
   applyBrand,
-  DIALECT_AXES,
-  DIALECT_PRESETS,
-  checkDialect,
-  dialectAgentGuide,
-  dialectAttributes,
+  FILL_PRESETS,
+  FILL_TARGETS,
+  checkFills,
+  fillsAttributes,
 } from './lib/brand-palette'
 export type {
   BrandPaletteInput,
@@ -192,8 +191,8 @@ export type {
   ContractOptions,
   ResolvedBrandPalette,
   ApplyBrandOptions,
-  Dialect,
-  DialectAxis,
+  Fills,
+  FillTarget,
 } from './lib/brand-palette'
 
 /* ----------------------------------------------------------------- helpers */

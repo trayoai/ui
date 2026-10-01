@@ -136,12 +136,13 @@ the wrong place or not at all. Nothing errors at build time.
     map it with `fromBrandThemeContract(contract)`. The company's styling is
     the canvas (page, cards, text too); the kit supplies the language. Pass
     `{ surfaces: 'trayo' }` only when the page should stay the kit's cream. Run `checkBrandPalette`, then `resolveBrandPalette`,
-    then call `applyBrand(document, contract, { theme, dialect })` once at
-    the app root — it writes the stylesheet, the attributes and the dark
-    class (README "Customer brand"). Pick ONE dialect for the whole app
-    (`plain` | `editorial` | `tinted` | `compact`, or an object) and never
-    mix its options within a screen. For the brand on a surface — a selected
-    row, a stat strip, a side panel — use `bg-container
+    then call `applyBrand(document, contract, { theme, fills, lead })` once
+    at the app root — it writes the stylesheet, the attributes and the dark
+    class (README "Customer brand"). The brand is its COLOURS only: never
+    change fonts, type roles, radius, spacing or the components for a brand.
+    Vary where the colour goes (`fills`: none | tiles | cards | all; `lead`:
+    primary | secondary | tertiary; the theme) — once per app, never per
+    screen. For the brand on a surface use `bg-container
     text-container-foreground`, never a hand-mixed tint. Never hand-set
     `--brand-*` or `--accent-*`, and never adjust a colour for contrast — the
     resolver does. Status colours, type, radius and the warm glow stay the

@@ -1,5 +1,5 @@
 import { fromBrandThemeContract, type BrandThemeContract, type ContractOptions } from './contract'
-import { dialectAttributes, DIALECT_PRESETS, type Dialect } from './dialect'
+import { fillsAttributes, FILL_PRESETS, type Fills } from './fills'
 import {
   brandAttributes,
   brandPaletteCss,
@@ -26,8 +26,10 @@ export interface BrandDocument {
 export interface ApplyBrandOptions extends ContractOptions {
   /** `'auto'` (default) follows `palette.theme`; a generator balancing a gallery passes it explicitly. */
   theme?: 'auto' | 'light' | 'dark'
-  /** A dialect object or a preset name; omitted = the kit as shipped. */
-  dialect?: Dialect | keyof typeof DIALECT_PRESETS
+  /** Which surfaces take the brand's container tone: a list or a preset name; omitted = none. */
+  fills?: Fills | keyof typeof FILL_PRESETS
+  /** Which of the brand's colours leads; see `BrandPaletteInput.lead`. */
+  lead?: BrandPaletteInput['lead']
   /** The canvas tint strength; see `BrandPaletteInput.canvas`. */
   canvas?: BrandPaletteInput['canvas']
 }
@@ -37,7 +39,7 @@ const STYLE_ID = 'trayo-brand'
 /**
  * Brands a document in one call — the whole sequence a build agent would
  * otherwise have to get right in order: contract → slots → check → resolve →
- * stylesheet → attributes → theme class → dialect. Idempotent: calling it
+ * stylesheet → attributes → theme class → fills. Idempotent: calling it
  * again replaces the previous brand. Returns the palette (its `adjustments`
  * and `theme` are worth logging).
  *
@@ -47,17 +49,18 @@ const STYLE_ID = 'trayo-brand'
 export function applyBrand(
   doc: BrandDocument,
   contract: BrandThemeContract | BrandPaletteInput,
-  { theme = 'auto', dialect, canvas, ...contractOptions }: ApplyBrandOptions = {}
+  { theme = 'auto', fills, lead, canvas, ...contractOptions }: ApplyBrandOptions = {}
 ): ResolvedBrandPalette {
   // A raw BrandPaletteInput can carry every contract field too; mapping it
   // through the contract must not lose the fields only the raw shape has.
   const input: BrandPaletteInput = isContract(contract)
     ? {
         ...fromBrandThemeContract(contract, contractOptions).input,
-        ...pick(contract as BrandPaletteInput, ['secondary', 'emphasis', 'canvas'])
+        ...pick(contract as BrandPaletteInput, ['secondary', 'emphasis', 'canvas', 'lead'])
       }
     : { ...contract }
   if (canvas) input.canvas = canvas
+  if (lead) input.lead = lead
   const problems = checkBrandPalette(input)
   if (problems.length) {
     throw new Error(`applyBrand: invalid brand palette — ${problems.map((p) => p.message).join(' ')}`)
@@ -66,7 +69,7 @@ export function applyBrand(
 
   const root = doc.documentElement
   for (const name of root.getAttributeNames()) {
-    if (name.startsWith('data-brand') || name.startsWith('data-dialect-')) root.removeAttribute(name)
+    if (name.startsWith('data-brand') || name.startsWith('data-fill-')) root.removeAttribute(name)
   }
   const existing = doc.getElementById(STYLE_ID)
   const css = brandPaletteCss(palette, 'html')
@@ -79,9 +82,8 @@ export function applyBrand(
   }
   for (const [k, v] of Object.entries(brandAttributes(palette))) root.setAttribute(k, v)
   root.classList.toggle('dark', theme === 'dark' || (theme === 'auto' && palette.theme === 'dark'))
-  const dialectValue = typeof dialect === 'string' ? DIALECT_PRESETS[dialect] : dialect
-  if (dialectValue)
-    for (const [k, v] of Object.entries(dialectAttributes(dialectValue))) root.setAttribute(k, v)
+  const fillList = typeof fills === 'string' ? FILL_PRESETS[fills] : fills
+  if (fillList) for (const [k, v] of Object.entries(fillsAttributes(fillList))) root.setAttribute(k, v)
   return palette
 }
 
