@@ -320,7 +320,9 @@ describe('containers and dialects', () => {
 describe('page colour and brand band', () => {
   const rules = css.slice(css.indexOf('PAGE COLOUR —'), css.indexOf('@theme inline {'))
   it('canvas and inverse have rules; inverse frames the content column', () => {
-    expect(rules).toContain("[data-page='canvas'] .app-shell-bg")
+    // html[…] so the page colour outranks `:is(.dark) .app-shell-bg` in dark mode.
+    expect(rules).toContain("html[data-page='canvas'] .app-shell-bg")
+    expect(rules).toContain("html[data-page='inverse'] .app-shell-bg {")
     expect(rules).toContain("[data-page='inverse'] .app-shell-bg [data-slot='page-container']")
   })
   it('page rules change colour and the frame only — no type', () => {

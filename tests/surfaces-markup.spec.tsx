@@ -14,6 +14,9 @@ describe('AppShell rail', () => {
     expect(html).toContain('data-shell-region=""')
     expect(html).toMatch(/<nav aria-label="Sections"[^>]*>.*Accounts/)
     expect(html).toMatch(/data-slot="app-shell-body".*data-slot="page-container"/)
+    // Regression: the rail was hidden below md, the only copy of the links.
+    const rail = /<aside[^>]*app-shell-rail[^>]*>/.exec(html)![0]
+    expect(rail).not.toMatch(/\bhidden\b/)
   })
 
   it('without a rail, children render directly (unchanged)', () => {

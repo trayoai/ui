@@ -1301,11 +1301,12 @@
    inverse: the page framed in the brand's shell colour, the content column
    on its usual sheet inside — every component keeps its tested colours.
    ═══════════════════════════════════════════════════════════════════════ */
-[data-page='canvas'] .app-shell-bg {
+/* html[…] outranks `:is(.dark) .app-shell-bg`, so the page colour holds in dark. */
+html[data-page='canvas'] .app-shell-bg {
   background-color: var(--container);
   background-image: var(--shell-grain), linear-gradient(var(--container), var(--container));
 }
-[data-page='inverse'] .app-shell-bg {
+html[data-page='inverse'] .app-shell-bg {
   background-color: var(--brand-shell, var(--accent-brand));
   background-image: var(--shell-grain);
 }

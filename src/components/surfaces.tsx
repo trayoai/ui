@@ -35,7 +35,9 @@ const CONTAINER_MAX: Record<ContainerWidth, string> = {
  * Give it a `rail` and the app gets a left column for section links
  * (`<AppShellNavLink>`s stack there): a full-height strip in the same shell
  * colour as the top bar — one of the large colour areas that make two
- * branded apps look different. Content goes to its right.
+ * branded apps look different. Content goes to its right. Below `md` the
+ * rail becomes a horizontally scrolling strip under the top bar, so the
+ * links stay reachable on phones.
  */
 export function AppShell({
   className,
@@ -113,17 +115,21 @@ export function AppShell({
         </header>
       )}
       {rail != null ? (
-        <div data-slot='app-shell-body' className='flex items-start'>
+        <div data-slot='app-shell-body' className='flex flex-col md:flex-row md:items-start'>
           <aside
             data-slot='app-shell-rail'
             // Same shell colour as the top bar when the brand has one.
             data-shell-region=''
             className={cn(
-              'sticky hidden w-60 shrink-0 flex-col self-start border-r border-border-subtle bg-surface-sidebar p-3 md:flex',
-              hasBar ? 'top-topbar h-[calc(100vh-var(--spacing-topbar))]' : 'top-0 h-screen'
+              'flex w-full shrink-0 border-b border-border-subtle bg-surface-sidebar p-2',
+              'md:sticky md:w-60 md:flex-col md:self-start md:border-r md:border-b-0 md:p-3',
+              hasBar ? 'md:top-topbar md:h-[calc(100vh-var(--spacing-topbar))]' : 'md:top-0 md:h-screen'
             )}
           >
-            <nav aria-label='Sections' className='flex flex-col gap-1 [&>*]:justify-start'>
+            <nav
+              aria-label='Sections'
+              className='flex flex-row gap-1 overflow-x-auto md:flex-col md:overflow-visible md:[&>*]:justify-start'
+            >
               {rail}
             </nav>
           </aside>
