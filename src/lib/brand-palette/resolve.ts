@@ -711,8 +711,13 @@ function resolveSurfaces(
 
   // Dark: Trayo's ladder, tinted with the brand's hue (the canvas hue, else
   // the ink's) at a chroma that keeps the kit's dark text readable everywhere.
+  // A neutral canvas keeps the kit's slate: no fallback to the ink's hue.
   const tint =
-    canvasHue !== null ? { h: canvasHue } : [toOklch(text)].find((c) => c.c >= NEUTRAL_SURFACE_CHROMA)
+    canvasHue !== null
+      ? { h: canvasHue }
+      : canvas
+        ? [toOklch(text)].find((c) => c.c >= NEUTRAL_SURFACE_CHROMA)
+        : undefined
   // Bold: Material's tone ladder in the brand hue, a deeper night than
   // Trayo's slate. Quiet: Trayo's own lightness steps, tinted.
   const darkOf = (trayo: RGB, ladderL: number) => {

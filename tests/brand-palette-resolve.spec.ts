@@ -626,6 +626,9 @@ describe('complete override — surfaces', () => {
     expect(p.adjustments.join(' ')).not.toMatch(/canvas takes the brand's hue/)
     expect(p.tokens['--brand-background-dark']).toBe(TRAYO_SURFACES.dark.shell)
     expect(p.tokens['--brand-surface-dark']).toBe(TRAYO_SURFACES.dark.card)
+    // Regression (review): a chromatic ink (PayPal's navy) must not tint dark mode either.
+    const inked = resolveBrandPalette({ primary: '#002991', background: '#ffffff', text: '#001435' })
+    expect(inked.tokens['--brand-background-dark']).toBe(TRAYO_SURFACES.dark.shell)
   })
 
   it("canvas: 'soft' tints a neutral background with the primary hue, so brands never share a canvas", () => {
