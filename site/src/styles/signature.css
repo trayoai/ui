@@ -1,0 +1,111 @@
+/* Stylesheet for /signature only. Same setup as demo.css (this page is the
+ * Tailwind consumer; the library lives one level above this Astro root), plus
+ * the signature toggles.
+ *
+ * Each `data-sig-<key>="off"` rule removes ONE Trayo tell from the screen so
+ * its contribution can be judged in isolation. Anything under
+ * `[data-sig-controls]` is the lab's own chrome and is left alone. */
+@import 'tailwindcss';
+@import '../../../src/styles/trayo-ui.css';
+@source '../../../src';
+@source '../components';
+
+/* Paper & glow: flat page, no grain, no corner glows. */
+[data-sig-paper='off'].app-shell-bg,
+[data-sig-paper='off'] .app-shell-bg {
+  background-image: var(--gradient-shell);
+}
+
+/* Pill geometry: controls square off, the radius ramp collapses, dashed
+   frames turn solid. Avatars and logo tiles keep their shape (that is the
+   faces & tiles tell, not this one). */
+[data-sig-pill='off'] {
+  --radius: 0.375rem;
+}
+[data-sig-pill='off'] :is(button, a, [data-slot='badge']).rounded-full:not([data-sig-controls] *):not([data-sig-controls]) {
+  border-radius: 6px;
+}
+[data-sig-pill='off'] .border-dashed:not([data-sig-controls] *) {
+  border-style: solid;
+}
+
+/* Type voice: system fonts everywhere, eyebrows lose their uppercase tracking. */
+[data-sig-type='off'] {
+  --font-heading: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-sans: var(--font-body);
+}
+[data-sig-type='off'] .text-eyebrow:not([data-sig-controls] *) {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Motion: nothing moves. */
+[data-sig-motion='off'] :not([data-sig-controls] *),
+[data-sig-motion='off'] :not([data-sig-controls] *)::before,
+[data-sig-motion='off'] :not([data-sig-controls] *)::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Faces & tiles: the illustrated faces give way to a generic silhouette on a
+   flat disc, and the logo tiles lose their hairline. */
+[data-sig-faces='off'] [data-slot='person-avatar'] {
+  background: var(--surface-well);
+}
+[data-sig-faces='off'] [data-slot='person-avatar'] img {
+  visibility: hidden;
+}
+[data-sig-faces='off'] [data-slot='person-avatar']::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--text-muted);
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='8.5' r='4'/><path d='M4 21c0-4.4 3.6-7.5 8-7.5s8 3.1 8 7.5z'/></svg>")
+    center / 62% no-repeat;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='8.5' r='4'/><path d='M4 21c0-4.4 3.6-7.5 8-7.5s8 3.1 8 7.5z'/></svg>")
+    center / 62% no-repeat;
+}
+[data-sig-faces='off'] [data-slot='company-logo'] {
+  box-shadow: none;
+  border-radius: 4px;
+}
+
+/* The lab's own chrome sits inside the experiment and would inherit the
+   overridden tokens; restore the kit's values at its boundary so the controls
+   are a fixed baseline whatever the toggles do. */
+[data-sig-controls] {
+  --font-heading: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-sans: var(--font-body);
+  --radius: 0.75rem;
+}
+
+/* The lab panel is a Surface too; fills must not restyle
+   it, or the controls stop being a fixed baseline. */
+[data-sig-controls][data-slot='surface'] {
+  background-image: var(--gradient-card) !important;
+  background-color: transparent !important;
+  box-shadow: var(--shadow-card) !important;
+  border: 0 !important;
+  --text-primary: var(--page-text-primary, #1c1a17);
+  --text-secondary: var(--page-text-secondary, #6b6253);
+  --text-muted: var(--page-text-muted, #9a9180);
+}
+[data-sig-controls] [data-slot='button'].bg-accent-brand {
+  background-color: var(--accent-brand) !important;
+  color: var(--accent-brand-foreground) !important;
+  box-shadow: none !important;
+}
+
+/* Paper & glow off still means no grain under the page looks (these rules
+   come later at equal specificity, so they need their own off variant). */
+html[data-page='canvas'] [data-sig-paper='off'].app-shell-bg {
+  background-image: linear-gradient(var(--container), var(--container));
+}
+html[data-page='inverse'] [data-sig-paper='off'].app-shell-bg {
+  background-image: none;
+}
+html[data-page='inverse'] [data-sig-paper='off'] [data-slot='page-container'] {
+  background-image: var(--gradient-shell);
+}

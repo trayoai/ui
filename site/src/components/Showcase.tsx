@@ -420,7 +420,7 @@ function DemoHeader({ compact }: { compact?: boolean }) {
  * so both ends are named and the current one is lit. The icons are shortcuts
  * straight to their theme; the switch stays the single keyboard stop.
  */
-function ThemeSwitch({
+export function ThemeSwitch({
   dark,
   onChange,
 }: {
@@ -722,7 +722,7 @@ type Band = (typeof BANDS)[number]['value']
  * brand-research agent writes. The kit maps them onto its slots: page, cards
  * and text stay Trayo's; primary, accents and (Slack) the top bar change.
  */
-const DEMO_BRANDS: Record<Exclude<DemoBrand, 'trayo'>, BrandThemeContract> = {
+export const DEMO_BRANDS: Record<Exclude<DemoBrand, 'trayo'>, BrandThemeContract> = {
   paypal: {
     primary: '#002991', onPrimary: '#ffffff', shell: '#ffffff', onShell: '#001435',
     background: '#ffffff', surface: '#f5f7fa', text: '#001435', mutedText: '#545d68',
@@ -742,8 +742,8 @@ const DEMO_BRANDS: Record<Exclude<DemoBrand, 'trayo'>, BrandThemeContract> = {
     background: '#ffffff', surface: '#f5f5f7', text: '#1d1d1f', mutedText: '#6e6e73',
   },
 }
-type DemoBrand = 'trayo' | 'paypal' | 'slack' | 'stripe' | 'apple'
-const BRAND_OPTIONS: { value: DemoBrand; label: string }[] = [
+export type DemoBrand = 'trayo' | 'paypal' | 'slack' | 'stripe' | 'apple'
+export const BRAND_OPTIONS: { value: DemoBrand; label: string }[] = [
   { value: 'trayo', label: 'Trayo' },
   { value: 'paypal', label: 'PayPal' },
   { value: 'slack', label: 'Slack' },
@@ -755,7 +755,7 @@ const BRAND_OPTIONS: { value: DemoBrand; label: string }[] = [
  * Applies a demo brand the way an app does: the resolved tokens and the
  * data-brand attributes on <html>, so portaled popovers follow too.
  */
-function useDemoBrand(brand: DemoBrand, full: boolean) {
+export function useDemoBrand(brand: DemoBrand, full: boolean) {
   useEffect(() => {
     if (brand === 'trayo') return
     const root = document.documentElement
@@ -811,6 +811,9 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
         nav={
           <>
             <AppShellNavLink active>Components</AppShellNavLink>
+            <AppShellNavLink href='/signature' target='_top'>
+              Signature lab
+            </AppShellNavLink>
             <AppShellNavLink href={libraryHref ?? 'https://ui.trayo.ai'} target='_top'>
               Get the library
             </AppShellNavLink>

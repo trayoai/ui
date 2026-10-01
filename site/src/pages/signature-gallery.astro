@@ -1,0 +1,71 @@
+---
+// The variant gallery: what a generator builds for recipes 0–5 of each brand,
+// from the kit's rotation (brandVariant). Every frame is the live lab page
+// with chrome=0, so this is exactly what an app gets.
+import { brandVariant } from '../../../src/lib/brand-palette'
+import { DEMO_BRANDS } from '../components/Showcase'
+
+const brands = ['slack', 'paypal', 'stripe', 'apple'] as const
+const variants = [0, 1, 2, 3, 4, 5]
+const label = (brand: (typeof brands)[number], n: number) => {
+  const v = brandVariant(n, DEMO_BRANDS[brand])
+  return `${v.silhouette} · ${v.theme} · ${v.lead}-led${v.fills !== 'none' ? ` · ${v.fills}` : ''}`
+}
+const base = import.meta.env.BASE_URL.replace(/\/$/, '')
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Brand variant gallery</title>
+<meta name="description" content="Six generated variants per brand from the Trayo UI kit's calm rotation: neutral page, one coloured region, colours only." />
+<style>
+  :root { --bg: #f7f6f3; --ink: #1c1a17; --muted: #6b6253; --line: rgb(28 26 23 / 0.12); }
+  @media (prefers-color-scheme: dark) { :root { --bg: #14151a; --ink: #eceae6; --muted: #a39d93; --line: rgb(255 255 255 / 0.12); } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, 'Segoe UI', sans-serif; }
+  main { padding: 24px 16px 48px; max-width: 2200px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p.lede { margin: 0 0 24px; color: var(--muted); max-width: 70ch; }
+  section { margin-bottom: 28px; }
+  h2 { font-size: 15px; text-transform: capitalize; margin: 0 0 10px; }
+  .row { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+  figure { margin: 0; }
+  .frame { position: relative; width: 100%; aspect-ratio: 1440 / 900; overflow: hidden; border-radius: 10px; border: 1px solid var(--line); background: #fff; }
+  .frame iframe { position: absolute; top: 0; left: 0; width: 1440px; height: 900px; border: 0; transform-origin: 0 0; pointer-events: none; }
+  figcaption { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; color: var(--muted); font-size: 12px; }
+  figcaption a { color: inherit; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Brand variant gallery</h1>
+  <p class="lede">What a generator builds for recipes 0–5 of each brand, using the kit's rotation (<code>brandVariant</code>). The page stays neutral, each screen has one coloured region, and only colours change. Click a caption to open that app.</p>
+  {brands.map((brand) => (
+    <section>
+      <h2>{brand}</h2>
+      <div class="row">
+        {variants.map((n) => {
+          const href = `${base}/signature/?brand=${brand}&variant=${n}&chrome=0`
+          return (
+            <figure>
+              <div class="frame"><iframe src={href} loading="lazy" title={`${brand} variant ${n}`} tabindex="-1"></iframe></div>
+              <figcaption><a href={href}>#{n} · {label(brand, n)}</a></figcaption>
+            </figure>
+          )
+        })}
+      </div>
+    </section>
+  ))}
+</main>
+<script>
+  // Scale each 1440×900 app to its frame.
+  const fit = () => document.querySelectorAll<HTMLElement>('.frame').forEach((f) => {
+    const s = f.clientWidth / 1440
+    f.querySelector('iframe')!.style.transform = `scale(${s})`
+  })
+  fit(); addEventListener('resize', fit)
+</script>
+</body>
+</html>
