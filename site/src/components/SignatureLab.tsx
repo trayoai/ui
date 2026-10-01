@@ -103,7 +103,7 @@ const COVERS: { value: Cover; label: string }[] = [
  * Looks: where the brand's colour mass goes. Ohad's point: dozens of recipes
  * must look materially different with the brand used strongly, not only via
  * light/dark. Each look composes a cover, a layout, a canvas strength and a
- * dialect; the generator rotates through them the way it rotates themes.
+ * fills; the generator rotates through them the way it rotates themes.
  */
 type Look = 'band' | 'rail' | 'tiles' | 'wash' | 'split'
 type FillName = keyof typeof FILL_PRESETS
