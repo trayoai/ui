@@ -105,15 +105,28 @@ const COVERS: { value: Cover; label: string }[] = [
  * light/dark. Each look composes a cover, a layout, a canvas strength and a
  * fills; the generator rotates through them the way it rotates themes.
  */
-type Look = 'band' | 'rail' | 'tiles' | 'wash' | 'split'
+type Look = 'band' | 'rail' | 'tiles' | 'wash' | 'split' | 'canvas' | 'inverse' | 'full'
+/**
+ * Page colour: `canvas` paints the whole page in the brand's container tone
+ * (cards stay light); `inverse` frames the page in the brand's shell colour
+ * and sets the content on its usual sheet inside the frame, so every
+ * component keeps its tested colours. Colour only — no component changes.
+ */
+type Page = 'default' | 'canvas' | 'inverse'
 type FillName = keyof typeof FILL_PRESETS
 type Lead = 'primary' | 'secondary' | 'tertiary'
-const LOOKS: Record<Look, { label: string; cover: Cover; layout: 'top' | 'rail'; canvas: 'soft' | 'vibrant'; fills: FillName; panel?: boolean }> = {
+const LOOKS: Record<
+  Look,
+  { label: string; cover: Cover; layout: 'top' | 'rail'; canvas: 'soft' | 'vibrant'; fills: FillName; panel?: boolean; page?: Page }
+> = {
   band: { label: 'Band', cover: 'band', layout: 'top', canvas: 'soft', fills: 'none' },
   rail: { label: 'Rail', cover: 'plain', layout: 'rail', canvas: 'soft', fills: 'none' },
   tiles: { label: 'Tiles', cover: 'plain', layout: 'top', canvas: 'soft', fills: 'tiles' },
   wash: { label: 'Wash', cover: 'hero', layout: 'top', canvas: 'vibrant', fills: 'none' },
-  split: { label: 'Split', cover: 'band', layout: 'top', canvas: 'soft', fills: 'cards', panel: true }
+  split: { label: 'Split', cover: 'band', layout: 'top', canvas: 'soft', fills: 'cards', panel: true },
+  canvas: { label: 'Canvas', cover: 'band', layout: 'top', canvas: 'soft', fills: 'none', page: 'canvas' },
+  inverse: { label: 'Inverse', cover: 'hero', layout: 'top', canvas: 'soft', fills: 'none', page: 'inverse' },
+  full: { label: 'Full', cover: 'band', layout: 'rail', canvas: 'soft', fills: 'all', page: 'canvas' }
 }
 const LOOK_OPTIONS = (Object.keys(LOOKS) as Look[]).map((value) => ({ value, label: LOOKS[value].label }))
 const FILL_OPTIONS = (Object.keys(FILL_PRESETS) as FillName[]).map((value) => ({ value, label: value }))
@@ -225,6 +238,7 @@ function readUrl(): {
   look: Look
   fills: FillName | null
   lead: Lead
+  chrome: boolean
   off: SignatureKey[]
 } {
   const q = new URLSearchParams(window.location.search)
@@ -238,7 +252,9 @@ function readUrl(): {
   const lead = LEAD_OPTIONS.some((l) => l.value === q.get('lead')) ? (q.get('lead') as Lead) : 'primary'
   // No `dark` param: the brand's own recommendation decides.
   const dark = q.has('dark') ? q.get('dark') === '1' : null
-  return { brand, dark, cover, look, fills, lead, off }
+  // chrome=0 hides the lab's own control panel: the screenshot is the app only.
+  const chrome = q.get('chrome') !== '0'
+  return { brand, dark, cover, look, fills, lead, chrome, off }
 }
 
 function writeUrl(
@@ -248,6 +264,7 @@ function writeUrl(
   cover: Cover,
   fills: FillName,
   lead: Lead,
+  chrome: boolean,
   sig: Record<SignatureKey, boolean>
 ) {
   const q = new URLSearchParams()
@@ -257,6 +274,7 @@ function writeUrl(
   if (cover !== LOOKS[look].cover) q.set('cover', cover)
   if (fills !== LOOKS[look].fills) q.set('fills', fills)
   if (lead !== 'primary') q.set('lead', lead)
+  if (!chrome) q.set('chrome', '0')
   const off = SIGNATURES.filter((s) => !sig[s.key]).map((s) => s.key)
   if (off.length) q.set('off', off.join(','))
   window.history.replaceState(null, '', `?${q.toString()}`)
@@ -272,6 +290,7 @@ export function SignatureLab() {
   const [cover, setCover] = useState<Cover>(LOOKS.band.cover)
   const [fills, setFills] = useState<FillName>(LOOKS.band.fills)
   const [lead, setLead] = useState<Lead>('primary')
+  const [chrome, setChrome] = useState(true)
   const [ready, setReady] = useState(false)
   // A look sets its cover and fills; either can then be changed on its own.
   const setLook = (next: Look) => {
@@ -293,7 +312,8 @@ export function SignatureLab() {
   }, [ready, brand, dark, fills, lead, look])
 
   useEffect(() => {
-    const { brand, dark, cover, look, fills, lead, off } = readUrl()
+    const { brand, dark, cover, look, fills, lead, chrome, off } = readUrl()
+    setChrome(chrome)
     setBrand(brand)
     setDark(dark ?? recommendedDark(brand))
     setLookState(look)
@@ -304,8 +324,8 @@ export function SignatureLab() {
     setReady(true)
   }, [])
   useEffect(() => {
-    if (ready) writeUrl(brand, dark, look, cover, fills, lead, sig)
-  }, [ready, brand, dark, look, cover, fills, lead, sig])
+    if (ready) writeUrl(brand, dark, look, cover, fills, lead, chrome, sig)
+  }, [ready, brand, dark, look, cover, fills, lead, chrome, sig])
   // Switching brand follows its theme recommendation; the switch still overrides.
   const pickBrand = (next: DemoBrand) => {
     setBrand(next)
@@ -317,10 +337,12 @@ export function SignatureLab() {
 
   const layout = LOOKS[look].layout
   const showPanel = LOOKS[look].panel === true
+  const page = LOOKS[look].page ?? 'default'
   return (
     <div>
       <AppShell
         {...dataAttrs}
+        data-page={page}
         width='wide'
         brand={
           <>
@@ -343,10 +365,14 @@ export function SignatureLab() {
         }
       >
         <Toaster />
-        <PageContainer width='wide' className='flex flex-col gap-8'>
+        <PageContainer
+          width='wide'
+          data-page-sheet={page === 'inverse' ? '' : undefined}
+          className='flex flex-col gap-8'
+        >
           {/* The lab's own controls: outside the experiment, so they keep the
               kit's pills whatever the toggles do. */}
-          <Surface data-sig-controls='' className='flex flex-col gap-4 p-5'>
+          <Surface data-sig-controls='' className={cn('flex flex-col gap-4 p-5', !chrome && 'hidden')}>
             <div className='flex flex-wrap items-start justify-between gap-3'>
               <div>
                 <div className='text-card-title text-text-primary'>Signature lab</div>

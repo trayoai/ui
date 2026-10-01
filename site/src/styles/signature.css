@@ -97,3 +97,25 @@
   color: var(--accent-brand-foreground) !important;
   box-shadow: none !important;
 }
+
+/* Page colour (looks `canvas`, `full`, `inverse`). Colour only.
+   canvas: the page in the brand's container tone; cards keep their surface.
+   inverse: the page is framed in the brand's shell colour and the content
+   sits on its usual sheet inside, so components keep their tested colours. */
+[data-page='canvas'].app-shell-bg {
+  background-color: var(--container);
+  background-image: var(--shell-grain), linear-gradient(var(--container), var(--container));
+}
+[data-page='inverse'].app-shell-bg {
+  background-color: var(--brand-shell, var(--accent-brand));
+  background-image: var(--shell-grain);
+}
+[data-page='inverse'] [data-page-sheet] {
+  /* A frame wide enough to read at thumbnail size, on any viewport. */
+  width: min(1400px, calc(100% - 7rem));
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  border-radius: calc(var(--radius) + 8px);
+  background-color: var(--surface-shell);
+  background-image: var(--shell-grain), var(--gradient-shell);
+}
