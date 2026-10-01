@@ -81,7 +81,7 @@
   --radius: 0.75rem;
 }
 
-/* The lab panel is a Surface too; dialects (card/tile axes) must not restyle
+/* The lab panel is a Surface too; fills must not restyle
    it, or the controls stop being a fixed baseline. */
 [data-sig-controls][data-slot='surface'] {
   background-image: var(--gradient-card) !important;

@@ -24,7 +24,7 @@ import {
   cn,
   toast,
   applyBrand,
-  DIALECT_PRESETS,
+  FILL_PRESETS,
   fromBrandThemeContract,
   resolveBrandPalette,
   type Column,
@@ -59,12 +59,14 @@ const SIGNATURES: { key: SignatureKey; label: string; tell: string; note?: strin
   {
     key: 'pill',
     label: 'Pill geometry',
-    tell: 'Pill buttons, pill nav links, the 8/10/12/16 radius ramp, dashed frames around empty states.'
+    tell: 'Pill buttons, pill nav links, the 8/10/12/16 radius ramp, dashed frames around empty states.',
+    note: 'DNA check — never a brand option'
   },
   {
     key: 'type',
     label: 'Type voice',
-    tell: 'Figtree headings, uppercase eyebrow labels, the Meta small print rhythm.'
+    tell: 'Figtree headings, uppercase eyebrow labels, the Meta small print rhythm.',
+    note: 'DNA check — never a brand option'
   },
   {
     key: 'motion',
@@ -104,21 +106,27 @@ const COVERS: { value: Cover; label: string }[] = [
  * dialect; the generator rotates through them the way it rotates themes.
  */
 type Look = 'band' | 'rail' | 'tiles' | 'wash' | 'split'
-type DialectName = keyof typeof DIALECT_PRESETS
-const LOOKS: Record<Look, { label: string; cover: Cover; layout: 'top' | 'rail'; canvas: 'soft' | 'vibrant'; dialect: DialectName; panel?: boolean }> = {
-  band: { label: 'Band', cover: 'band', layout: 'top', canvas: 'soft', dialect: 'plain' },
-  rail: { label: 'Rail', cover: 'plain', layout: 'rail', canvas: 'soft', dialect: 'plain' },
-  tiles: { label: 'Tiles', cover: 'plain', layout: 'top', canvas: 'soft', dialect: 'tinted' },
-  wash: { label: 'Wash', cover: 'hero', layout: 'top', canvas: 'vibrant', dialect: 'editorial' },
-  split: { label: 'Split', cover: 'band', layout: 'top', canvas: 'soft', dialect: 'compact', panel: true }
+type FillName = keyof typeof FILL_PRESETS
+type Lead = 'primary' | 'secondary' | 'tertiary'
+const LOOKS: Record<Look, { label: string; cover: Cover; layout: 'top' | 'rail'; canvas: 'soft' | 'vibrant'; fills: FillName; panel?: boolean }> = {
+  band: { label: 'Band', cover: 'band', layout: 'top', canvas: 'soft', fills: 'none' },
+  rail: { label: 'Rail', cover: 'plain', layout: 'rail', canvas: 'soft', fills: 'none' },
+  tiles: { label: 'Tiles', cover: 'plain', layout: 'top', canvas: 'soft', fills: 'tiles' },
+  wash: { label: 'Wash', cover: 'hero', layout: 'top', canvas: 'vibrant', fills: 'none' },
+  split: { label: 'Split', cover: 'band', layout: 'top', canvas: 'soft', fills: 'cards', panel: true }
 }
 const LOOK_OPTIONS = (Object.keys(LOOKS) as Look[]).map((value) => ({ value, label: LOOKS[value].label }))
-const DIALECT_OPTIONS = (Object.keys(DIALECT_PRESETS) as DialectName[]).map((value) => ({ value, label: value }))
+const FILL_OPTIONS = (Object.keys(FILL_PRESETS) as FillName[]).map((value) => ({ value, label: value }))
+const LEAD_OPTIONS: { value: Lead; label: string }[] = [
+  { value: 'primary', label: 'Primary-led' },
+  { value: 'secondary', label: 'Secondary-led' },
+  { value: 'tertiary', label: 'Tertiary-led' }
+]
 
 /** Un-brands the document (the Trayo option): what applyBrand set, removed. */
 function clearBrand() {
   const root = document.documentElement
-  for (const n of root.getAttributeNames()) if (n.startsWith('data-brand') || n.startsWith('data-dialect-')) root.removeAttribute(n)
+  for (const n of root.getAttributeNames()) if (n.startsWith('data-brand') || n.startsWith('data-fill-')) root.removeAttribute(n)
   document.getElementById('trayo-brand')?.remove()
 }
 
@@ -215,7 +223,8 @@ function readUrl(): {
   dark: boolean | null
   cover: Cover | null
   look: Look
-  dialect: DialectName | null
+  fills: FillName | null
+  lead: Lead
   off: SignatureKey[]
 } {
   const q = new URLSearchParams(window.location.search)
@@ -225,10 +234,11 @@ function readUrl(): {
     .filter((k): k is SignatureKey => SIGNATURES.some((s) => s.key === k))
   const cover = COVERS.some((c) => c.value === q.get('cover')) ? (q.get('cover') as Cover) : null
   const look = q.get('look') && q.get('look')! in LOOKS ? (q.get('look') as Look) : 'band'
-  const dialect = q.get('dialect') && q.get('dialect')! in DIALECT_PRESETS ? (q.get('dialect') as DialectName) : null
+  const fills = q.get('fills') && q.get('fills')! in FILL_PRESETS ? (q.get('fills') as FillName) : null
+  const lead = LEAD_OPTIONS.some((l) => l.value === q.get('lead')) ? (q.get('lead') as Lead) : 'primary'
   // No `dark` param: the brand's own recommendation decides.
   const dark = q.has('dark') ? q.get('dark') === '1' : null
-  return { brand, dark, cover, look, dialect, off }
+  return { brand, dark, cover, look, fills, lead, off }
 }
 
 function writeUrl(
@@ -236,7 +246,8 @@ function writeUrl(
   dark: boolean,
   look: Look,
   cover: Cover,
-  dialect: DialectName,
+  fills: FillName,
+  lead: Lead,
   sig: Record<SignatureKey, boolean>
 ) {
   const q = new URLSearchParams()
@@ -244,7 +255,8 @@ function writeUrl(
   q.set('dark', dark ? '1' : '0')
   q.set('look', look)
   if (cover !== LOOKS[look].cover) q.set('cover', cover)
-  if (dialect !== LOOKS[look].dialect) q.set('dialect', dialect)
+  if (fills !== LOOKS[look].fills) q.set('fills', fills)
+  if (lead !== 'primary') q.set('lead', lead)
   const off = SIGNATURES.filter((s) => !sig[s.key]).map((s) => s.key)
   if (off.length) q.set('off', off.join(','))
   window.history.replaceState(null, '', `?${q.toString()}`)
@@ -258,17 +270,18 @@ export function SignatureLab() {
   const [sig, setSig] = useState<Record<SignatureKey, boolean>>(ALL_ON)
   const [look, setLookState] = useState<Look>('band')
   const [cover, setCover] = useState<Cover>(LOOKS.band.cover)
-  const [dialect, setDialect] = useState<DialectName>(LOOKS.band.dialect)
+  const [fills, setFills] = useState<FillName>(LOOKS.band.fills)
+  const [lead, setLead] = useState<Lead>('primary')
   const [ready, setReady] = useState(false)
-  // A look sets its cover and dialect; either can then be changed on its own.
+  // A look sets its cover and fills; either can then be changed on its own.
   const setLook = (next: Look) => {
     setLookState(next)
     setCover(LOOKS[next].cover)
-    setDialect(LOOKS[next].dialect)
+    setFills(LOOKS[next].fills)
   }
 
   // Brand the document the way an app does — one call — so the lab shows
-  // exactly what applyBrand produces, dialect and canvas included.
+  // exactly what applyBrand produces, fills, lead and canvas included.
   useEffect(() => {
     if (!ready) return
     if (brand === 'trayo') {
@@ -276,22 +289,23 @@ export function SignatureLab() {
       document.documentElement.classList.toggle('dark', dark)
       return
     }
-    applyBrand(document, DEMO_BRANDS[brand], { theme: dark ? 'dark' : 'light', dialect, canvas: LOOKS[look].canvas })
-  }, [ready, brand, dark, dialect, look])
+    applyBrand(document, DEMO_BRANDS[brand], { theme: dark ? 'dark' : 'light', fills, lead, canvas: LOOKS[look].canvas })
+  }, [ready, brand, dark, fills, lead, look])
 
   useEffect(() => {
-    const { brand, dark, cover, look, dialect, off } = readUrl()
+    const { brand, dark, cover, look, fills, lead, off } = readUrl()
     setBrand(brand)
     setDark(dark ?? recommendedDark(brand))
     setLookState(look)
     setCover(cover ?? LOOKS[look].cover)
-    setDialect(dialect ?? LOOKS[look].dialect)
+    setFills(fills ?? LOOKS[look].fills)
+    setLead(lead)
     setSig({ ...ALL_ON, ...Object.fromEntries(off.map((k) => [k, false])) })
     setReady(true)
   }, [])
   useEffect(() => {
-    if (ready) writeUrl(brand, dark, look, cover, dialect, sig)
-  }, [ready, brand, dark, look, cover, dialect, sig])
+    if (ready) writeUrl(brand, dark, look, cover, fills, lead, sig)
+  }, [ready, brand, dark, look, cover, fills, lead, sig])
   // Switching brand follows its theme recommendation; the switch still overrides.
   const pickBrand = (next: DemoBrand) => {
     setBrand(next)
@@ -337,14 +351,16 @@ export function SignatureLab() {
               <div>
                 <div className='text-card-title text-text-primary'>Signature lab</div>
                 <p className='text-body max-w-2xl text-text-secondary'>
-                  The customer's colours are on every surface below. Each toggle is one candidate for what still says
-                  Trayo. Turn them off one at a time, or all at once, and compare. The URL carries the state.
+                  The customer's colours are on every surface below; nothing else changes for a brand. Each toggle removes
+                  one Trayo tell so its contribution can be judged — the type and pill toggles are DNA checks, not options.
+                  Looks, fills and lead vary where the colour goes. The URL carries the state.
                 </p>
               </div>
               <div className='flex flex-wrap items-center gap-2'>
                 <SegmentedControl size='sm' aria-label='Look' value={look} onValueChange={setLook} options={LOOK_OPTIONS} />
                 <SegmentedControl size='sm' aria-label='Cover' value={cover} onValueChange={setCover} options={COVERS} />
-                <SegmentedControl size='sm' aria-label='Dialect' value={dialect} onValueChange={setDialect} options={DIALECT_OPTIONS} />
+                <SegmentedControl size='sm' aria-label='Fills' value={fills} onValueChange={setFills} options={FILL_OPTIONS} />
+                <SegmentedControl size='sm' aria-label='Lead' value={lead} onValueChange={setLead} options={LEAD_OPTIONS} />
                 <Button variant='tertiary' size='sm' onClick={() => setSig(ALL_ON)}>
                   All on
                 </Button>
