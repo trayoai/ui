@@ -1282,7 +1282,8 @@
    ═══════════════════════════════════════════════════════════════════════ */
 [data-fill-cards] :is([data-slot='surface'], [data-slot='card']),
 [data-fill-tiles] [data-slot='stat-tile'] {
-  background-image: none; background-color: var(--container); box-shadow: none;
+  /* Colour only: the hairline shadow and the hover lift are the component's. */
+  background-image: none; background-color: var(--container);
   --text-primary: var(--container-foreground);
   --text-secondary: color-mix(in srgb, var(--container-foreground) 82%, var(--container));
   --text-muted: color-mix(in srgb, var(--container-foreground) 64%, var(--container));

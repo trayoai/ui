@@ -310,4 +310,9 @@ describe('containers and dialects', () => {
     for (const target of Object.keys(FILL_TARGETS)) expect(rules, target).toContain(`[data-fill-${target}]`)
     expect(css).not.toContain('data-dialect-')
   })
+
+  it('fills change colour only: no shadow, radius, border-width or font in their rules', () => {
+    const rules = css.slice(css.indexOf('FILLS —'), css.indexOf('@theme inline {'))
+    expect(rules).not.toMatch(/box-shadow|border-radius|border-width|font-|padding|height/)
+  })
 })
