@@ -4,6 +4,7 @@ import {
   AppShell,
   AppShellNavLink,
   Badge,
+  BrandBand,
   BrandMesh,
   Button,
   Callout,
@@ -139,7 +140,7 @@ const LEAD_OPTIONS: { value: Lead; label: string }[] = [
 /** Un-brands the document (the Trayo option): what applyBrand set, removed. */
 function clearBrand() {
   const root = document.documentElement
-  for (const n of root.getAttributeNames()) if (n.startsWith('data-brand') || n.startsWith('data-fill-')) root.removeAttribute(n)
+  for (const n of root.getAttributeNames()) if (n.startsWith('data-brand') || n.startsWith('data-fill-') || n === 'data-page') root.removeAttribute(n)
   document.getElementById('trayo-brand')?.remove()
 }
 
@@ -308,7 +309,13 @@ export function SignatureLab() {
       document.documentElement.classList.toggle('dark', dark)
       return
     }
-    applyBrand(document, DEMO_BRANDS[brand], { theme: dark ? 'dark' : 'light', fills, lead, canvas: LOOKS[look].canvas })
+    applyBrand(document, DEMO_BRANDS[brand], {
+      theme: dark ? 'dark' : 'light',
+      fills,
+      lead,
+      canvas: LOOKS[look].canvas,
+      page: LOOKS[look].page ?? 'default'
+    })
   }, [ready, brand, dark, fills, lead, look])
 
   useEffect(() => {
@@ -337,13 +344,20 @@ export function SignatureLab() {
 
   const layout = LOOKS[look].layout
   const showPanel = LOOKS[look].panel === true
-  const page = LOOKS[look].page ?? 'default'
   return (
     <div>
       <AppShell
         {...dataAttrs}
-        data-page={page}
         width='wide'
+        rail={
+          layout === 'rail'
+            ? ['Accounts', 'People', 'Signals', 'Sequences', 'Reports'].map((item, i) => (
+                <AppShellNavLink key={item} active={i === 0}>
+                  {item}
+                </AppShellNavLink>
+              ))
+            : undefined
+        }
         brand={
           <>
             <span>Acme GTM</span>
@@ -365,11 +379,7 @@ export function SignatureLab() {
         }
       >
         <Toaster />
-        <PageContainer
-          width='wide'
-          data-page-sheet={page === 'inverse' ? '' : undefined}
-          className='flex flex-col gap-8'
-        >
+        <PageContainer width='wide' className='flex flex-col gap-8'>
           {/* The lab's own controls: outside the experiment, so they keep the
               kit's pills whatever the toggles do. */}
           <Surface data-sig-controls='' className={cn('flex flex-col gap-4 p-5', !chrome && 'hidden')}>
@@ -422,42 +432,17 @@ export function SignatureLab() {
           </Surface>
 
           {/* ---- the experiment: a typical GTM screen under the brand ---- */}
-          <div className={cn('flex gap-6', layout === 'rail' ? 'items-start' : 'flex-col')}>
-          {layout === 'rail' && (
-            <aside
-              data-shell-region=''
-              className='sticky top-20 flex w-56 shrink-0 flex-col gap-1 self-start rounded-[var(--radius)] bg-surface-sidebar p-3 text-text-primary'
-            >
-              <div className='mb-2 px-2 text-name'>Acme GTM</div>
-              {['Accounts', 'People', 'Signals', 'Sequences', 'Reports'].map((item, i) => (
-                <a
-                  key={item}
-                  href='#'
-                  className={cn(
-                    'rounded-full px-3 py-1.5 text-sm font-medium',
-                    i === 0 ? 'bg-accent-soft text-accent-text' : 'text-text-secondary hover:bg-surface-well'
-                  )}
-                >
-                  {item}
-                </a>
-              ))}
-            </aside>
-          )}
-          <div className='flex min-w-0 flex-1 flex-col gap-8'>
+          <div className='flex flex-col gap-8'>
           {cover === 'band' && (
-            <section className='rounded-[calc(var(--radius)+4px)] bg-accent-brand px-8 py-12 text-accent-brand-foreground'>
+            <BrandBand>
               <div className='flex flex-col gap-2'>
-                <span className='text-eyebrow opacity-80' style={{ color: 'inherit' }}>
-                  This week
-                </span>
-                <h1 className='text-page-title' style={{ color: 'inherit' }}>
-                  14 accounts moved — 3 booked meetings
-                </h1>
-                <p className='text-body max-w-xl opacity-85' style={{ color: 'inherit' }}>
+                <span className='text-eyebrow'>This week</span>
+                <h1 className='text-page-title text-text-primary'>14 accounts moved — 3 booked meetings</h1>
+                <p className='text-body max-w-xl text-text-secondary'>
                   Signals from job changes, funding and hiring, ranked by fit. Reach out while it is warm.
                 </p>
               </div>
-            </section>
+            </BrandBand>
           )}
           {cover === 'hero' && sig.mesh && (
             <BrandMesh
@@ -550,7 +535,6 @@ export function SignatureLab() {
               </ul>
             </aside>
           )}
-          </div>
           </div>
 
           <footer className='flex items-center justify-between border-t border-border-subtle pt-4 text-meta'>

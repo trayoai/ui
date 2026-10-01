@@ -98,36 +98,14 @@
   box-shadow: none !important;
 }
 
-/* Page colour (looks `canvas`, `full`, `inverse`). Colour only.
-   canvas: the page in the brand's container tone; cards keep their surface.
-   inverse: the page is framed in the brand's shell colour and the content
-   sits on its usual sheet inside, so components keep their tested colours. */
-[data-page='canvas'].app-shell-bg {
-  background-color: var(--container);
-  background-image: var(--shell-grain), linear-gradient(var(--container), var(--container));
-}
-[data-page='inverse'].app-shell-bg {
-  background-color: var(--brand-shell, var(--accent-brand));
-  background-image: var(--shell-grain);
-}
-[data-page='inverse'] [data-page-sheet] {
-  /* A frame wide enough to read at thumbnail size, on any viewport. */
-  width: min(1400px, calc(100% - 7rem));
-  margin-top: 2rem;
-  margin-bottom: 2rem;
-  border-radius: calc(var(--radius) + 8px);
-  background-color: var(--surface-shell);
-  background-image: var(--shell-grain), var(--gradient-shell);
-}
-
 /* Paper & glow off still means no grain under the page looks (these rules
    come later at equal specificity, so they need their own off variant). */
-[data-sig-paper='off'][data-page='canvas'].app-shell-bg {
+html[data-page='canvas'] [data-sig-paper='off'].app-shell-bg {
   background-image: linear-gradient(var(--container), var(--container));
 }
-[data-sig-paper='off'][data-page='inverse'].app-shell-bg {
+html[data-page='inverse'] [data-sig-paper='off'].app-shell-bg {
   background-image: none;
 }
-[data-sig-paper='off'][data-page='inverse'] [data-page-sheet] {
+html[data-page='inverse'] [data-sig-paper='off'] [data-slot='page-container'] {
   background-image: var(--gradient-shell);
 }
