@@ -105,6 +105,9 @@ const COVERS: { value: Cover; label: string }[] = [
  * must look materially different with the brand used strongly, not only via
  * light/dark. Each look composes a cover, a layout, a canvas strength and a
  * fills; the generator rotates through them the way it rotates themes.
+ * Band, rail, tiles and split are calm — a neutral page and one coloured
+ * region, as shipped products do (2026-10-01 calibration). Wash, canvas,
+ * inverse and full colour the page itself: bold, for a showcase.
  */
 type Look = 'band' | 'rail' | 'tiles' | 'wash' | 'split' | 'canvas' | 'inverse' | 'full'
 /**
@@ -118,13 +121,13 @@ type FillName = keyof typeof FILL_PRESETS
 type Lead = 'primary' | 'secondary' | 'tertiary'
 const LOOKS: Record<
   Look,
-  { label: string; cover: Cover; layout: 'top' | 'rail'; canvas: 'soft' | 'vibrant'; fills: FillName; panel?: boolean; page?: Page }
+  { label: string; cover: Cover; layout: 'top' | 'rail'; canvas: 'neutral' | 'soft' | 'vibrant'; fills: FillName; panel?: boolean; page?: Page }
 > = {
-  band: { label: 'Band', cover: 'band', layout: 'top', canvas: 'soft', fills: 'none' },
-  rail: { label: 'Rail', cover: 'plain', layout: 'rail', canvas: 'soft', fills: 'none' },
-  tiles: { label: 'Tiles', cover: 'plain', layout: 'top', canvas: 'soft', fills: 'tiles' },
+  band: { label: 'Band', cover: 'band', layout: 'top', canvas: 'neutral', fills: 'none' },
+  rail: { label: 'Rail', cover: 'plain', layout: 'rail', canvas: 'neutral', fills: 'none' },
+  tiles: { label: 'Tiles', cover: 'plain', layout: 'top', canvas: 'neutral', fills: 'tiles' },
   wash: { label: 'Wash', cover: 'hero', layout: 'top', canvas: 'vibrant', fills: 'none' },
-  split: { label: 'Split', cover: 'band', layout: 'top', canvas: 'soft', fills: 'cards', panel: true },
+  split: { label: 'Split', cover: 'band', layout: 'top', canvas: 'neutral', fills: 'cards', panel: true },
   canvas: { label: 'Canvas', cover: 'band', layout: 'top', canvas: 'soft', fills: 'none', page: 'canvas' },
   inverse: { label: 'Inverse', cover: 'hero', layout: 'top', canvas: 'soft', fills: 'none', page: 'inverse' },
   full: { label: 'Full', cover: 'band', layout: 'rail', canvas: 'soft', fills: 'all', page: 'canvas' }
