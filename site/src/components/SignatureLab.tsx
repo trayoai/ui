@@ -25,6 +25,8 @@ import {
   cn,
   toast,
   applyBrand,
+  brandVariant,
+  brandVariantOptions,
   FILL_PRESETS,
   fromBrandThemeContract,
   resolveBrandPalette,
@@ -140,6 +142,14 @@ const LEAD_OPTIONS: { value: Lead; label: string }[] = [
   { value: 'tertiary', label: 'Tertiary-led' }
 ]
 
+/**
+ * A variant from the kit's rotation (`brandVariant`), shown as a lab look:
+ * what a generator would build for the Nth recipe of this brand. The band
+ * silhouette is the band look, the rail the rail look, quiet the tiles look
+ * with the variant's fills.
+ */
+const SILHOUETTE_LOOK = { band: 'band', rail: 'rail', quiet: 'tiles' } as const
+
 /** Un-brands the document (the Trayo option): what applyBrand set, removed. */
 function clearBrand() {
   const root = document.documentElement
@@ -244,6 +254,7 @@ function readUrl(): {
   lead: Lead
   chrome: boolean
   off: SignatureKey[]
+  variant: number | null
 } {
   const q = new URLSearchParams(window.location.search)
   const brand = BRAND_OPTIONS.some((b) => b.value === q.get('brand')) ? (q.get('brand') as DemoBrand) : 'slack'
@@ -258,7 +269,9 @@ function readUrl(): {
   const dark = q.has('dark') ? q.get('dark') === '1' : null
   // chrome=0 hides the lab's own control panel: the screenshot is the app only.
   const chrome = q.get('chrome') !== '0'
-  return { brand, dark, cover, look, fills, lead, chrome, off }
+  const v = Number.parseInt(q.get('variant') ?? '', 10)
+  const variant = Number.isFinite(v) && v >= 0 ? v : null
+  return { brand, dark, cover, look, fills, lead, chrome, off, variant }
 }
 
 function writeUrl(
@@ -269,10 +282,18 @@ function writeUrl(
   fills: FillName,
   lead: Lead,
   chrome: boolean,
-  sig: Record<SignatureKey, boolean>
+  sig: Record<SignatureKey, boolean>,
+  variant: number | null
 ) {
   const q = new URLSearchParams()
   q.set('brand', brand)
+  if (variant !== null) {
+    // A variant decides the look, theme, fills and lead; only it is written.
+    q.set('variant', String(variant))
+    if (!chrome) q.set('chrome', '0')
+    window.history.replaceState(null, '', `?${q.toString()}`)
+    return
+  }
   q.set('dark', dark ? '1' : '0')
   q.set('look', look)
   if (cover !== LOOKS[look].cover) q.set('cover', cover)
@@ -296,8 +317,20 @@ export function SignatureLab() {
   const [lead, setLead] = useState<Lead>('primary')
   const [chrome, setChrome] = useState(true)
   const [ready, setReady] = useState(false)
+  const [variant, setVariant] = useState<number | null>(null)
+  const [emphasis, setEmphasis] = useState<'bold' | 'quiet' | undefined>(undefined)
+  // Any manual control leaves the rotation.
+  const manual =
+    <T,>(set: (value: T) => void) =>
+    (value: T) => {
+      setVariant(null)
+      setEmphasis(undefined)
+      set(value)
+    }
   // A look sets its cover and fills; either can then be changed on its own.
   const setLook = (next: Look) => {
+    setVariant(null)
+    setEmphasis(undefined)
     setLookState(next)
     setCover(LOOKS[next].cover)
     setFills(LOOKS[next].fills)
@@ -316,13 +349,30 @@ export function SignatureLab() {
       theme: dark ? 'dark' : 'light',
       fills,
       lead,
+      emphasis,
       canvas: LOOKS[look].canvas,
       page: LOOKS[look].page ?? 'default'
     })
-  }, [ready, brand, dark, fills, lead, look])
+  }, [ready, brand, dark, fills, lead, look, emphasis])
+
+  // A variant sets every choice the way a generator would (lead availability
+  // depends on the brand, so it is re-picked on a brand switch).
+  useEffect(() => {
+    if (!ready || variant === null || brand === 'trayo') return
+    const v = brandVariant(variant, DEMO_BRANDS[brand])
+    const options = brandVariantOptions(v)
+    const nextLook = SILHOUETTE_LOOK[v.silhouette]
+    setLookState(nextLook)
+    setCover(LOOKS[nextLook].cover)
+    setFills(v.fills)
+    setLead(v.lead)
+    setDark(options.theme === 'dark')
+    setEmphasis(v.emphasis)
+  }, [ready, variant, brand])
 
   useEffect(() => {
-    const { brand, dark, cover, look, fills, lead, chrome, off } = readUrl()
+    const { brand, dark, cover, look, fills, lead, chrome, off, variant } = readUrl()
+    setVariant(variant)
     setChrome(chrome)
     setBrand(brand)
     setDark(dark ?? recommendedDark(brand))
@@ -334,12 +384,12 @@ export function SignatureLab() {
     setReady(true)
   }, [])
   useEffect(() => {
-    if (ready) writeUrl(brand, dark, look, cover, fills, lead, chrome, sig)
-  }, [ready, brand, dark, look, cover, fills, lead, chrome, sig])
+    if (ready) writeUrl(brand, dark, look, cover, fills, lead, chrome, sig, variant)
+  }, [ready, brand, dark, look, cover, fills, lead, chrome, sig, variant])
   // Switching brand follows its theme recommendation; the switch still overrides.
   const pickBrand = (next: DemoBrand) => {
     setBrand(next)
-    setDark(recommendedDark(next))
+    if (variant === null) setDark(recommendedDark(next))
   }
 
   const toggle = (key: SignatureKey) => (on: boolean) => setSig((s) => ({ ...s, [key]: on }))
@@ -377,7 +427,7 @@ export function SignatureLab() {
         actions={
           <div data-sig-controls='' className='flex items-center gap-2'>
             <SegmentedControl size='sm' aria-label='Customer brand' value={brand} onValueChange={pickBrand} options={BRAND_OPTIONS} />
-            <ThemeSwitch dark={dark} onChange={setDark} />
+            <ThemeSwitch dark={dark} onChange={manual(setDark)} />
           </div>
         }
       >
@@ -397,9 +447,23 @@ export function SignatureLab() {
               </div>
               <div className='flex flex-wrap items-center gap-2'>
                 <SegmentedControl size='sm' aria-label='Look' value={look} onValueChange={setLook} options={LOOK_OPTIONS} />
-                <SegmentedControl size='sm' aria-label='Cover' value={cover} onValueChange={setCover} options={COVERS} />
-                <SegmentedControl size='sm' aria-label='Fills' value={fills} onValueChange={setFills} options={FILL_OPTIONS} />
-                <SegmentedControl size='sm' aria-label='Lead' value={lead} onValueChange={setLead} options={LEAD_OPTIONS} />
+                <SegmentedControl size='sm' aria-label='Cover' value={cover} onValueChange={manual(setCover)} options={COVERS} />
+                <SegmentedControl size='sm' aria-label='Fills' value={fills} onValueChange={manual(setFills)} options={FILL_OPTIONS} />
+                <SegmentedControl size='sm' aria-label='Lead' value={lead} onValueChange={manual(setLead)} options={LEAD_OPTIONS} />
+                <div className='flex items-center gap-1' aria-label='Generated variant'>
+                  <Button variant='tertiary' size='sm' disabled={!variant} onClick={() => setVariant((v) => Math.max(0, (v ?? 0) - 1))}>
+                    ‹
+                  </Button>
+                  <Button variant='secondary' size='sm' onClick={() => setVariant((v) => (v === null ? 0 : null))}>
+                    {variant === null ? 'Variants' : `Variant ${variant}`}
+                  </Button>
+                  <Button variant='tertiary' size='sm' onClick={() => setVariant((v) => (v ?? -1) + 1)}>
+                    ›
+                  </Button>
+                  <a className='text-meta text-accent-text underline' href={`../signature-gallery/`}>
+                    Gallery
+                  </a>
+                </div>
                 <Button variant='tertiary' size='sm' onClick={() => setSig(ALL_ON)}>
                   All on
                 </Button>
