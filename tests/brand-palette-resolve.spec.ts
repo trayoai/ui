@@ -306,7 +306,7 @@ describe('dark ladder (bold) follows Material tones in the brand hue', () => {
   })
 })
 
-describe('containers (Material tone 90 / on 10; dark 30 / 90)', () => {
+describe('containers (a pale light step / on 10; dark tone 30 / 90)', () => {
   it.each(['#002991', '#611f69', '#543afc', '#ffe01b', '#000000'])(
     '%s: readable, in the brand hue',
     (primary) => {
@@ -319,7 +319,9 @@ describe('containers (Material tone 90 / on 10; dark 30 / 90)', () => {
       expect(
         contrast(rgb(t['--brand-on-container-tertiary']), rgb(t['--brand-container-tertiary']))
       ).toBeGreaterThanOrEqual(7)
-      expect(toOklch(rgb(t['--brand-container'])).l).toBeCloseTo(0.9, 1)
+      // Pale enough to fill a stat strip or a page without reading as a coloured background.
+      expect(toOklch(rgb(t['--brand-container'])).l).toBeCloseTo(0.95, 1)
+      expect(toOklch(rgb(t['--brand-container'])).c).toBeLessThanOrEqual(0.046)
       expect(toOklch(rgb(t['--brand-container-dark'])).l).toBeCloseTo(0.35, 1)
       if (toOklch(rgb(primary)).c > 0.04) {
         const d = Math.abs(toOklch(rgb(t['--brand-container'])).h - toOklch(rgb(primary)).h)
@@ -331,7 +333,7 @@ describe('containers (Material tone 90 / on 10; dark 30 / 90)', () => {
 
 describe('canvas strength', () => {
   it("'vibrant' tints a neutral page more than 'soft', still 7:1 for text", () => {
-    const soft = resolveBrandPalette({ primary: '#611f69', background: '#ffffff' })
+    const soft = resolveBrandPalette({ primary: '#611f69', background: '#ffffff', canvas: 'soft' })
     const vivid = resolveBrandPalette({ primary: '#611f69', background: '#ffffff', canvas: 'vibrant' })
     expect(toOklch(rgb(vivid.slots.background!)).c).toBeGreaterThan(toOklch(rgb(soft.slots.background!)).c)
     expect(toOklch(rgb(vivid.slots.background!)).l).toBeLessThan(toOklch(rgb(soft.slots.background!)).l)
@@ -615,11 +617,22 @@ describe('complete override — surfaces', () => {
     expect(grey['--brand-background-dark']).toBe(TRAYO_SURFACES.dark.shell)
   })
 
-  it('a neutral background takes the primary hue as a soft tint, so brands never share a canvas', () => {
-    // Regression (Ohad, 2026-09-30): every demo contract says #ffffff, so all
+  it('a neutral background stays neutral by default, light and dark', () => {
+    // Calibration (2026-10-01): every shipped product measured kept a page
+    // with no chroma; brand colour went on controls and chrome.
+    const p = resolveBrandPalette({ primary: '#611f69', background: '#ffffff', surface: '#f8f8f8' })
+    expect(p.slots.background).toBe('#ffffff')
+    expect(p.slots.surface).toBe('#f8f8f8')
+    expect(p.adjustments.join(' ')).not.toMatch(/canvas takes the brand's hue/)
+    expect(p.tokens['--brand-background-dark']).toBe(TRAYO_SURFACES.dark.shell)
+    expect(p.tokens['--brand-surface-dark']).toBe(TRAYO_SURFACES.dark.card)
+  })
+
+  it("canvas: 'soft' tints a neutral background with the primary hue, so brands never share a canvas", () => {
+    // Opt-in (Ohad, 2026-09-30): every demo contract says #ffffff, so all
     // the screenshots had the same white page.
-    const paypal = resolveBrandPalette({ primary: '#002991', background: '#ffffff', surface: '#f5f7fa' })
-    const slack = resolveBrandPalette({ primary: '#611f69', background: '#ffffff', surface: '#f8f8f8' })
+    const paypal = resolveBrandPalette({ primary: '#002991', background: '#ffffff', surface: '#f5f7fa', canvas: 'soft' })
+    const slack = resolveBrandPalette({ primary: '#611f69', background: '#ffffff', surface: '#f8f8f8', canvas: 'soft' })
     for (const [p, hue] of [
       [paypal, toOklch(rgb('#002991')).h],
       [slack, toOklch(rgb('#611f69')).h]

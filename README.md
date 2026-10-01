@@ -607,7 +607,7 @@ also says which theme the brand reads best in — `palette.theme` is `'dark'`
 for a dark primary on a dark bar — so set `class="dark"` on `<html>` when it
 says so. `emphasis: 'quiet'` turns both off.
 
-**One call does all of it.** `applyBrand(document, contract, { theme, dialect, canvas })` resolves the palette, writes the stylesheet, sets the attributes and the dark class, and applies the dialect — idempotent, and it throws on a bad contract rather than shipping half a brand:
+**One call does all of it.** `applyBrand(document, contract, { theme, page, fills, lead, canvas })` resolves the palette, writes the stylesheet, sets the attributes and the dark class, and applies the fills — idempotent, and it throws on a bad contract rather than shipping half a brand:
 
 ```ts
 import { applyBrand } from './trayo-ui'
@@ -615,7 +615,9 @@ const palette = applyBrand(document, contract, { theme: 'light', fills: 'tiles',
 console.log(palette.theme, palette.adjustments)
 ```
 
-**Container tone.** Every palette carries the brand's container (Material's `primaryContainer`: tone 90 with tone-10 text; 30/90 in dark) and a tertiary one, as `bg-container text-container-foreground` and `bg-container-tertiary …`. Use them where the brand should sit on a surface — a selected row, a stat strip, a side panel — with readable text guaranteed. `canvas: 'vibrant'` tints a neutral page harder than the default `'soft'`, still 7:1 for text.
+**Calm by default.** Shipped products keep the page neutral and put brand colour on controls and chrome: measured on ten real app screens (Asana, Monday, Intercom, Notion, Zendesk), the page had no chroma at all and brand colour covered 1–5% of the screen. So a white page in the contract stays white, and dark mode keeps the kit's slate (`canvas: 'neutral'`, the default). `canvas: 'soft'` tints a neutral page with the brand's hue and `'vibrant'` harder, still 7:1 for text — opt-in, for a showcase rather than an everyday app. One coloured region per screen — the bar or rail, *or* a band — is the budget a real product spends.
+
+**Container tone.** Every palette carries the brand's container (a pale step of the primary with tone-10 text; Material's 30/90 in dark) and a tertiary one, as `bg-container text-container-foreground` and `bg-container-tertiary …`. Use them where the brand should sit on a surface — a selected row, a stat strip, a side panel — with readable text guaranteed.
 
 **Fills.** Which surfaces take the brand's container tone: `cards`, `tiles`, `table-head`, or the presets `none`, `tiles`, `cards`, `all`. Colour only — a filled card is still the same card. Pass them to `applyBrand`, or set `fillsAttributes(fills)` on `<html>`.
 

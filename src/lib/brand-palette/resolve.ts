@@ -66,18 +66,25 @@ const LIGHT_SHELL_L = 0.93
 /** OKLCH lightness under which a page background is not a light theme. */
 const LIGHT_PAGE_L = 0.8
 /**
- * The canvas carries the brand: a neutral page (most contracts say #ffffff)
- * takes the primary's hue as a soft tint so two brands never share a
- * background, and dark surfaces tint the same way, more visibly.
+ * How a neutral page (most contracts say #ffffff) takes the brand.
+ * `neutral` (default) keeps it as given, and dark mode keeps Trayo's slate:
+ * shipped products keep the page neutral and spend brand colour on controls
+ * and chrome (2026-10-01 calibration: page chroma 0 on every real screen,
+ * brand colour on 1–5% of it). `soft` and `vibrant` tint it with the
+ * primary's hue so two brands never share a background, and dark surfaces
+ * tint the same way, more visibly.
  */
 // sRGB allows less than these for some hues this light; fromOklch clips.
 const CANVAS = {
+  neutral: null,
   soft: { chroma: 0.024, maxL: 0.965 }, // Material's neutral range
   vibrant: { chroma: 0.04, maxL: 0.945 } // Material's "vibrant" neutrals; still 7:1 for ink
 } as const
 /** Container tone: primary at this lightness/chroma (Material tone 90 ≈ L 0.9). */
-const CONTAINER_L = { light: 0.9, dark: 0.35 }
-const CONTAINER_MAX_CHROMA = { light: 0.08, dark: 0.1 }
+// Light is a pale step (Material's tone 90 at full chroma read as a coloured
+// background across a page); dark keeps Material's tone 30.
+const CONTAINER_L = { light: 0.95, dark: 0.35 }
+const CONTAINER_MAX_CHROMA = { light: 0.045, dark: 0.1 }
 const DARK_SURFACE_CHROMA = 0.045
 /** A surface with less chroma than this is neutral and eligible for the tint. */
 const NEUTRAL_SURFACE_CHROMA = 0.01
@@ -151,11 +158,12 @@ export interface BrandPaletteInput {
    */
   emphasis?: 'bold' | 'quiet'
   /**
-   * How strongly a neutral page takes the brand hue: `'soft'` (default) or
-   * `'vibrant'`, the strongest tint that keeps text at 7:1 (Material's
-   * "vibrant" neutrals). A chromatic background is kept as given either way.
+   * How strongly a neutral page takes the brand hue: `'neutral'` (default)
+   * not at all, as shipped products do; `'soft'` a faint tint; `'vibrant'`
+   * the strongest tint that keeps text at 7:1 (Material's "vibrant"
+   * neutrals). A chromatic background is kept as given either way.
    */
-  canvas?: 'soft' | 'vibrant'
+  canvas?: 'neutral' | 'soft' | 'vibrant'
   /**
    * Which of the brand's colours leads the palette — fills the buttons and
    * the bar, drives links and the mesh. `'primary'` (default); `'secondary'`
@@ -333,7 +341,7 @@ export function resolveBrandPalette(given: BrandPaletteInput): ResolvedBrandPale
         trayoDark,
         adjustments,
         input.emphasis !== 'quiet',
-        CANVAS[input.canvas ?? 'soft']
+        CANVAS[input.canvas ?? 'neutral']
       )
     : null
   const L: Surfaces = override?.light ?? trayoLight
@@ -451,10 +459,13 @@ export function resolveBrandPalette(given: BrandPaletteInput): ResolvedBrandPale
       ...(tertiary ? [[tertiary, tertiary] as const] : []),
       ...SERIES_POOL.map(([l, d]) => [parseHex(l)!, parseHex(d)!] as const)
     ]
+    const onLightCard = (c: RGB) =>
+      shiftLightnessUntil(c, 'darker', (x) => contrast(x, L.card) >= NON_TEXT_CONTRAST)
     // Rechecked at every fill: a candidate that was distinct from the accents
-    // may sit next to a series filled in the step before.
+    // may sit next to a series filled in the step before. Checked as it will
+    // be drawn, after the card's contrast step, which can move its hue.
     const nextFromPool = () => {
-      const i = pool.findIndex(([light]) => !nearChosen(light))
+      const i = pool.findIndex(([light]) => !nearChosen(onLightCard(light)))
       return i === -1 ? undefined : pool.splice(i, 1)[0]
     }
     for (let n = 2; n <= CHART_SERIES + 1; n++) {
@@ -471,12 +482,8 @@ export function resolveBrandPalette(given: BrandPaletteInput): ResolvedBrandPale
       const filled = given ? null : (nextFromPool() ?? ([rotated, rotated] as const))
       const lightSource = given ?? filled![0]
       const darkSource = given ?? filled![1]
-      if (filled) chosen.push(filled[0])
-      const light = shiftLightnessUntil(
-        lightSource,
-        'darker',
-        (c) => contrast(c, L.card) >= NON_TEXT_CONTRAST
-      )
+      const light = onLightCard(lightSource)
+      if (filled) chosen.push(light)
       const dark = shiftLightnessUntil(darkSource, 'lighter', (c) => contrast(c, D.card) >= NON_TEXT_CONTRAST)
       if (!same(light, lightSource)) {
         adjustments.push(
@@ -638,17 +645,22 @@ function resolveSurfaces(
   trayoDark: Surfaces,
   adjustments: string[],
   bold: boolean,
-  canvas: { chroma: number; maxL: number }
+  canvas: { chroma: number; maxL: number } | null
 ): { light: Surfaces; dark: Surfaces; tokens: Record<BrandSurfaceToken, string> } {
   const given = parseHex(input.background!)!
   const givenL = toOklch(given)
-  // The hue the canvas carries: the page's own when it has one, else the
-  // primary's. A black-and-white brand has neither and keeps its white.
+  // The hue the canvas carries: the page's own when it has one, else (when
+  // a tint is asked for) the primary's. A black-and-white brand has neither
+  // and keeps its white.
   const canvasHue =
-    givenL.c >= NEUTRAL_SURFACE_CHROMA ? givenL.h : !isNeutral(primary) ? toOklch(primary).h : null
-  const tintCanvas = canvasHue !== null && givenL.c < NEUTRAL_SURFACE_CHROMA
+    givenL.c >= NEUTRAL_SURFACE_CHROMA
+      ? givenL.h
+      : canvas && !isNeutral(primary)
+        ? toOklch(primary).h
+        : null
+  const tintCanvas = canvas !== null && canvasHue !== null && givenL.c < NEUTRAL_SURFACE_CHROMA
   const shell = tintCanvas
-    ? quantize(fromOklch({ l: Math.min(givenL.l, canvas.maxL), c: canvas.chroma, h: canvasHue }))
+    ? quantize(fromOklch({ l: Math.min(givenL.l, canvas.maxL), c: canvas.chroma, h: canvasHue! }))
     : given
   const shellL = toOklch(shell)
   if (tintCanvas) {
@@ -667,7 +679,7 @@ function resolveSurfaces(
       : quantize(
           fromOklch({
             l: Math.max(givenCard ? toOklch(givenCard).l : 0, shellL.l + 0.012),
-            c: tintCanvas ? canvas.chroma / 2 : shellL.c,
+            c: tintCanvas ? canvas!.chroma / 2 : shellL.c,
             h: shellL.h
           })
         )
