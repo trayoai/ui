@@ -1,5 +1,5 @@
-import type { ApplyBrandOptions } from './apply'
-import { fromBrandThemeContract, type BrandThemeContract } from './contract'
+import { toBrandInput, type ApplyBrandOptions } from './apply'
+import type { BrandThemeContract } from './contract'
 import { brandLeads, type BrandPaletteInput } from './resolve'
 
 /**
@@ -40,9 +40,9 @@ export function brandVariant(seed: number | string, contract?: BrandThemeContrac
   const silhouette = SILHOUETTES[index % 3]
   const theme = THEMES[index % 2]
   const turn = Math.floor(index / 6)
-  const available = contract ? brandLeads(toInput(contract)) : [...LEADS]
-  const wanted = LEADS[turn % 3]
-  const lead = available.includes(wanted) ? wanted : available[(LEADS.indexOf(wanted) + 1) % available.length]
+  const available = contract ? brandLeads(toBrandInput(contract)) : [...LEADS]
+  // The turn's lead, else the next one round the rotation the brand can take.
+  const lead = [0, 1, 2].map((k) => LEADS[(turn + k) % 3]).find((l) => available.includes(l)) ?? 'primary'
   const fills = silhouette === 'quiet' ? (turn % 2 === 0 ? 'tiles' : 'cards') : 'none'
   return { index, silhouette, theme, lead, fills, emphasis: silhouette === 'rail' ? 'bold' : 'quiet' }
 }
@@ -57,12 +57,6 @@ export function brandVariantOptions(variant: BrandVariant): ApplyBrandOptions {
     canvas: 'neutral',
     page: 'default'
   }
-}
-
-function toInput(contract: BrandThemeContract | BrandPaletteInput): BrandPaletteInput {
-  return 'onPrimary' in contract && 'text' in contract && 'background' in contract
-    ? fromBrandThemeContract(contract as BrandThemeContract).input
-    : (contract as BrandPaletteInput)
 }
 
 /** FNV-1a, so a recipe id always lands on the same slot. */

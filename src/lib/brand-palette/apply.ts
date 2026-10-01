@@ -62,12 +62,7 @@ export function applyBrand(
 ): ResolvedBrandPalette {
   // A raw BrandPaletteInput can carry every contract field too; mapping it
   // through the contract must not lose the fields only the raw shape has.
-  const input: BrandPaletteInput = isContract(contract)
-    ? {
-        ...fromBrandThemeContract(contract, contractOptions).input,
-        ...pick(contract as BrandPaletteInput, ['secondary', 'emphasis', 'canvas', 'lead'])
-      }
-    : { ...contract }
+  const input = toBrandInput(contract, contractOptions)
   if (canvas) input.canvas = canvas
   if (lead) input.lead = lead
   if (emphasis) input.emphasis = emphasis
@@ -97,6 +92,23 @@ export function applyBrand(
   if (fillList) for (const [k, v] of Object.entries(fillsAttributes(fillList))) root.setAttribute(k, v)
   if (page && page !== 'default') root.setAttribute('data-page', page)
   return palette
+}
+
+/**
+ * A contract or raw slots as resolver input. A raw BrandPaletteInput can
+ * carry every contract field too; mapping it through the contract must not
+ * lose the fields only the raw shape has.
+ */
+export function toBrandInput(
+  contract: BrandThemeContract | BrandPaletteInput,
+  options: ContractOptions = {}
+): BrandPaletteInput {
+  return isContract(contract)
+    ? {
+        ...fromBrandThemeContract(contract, options).input,
+        ...pick(contract as BrandPaletteInput, ['secondary', 'emphasis', 'canvas', 'lead'])
+      }
+    : { ...contract }
 }
 
 /** Attribute names `applyBrand` may set, for anything that wants to clear them. */
