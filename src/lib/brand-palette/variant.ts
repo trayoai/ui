@@ -28,8 +28,7 @@ const LEADS = ['primary', 'secondary', 'tertiary'] as const
 /**
  * A calm, deterministic variant for one app in a batch, so a gallery of
  * recipes never repeats and never needs judgement: pass the recipe's index
- * (neighbours always differ in silhouette and theme; the lead turns every
- * six) or any string seed (hashed onto the same rotation).
+ * (neighbours always differ in silhouette, theme and lead) or any string seed (hashed onto the same rotation).
  *
  * Calm by construction: the page stays neutral (`canvas: 'neutral'`, no
  * `page` colour) and a screen gets one coloured region. Given the contract,
@@ -41,8 +40,11 @@ export function brandVariant(seed: number | string, contract?: BrandThemeContrac
   const theme = THEMES[index % 2]
   const turn = Math.floor(index / 6)
   const available = contract ? brandLeads(toBrandInput(contract)) : [...LEADS]
-  // The turn's lead, else the next one round the rotation the brand can take.
-  const lead = [0, 1, 2].map((k) => LEADS[(turn + k) % 3]).find((l) => available.includes(l)) ?? 'primary'
+  // The slot's lead, else the next one round the rotation the brand can
+  // take. (index + turn) moves the lead at every step and still gives each
+  // silhouette × theme all three leads within 18 slots.
+  const start = (index + turn) % 3
+  const lead = [0, 1, 2].map((k) => LEADS[(start + k) % 3]).find((l) => available.includes(l)) ?? 'primary'
   const fills = silhouette === 'quiet' ? (turn % 2 === 0 ? 'tiles' : 'cards') : 'none'
   return { index, silhouette, theme, lead, fills, emphasis: silhouette === 'rail' ? 'bold' : 'quiet' }
 }

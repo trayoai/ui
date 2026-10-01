@@ -44,12 +44,13 @@ const BRANDS: Record<string, BrandThemeContract> = {
 }
 
 describe('brandVariant: a deterministic rotation', () => {
-  it('neighbours always differ in silhouette and theme', () => {
+  it('neighbours always differ in silhouette, theme and lead', () => {
     for (let n = 0; n < 60; n++) {
       const a = brandVariant(n)
       const b = brandVariant(n + 1)
       expect(a.silhouette, `slot ${n}`).not.toBe(b.silhouette)
       expect(a.theme, `slot ${n}`).not.toBe(b.theme)
+      expect(a.lead, `slot ${n}`).not.toBe(b.lead)
     }
   })
 
@@ -78,11 +79,12 @@ describe('brandVariant: guardrails on real palettes', () => {
     expect(brandLeads(fromBrandThemeContract(BRANDS.stripe).input)).toEqual(['primary', 'tertiary'])
     expect(brandLeads(fromBrandThemeContract(BRANDS.slack).input)).toEqual(['primary', 'secondary', 'tertiary'])
     // Regression (review): a missing secondary advances to tertiary, not back to primary.
-    expect(brandVariant(6, BRANDS.stripe).lead).toBe('tertiary')
-    expect(brandVariant(12, BRANDS.stripe).lead).toBe('tertiary')
+    const wantsSecondary = Array.from({ length: 18 }, (_, n) => n).filter((n) => brandVariant(n).lead === 'secondary')
+    expect(wantsSecondary.length).toBe(6)
+    for (const n of wantsSecondary) expect(brandVariant(n, BRANDS.stripe).lead).toBe('tertiary')
     // Regression (review): raw slots keep their explicit secondary.
     const raw = { primary: '#000000', secondary: '#2563eb', onPrimary: '#ffffff', text: '#111111', background: '#ffffff' }
-    expect(brandVariant(6, raw).lead).toBe('secondary')
+    expect(brandVariant(wantsSecondary[0], raw).lead).toBe('secondary')
     for (let n = 0; n < 36; n++) {
       expect(brandVariant(n, BRANDS.apple).lead).toBe('primary')
       expect(brandVariant(n, BRANDS.stripe).lead).not.toBe('secondary')
