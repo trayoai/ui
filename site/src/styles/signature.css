@@ -119,3 +119,15 @@
   background-color: var(--surface-shell);
   background-image: var(--shell-grain), var(--gradient-shell);
 }
+
+/* Paper & glow off still means no grain under the page looks (these rules
+   come later at equal specificity, so they need their own off variant). */
+[data-sig-paper='off'][data-page='canvas'].app-shell-bg {
+  background-image: linear-gradient(var(--container), var(--container));
+}
+[data-sig-paper='off'][data-page='inverse'].app-shell-bg {
+  background-image: none;
+}
+[data-sig-paper='off'][data-page='inverse'] [data-page-sheet] {
+  background-image: var(--gradient-shell);
+}
