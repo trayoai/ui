@@ -96,11 +96,14 @@ describe('fromBrandThemeContract', () => {
       mutedText: '#616061'
     })
     expect(notes.join(' ')).not.toMatch(/not applied/)
+    // The page stays as the brand gives it (neutral canvas by default).
     const p = resolveBrandPalette(input)
-    // A white page takes the brand's hue as a soft tint; cards a fainter one.
-    expect(p.slots.background).not.toBe('#ffffff')
-    expect(toOklch(rgb(p.slots.background!)).c).toBeGreaterThanOrEqual(0.02)
-    expect(p.tokens['--brand-surface']).not.toBe('#f8f8f8')
+    expect(p.slots.background).toBe('#ffffff')
+    expect(p.tokens['--brand-surface']).toBe('#f8f8f8')
+    // Asked for, a white page takes the brand's hue as a soft tint; cards a fainter one.
+    const tinted = resolveBrandPalette({ ...input, canvas: 'soft' })
+    expect(toOklch(rgb(tinted.slots.background!)).c).toBeGreaterThanOrEqual(0.02)
+    expect(tinted.tokens['--brand-surface']).not.toBe('#f8f8f8')
   })
 
   it("surfaces: 'trayo' drops them and says so", () => {

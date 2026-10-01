@@ -607,17 +607,36 @@ also says which theme the brand reads best in — `palette.theme` is `'dark'`
 for a dark primary on a dark bar — so set `class="dark"` on `<html>` when it
 says so. `emphasis: 'quiet'` turns both off.
 
-**One call does all of it.** `applyBrand(document, contract, { theme, dialect, canvas })` resolves the palette, writes the stylesheet, sets the attributes and the dark class, and applies the dialect — idempotent, and it throws on a bad contract rather than shipping half a brand:
+**One call does all of it.** `applyBrand(document, contract, { theme, page, fills, lead, canvas })` resolves the palette, writes the stylesheet, sets the attributes and the dark class, and applies the fills — idempotent, and it throws on a bad contract rather than shipping half a brand:
 
 ```ts
 import { applyBrand } from './trayo-ui'
-const palette = applyBrand(document, contract, { theme: 'light', dialect: 'editorial' })
+const palette = applyBrand(document, contract, { theme: 'light', fills: 'tiles', lead: 'primary' })
 console.log(palette.theme, palette.adjustments)
 ```
 
-**Container tone.** Every palette carries the brand's container (Material's `primaryContainer`: tone 90 with tone-10 text; 30/90 in dark) and a tertiary one, as `bg-container text-container-foreground` and `bg-container-tertiary …`. Use them where the brand should sit on a surface — a selected row, a stat strip, a side panel — with readable text guaranteed. `canvas: 'vibrant'` tints a neutral page harder than the default `'soft'`, still 7:1 for text.
+**Calm by default.** Shipped products keep the page neutral and put brand colour on controls and chrome: measured on ten real app screens (Asana, Monday, Intercom, Notion, Zendesk), the page had no chroma at all and brand colour covered 1–5% of the screen. So a white page in the contract stays white, and dark mode keeps the kit's slate (`canvas: 'neutral'`, the default). `canvas: 'soft'` tints a neutral page with the brand's hue and `'vibrant'` harder, still 7:1 for text — opt-in, for a showcase rather than an everyday app. One coloured region per screen — the bar or rail, *or* a band — is the budget a real product spends.
 
-**Dialects.** Component-level choices an app commits to once and the kit applies everywhere: `callout` (bar-left / bar-right / filled / outlined), `card` (flat / hairline / lifted / tinted), `table` (zebra / cards / dense / tinted-head), `button` (soft / outline), `tile` (tinted / big-number). Two apps in different dialects feel like different products at full size; one app never mixes them. Pass a preset (`plain`, `editorial`, `tinted`, `compact`) or an object to `applyBrand`, or set `dialectAttributes(dialect)` on `<html>` yourself. `dialectAgentGuide()` documents the axes for an agent. None of them touch the pill buttons, type roles, faces or grain.
+**Container tone.** Every palette carries the brand's container (a pale step of the primary with tone-10 text; Material's 30/90 in dark) and a tertiary one, as `bg-container text-container-foreground` and `bg-container-tertiary …`. Use them where the brand should sit on a surface — a selected row, a stat strip, a side panel — with readable text guaranteed.
+
+**Fills.** Which surfaces take the brand's container tone: `cards`, `tiles`, `table-head`, or the presets `none`, `tiles`, `cards`, `all`. Colour only — a filled card is still the same card. Pass them to `applyBrand`, or set `fillsAttributes(fills)` on `<html>`.
+
+**Lead.** Which of the brand's colours leads: `lead: 'primary'` (default), `'secondary'` (the brand's second colour fills the buttons and the bar; its first becomes the decoration) or `'tertiary'`. The same palette in a different hierarchy, so two apps for one company can differ.
+
+**Page colour and layout.** Three more colour-only levers, so dozens of branded apps don't share a silhouette:
+- `applyBrand(…, { page: 'canvas' })` paints the whole page in the brand's container tone (cards stay light); `page: 'inverse'` frames the page in the brand's shell colour with the content on its usual sheet inside.
+- `<AppShell rail={…}>` adds a left rail of `<AppShellNavLink>`s in the same shell colour as the top bar.
+- `<BrandBand>` is a headline band in the brand's own colour; text inside takes the brand's readable foreground.
+
+**Variety across a batch: `brandVariant`.** A generator building many apps (one per recipe) shouldn't pick looks by judgement — it tends to pick the same one. `brandVariant(seed, contract)` returns a calm variant from a fixed rotation: a silhouette (`band` → render a `<BrandBand>`; `rail` → `<AppShell rail>`; `quiet` → neither, the brand sits in pale tiles or cards), a theme, a lead and fills. Pass the recipe's index (neighbours always differ in silhouette and theme; 12 in a row never repeat) or a string id. Every variant keeps the page neutral and one coloured region, and is led only by a colour the brand owns — its primary, or its own second colour when it has one (never the derived tertiary):
+
+```ts
+const variant = brandVariant(recipeIndex, contract)
+applyBrand(document, contract, brandVariantOptions(variant))
+// then render variant.silhouette: <BrandBand> for 'band', <AppShell rail={…}> for 'rail'
+```
+
+**What a brand never changes:** fonts and the type roles, radius, spacing, the components themselves, pill buttons, the faces and the grain. The brand is its colours — the 8–10 in the contract and what the kit derives from them — placed differently per app (looks, fills, lead, theme). That is the whole design: one product, the customer's colours.
 
 You choose **what** the colours are; the kit works out **how** to use them.
 Colour lists from logo APIs come by prominence, not role (PayPal's starts with

@@ -1,5 +1,5 @@
 import { fromBrandThemeContract, type BrandThemeContract, type ContractOptions } from './contract'
-import { dialectAttributes, DIALECT_PRESETS, type Dialect } from './dialect'
+import { fillsAttributes, FILL_PRESETS, type Fills } from './fills'
 import {
   brandAttributes,
   brandPaletteCss,
@@ -26,10 +26,21 @@ export interface BrandDocument {
 export interface ApplyBrandOptions extends ContractOptions {
   /** `'auto'` (default) follows `palette.theme`; a generator balancing a gallery passes it explicitly. */
   theme?: 'auto' | 'light' | 'dark'
-  /** A dialect object or a preset name; omitted = the kit as shipped. */
-  dialect?: Dialect | keyof typeof DIALECT_PRESETS
+  /** Which surfaces take the brand's container tone: a list or a preset name; omitted = none. */
+  fills?: Fills | keyof typeof FILL_PRESETS
+  /** Which of the brand's colours leads; see `BrandPaletteInput.lead`. */
+  lead?: BrandPaletteInput['lead']
+  /**
+   * The page's colour: `'default'` (the brand canvas), `'canvas'` (the whole
+   * page in the brand's container tone, cards stay light) or `'inverse'`
+   * (the page framed in the brand's shell colour, content on its usual sheet
+   * inside). Colour only; sets `data-page` on `<html>`.
+   */
+  page?: 'default' | 'canvas' | 'inverse'
   /** The canvas tint strength; see `BrandPaletteInput.canvas`. */
   canvas?: BrandPaletteInput['canvas']
+  /** Whether a brand with no coloured shell gets a derived bar; see `BrandPaletteInput.emphasis`. */
+  emphasis?: BrandPaletteInput['emphasis']
 }
 
 const STYLE_ID = 'trayo-brand'
@@ -37,7 +48,7 @@ const STYLE_ID = 'trayo-brand'
 /**
  * Brands a document in one call — the whole sequence a build agent would
  * otherwise have to get right in order: contract → slots → check → resolve →
- * stylesheet → attributes → theme class → dialect. Idempotent: calling it
+ * stylesheet → attributes → theme class → fills. Idempotent: calling it
  * again replaces the previous brand. Returns the palette (its `adjustments`
  * and `theme` are worth logging).
  *
@@ -47,17 +58,14 @@ const STYLE_ID = 'trayo-brand'
 export function applyBrand(
   doc: BrandDocument,
   contract: BrandThemeContract | BrandPaletteInput,
-  { theme = 'auto', dialect, canvas, ...contractOptions }: ApplyBrandOptions = {}
+  { theme = 'auto', fills, lead, canvas, page, emphasis, ...contractOptions }: ApplyBrandOptions = {}
 ): ResolvedBrandPalette {
   // A raw BrandPaletteInput can carry every contract field too; mapping it
   // through the contract must not lose the fields only the raw shape has.
-  const input: BrandPaletteInput = isContract(contract)
-    ? {
-        ...fromBrandThemeContract(contract, contractOptions).input,
-        ...pick(contract as BrandPaletteInput, ['secondary', 'emphasis', 'canvas'])
-      }
-    : { ...contract }
+  const input = toBrandInput(contract, contractOptions)
   if (canvas) input.canvas = canvas
+  if (lead) input.lead = lead
+  if (emphasis) input.emphasis = emphasis
   const problems = checkBrandPalette(input)
   if (problems.length) {
     throw new Error(`applyBrand: invalid brand palette — ${problems.map((p) => p.message).join(' ')}`)
@@ -66,7 +74,8 @@ export function applyBrand(
 
   const root = doc.documentElement
   for (const name of root.getAttributeNames()) {
-    if (name.startsWith('data-brand') || name.startsWith('data-dialect-')) root.removeAttribute(name)
+    if (name.startsWith('data-brand') || name.startsWith('data-fill-') || name === 'data-page')
+      root.removeAttribute(name)
   }
   const existing = doc.getElementById(STYLE_ID)
   const css = brandPaletteCss(palette, 'html')
@@ -79,10 +88,27 @@ export function applyBrand(
   }
   for (const [k, v] of Object.entries(brandAttributes(palette))) root.setAttribute(k, v)
   root.classList.toggle('dark', theme === 'dark' || (theme === 'auto' && palette.theme === 'dark'))
-  const dialectValue = typeof dialect === 'string' ? DIALECT_PRESETS[dialect] : dialect
-  if (dialectValue)
-    for (const [k, v] of Object.entries(dialectAttributes(dialectValue))) root.setAttribute(k, v)
+  const fillList = typeof fills === 'string' ? FILL_PRESETS[fills] : fills
+  if (fillList) for (const [k, v] of Object.entries(fillsAttributes(fillList))) root.setAttribute(k, v)
+  if (page && page !== 'default') root.setAttribute('data-page', page)
   return palette
+}
+
+/**
+ * A contract or raw slots as resolver input. A raw BrandPaletteInput can
+ * carry every contract field too; mapping it through the contract must not
+ * lose the fields only the raw shape has.
+ */
+export function toBrandInput(
+  contract: BrandThemeContract | BrandPaletteInput,
+  options: ContractOptions = {}
+): BrandPaletteInput {
+  return isContract(contract)
+    ? {
+        ...fromBrandThemeContract(contract, options).input,
+        ...pick(contract as BrandPaletteInput, ['secondary', 'emphasis', 'canvas', 'lead'])
+      }
+    : { ...contract }
 }
 
 /** Attribute names `applyBrand` may set, for anything that wants to clear them. */

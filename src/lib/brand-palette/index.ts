@@ -26,6 +26,7 @@ export {
   TRAYO_SURFACES,
   brandAttributes,
   brandPaletteCss,
+  brandLeads,
   brandPaletteStyle,
   checkBrandPalette,
   resolveBrandPalette,
@@ -40,15 +41,7 @@ export {
   type ContractMapping,
   type ContractOptions
 } from './contract'
-export {
-  DIALECT_AXES,
-  DIALECT_PRESETS,
-  checkDialect,
-  dialectAgentGuide,
-  dialectAttributes,
-  type Dialect,
-  type DialectAxis,
-  type DialectOption
-} from './dialect'
+export { FILL_PRESETS, FILL_TARGETS, checkFills, fillsAttributes, type FillTarget, type Fills } from './fills'
 export { applyBrand, BRAND_ROOT_ATTRIBUTES, type ApplyBrandOptions, type BrandDocument } from './apply'
 export { contrast, parseHex } from './color'
+export { brandVariant, brandVariantOptions, type BrandSilhouette, type BrandVariant } from './variant'

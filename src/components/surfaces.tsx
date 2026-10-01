@@ -31,6 +31,13 @@ const CONTAINER_MAX: Record<ContainerWidth, string> = {
  *
  * With a brand palette that has a `shell`, the top bar wears the customer's
  * product chrome (Slack's aubergine), text and fields included.
+ *
+ * Give it a `rail` and the app gets a left column for section links
+ * (`<AppShellNavLink>`s stack there): a full-height strip in the same shell
+ * colour as the top bar — one of the large colour areas that make two
+ * branded apps look different. Content goes to its right. Below `md` the
+ * rail becomes a horizontally scrolling strip under the top bar, so the
+ * links stay reachable on phones.
  */
 export function AppShell({
   className,
@@ -39,6 +46,7 @@ export function AppShell({
   nav,
   actions,
   width = 'default',
+  rail,
   ...props
 }: React.ComponentProps<'div'> & {
   /** App name, optionally a link or with a workspace tag beside it. */
@@ -49,6 +57,8 @@ export function AppShell({
   actions?: React.ReactNode
   /** Aligns the bar's inner width with your `PageContainer`'s `width`. */
   width?: ContainerWidth
+  /** A left rail of section links (`<AppShellNavLink>`s). */
+  rail?: React.ReactNode
 }) {
   const hasBar = brand != null || nav != null || actions != null
   return (
@@ -104,7 +114,30 @@ export function AppShell({
           </div>
         </header>
       )}
-      {children}
+      {rail != null ? (
+        <div data-slot='app-shell-body' className='flex flex-col md:flex-row md:items-start'>
+          <aside
+            data-slot='app-shell-rail'
+            // Same shell colour as the top bar when the brand has one.
+            data-shell-region=''
+            className={cn(
+              'flex w-full shrink-0 border-b border-border-subtle bg-surface-sidebar p-2',
+              'md:sticky md:w-60 md:flex-col md:self-start md:border-r md:border-b-0 md:p-3',
+              hasBar ? 'md:top-topbar md:h-[calc(100vh-var(--spacing-topbar))]' : 'md:top-0 md:h-screen'
+            )}
+          >
+            <nav
+              aria-label='Sections'
+              className='flex flex-row gap-1 overflow-x-auto md:flex-col md:overflow-visible md:[&>*]:justify-start'
+            >
+              {rail}
+            </nav>
+          </aside>
+          <div className='min-w-0 flex-1'>{children}</div>
+        </div>
+      ) : (
+        children
+      )}
     </div>
   )
 }
@@ -141,6 +174,25 @@ export function AppShellNavLink({
         className
       )}
       {...(props as React.HTMLAttributes<HTMLElement>)}
+    />
+  )
+}
+
+/**
+ * A band in the brand's own colour for a page's headline — the strongest
+ * single colour area a branded app has. Text inside takes the brand's
+ * readable foreground (the same one its buttons use), whatever the role
+ * class. Put it at the top of a `PageContainer`, once per page.
+ */
+export function BrandBand({ className, ...props }: React.ComponentProps<'section'>) {
+  return (
+    <section
+      data-slot='brand-band'
+      className={cn(
+        'rounded-[calc(var(--radius)+4px)] bg-accent-brand px-6 py-10 text-accent-brand-foreground md:px-8 md:py-12',
+        className
+      )}
+      {...props}
     />
   )
 }

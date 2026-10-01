@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 
 import { describe, expect, it } from 'vitest'
 
-import { DIALECT_AXES } from '../src/lib/brand-palette'
+import { FILL_TARGETS } from '../src/lib/brand-palette'
 import {
   BRAND_CHART_TOKENS,
   BRAND_CONTAINER_TOKENS,
@@ -305,34 +305,32 @@ describe('containers and dialects', () => {
     expect(css).toMatch(/--color-container-foreground: var\(--container-foreground\);/)
   })
 
-  it('every dialect option except default has a rule', () => {
-    const rules = css.slice(css.indexOf('DIALECTS —'), css.indexOf('@theme inline {'))
-    for (const [axis, def] of Object.entries(DIALECT_AXES)) {
-      for (const opt of def.options) {
-        if (opt === 'default') continue
-        expect(rules, `${axis}=${opt}`).toContain(`[data-dialect-${axis}='${opt}']`)
-      }
-    }
+  it('every fill target has a rule', () => {
+    const rules = css.slice(css.indexOf('FILLS —'), css.indexOf('@theme inline {'))
+    for (const target of Object.keys(FILL_TARGETS)) expect(rules, target).toContain(`[data-fill-${target}]`)
+    expect(css).not.toContain('data-dialect-')
+  })
+
+  it('fills change colour only: no shadow, radius, border-width or font in their rules', () => {
+    const rules = css.slice(css.indexOf('FILLS —'), css.indexOf('PAGE COLOUR —'))
+    expect(rules).not.toMatch(/box-shadow|border-radius|border-width|font-|padding|height/)
   })
 })
 
-describe('dialect rules keep interaction states', () => {
-  const rules = css.slice(css.indexOf('DIALECTS —'), css.indexOf('@theme inline {'))
-  it('zebra and cards fills leave hover and selected rows to the table', () => {
-    expect(rules).toMatch(
-      /zebra'\] \[data-slot='table-body'\] \[data-slot='table-row'\]:nth-child\(even\):not\(:hover\):not\(\[data-state='selected'\]\)/
-    )
-    expect(rules).toMatch(
-      /cards'\] \[data-slot='table-body'\] \[data-slot='table-row'\]\[data-state='selected'\]/
-    )
+describe('page colour and brand band', () => {
+  const rules = css.slice(css.indexOf('PAGE COLOUR —'), css.indexOf('@theme inline {'))
+  it('canvas and inverse have rules; inverse frames the content column', () => {
+    // html[…] so the page colour outranks `:is(.dark) .app-shell-bg` in dark mode.
+    expect(rules).toContain("html[data-page='canvas'] .app-shell-bg")
+    expect(rules).toContain("html[data-page='inverse'] .app-shell-bg {")
+    expect(rules).toContain("[data-page='inverse'] .app-shell-bg [data-slot='page-container']")
   })
-  it('soft and outline buttons draw a focus ring', () => {
-    expect(rules).toMatch(/button='soft'\] \[data-slot='button'\]\.bg-accent-brand:focus-visible/)
-    expect(rules).toMatch(/button='outline'\] \[data-slot='button'\]\.bg-accent-brand:focus-visible/)
+  it('page rules change colour and the frame only — no type', () => {
+    expect(rules).not.toMatch(/font-|letter-spacing|text-transform/)
   })
-  it('dense sets the cell height, not extra padding', () => {
+  it('text in a BrandBand takes the brand foreground', () => {
     expect(rules).toMatch(
-      /dense'\] \[data-slot='table-cell'\] \{ height: 2\.25rem; padding-top: 0; padding-bottom: 0; \}/
+      /\[data-slot='brand-band'\] \{[^}]*--text-primary: var\(--accent-brand-foreground\)/
     )
   })
 })

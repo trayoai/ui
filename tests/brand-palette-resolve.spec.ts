@@ -306,7 +306,7 @@ describe('dark ladder (bold) follows Material tones in the brand hue', () => {
   })
 })
 
-describe('containers (Material tone 90 / on 10; dark 30 / 90)', () => {
+describe('containers (a pale light step / on 10; dark tone 30 / 90)', () => {
   it.each(['#002991', '#611f69', '#543afc', '#ffe01b', '#000000'])(
     '%s: readable, in the brand hue',
     (primary) => {
@@ -319,7 +319,9 @@ describe('containers (Material tone 90 / on 10; dark 30 / 90)', () => {
       expect(
         contrast(rgb(t['--brand-on-container-tertiary']), rgb(t['--brand-container-tertiary']))
       ).toBeGreaterThanOrEqual(7)
-      expect(toOklch(rgb(t['--brand-container'])).l).toBeCloseTo(0.9, 1)
+      // Pale enough to fill a stat strip or a page without reading as a coloured background.
+      expect(toOklch(rgb(t['--brand-container'])).l).toBeCloseTo(0.95, 1)
+      expect(toOklch(rgb(t['--brand-container'])).c).toBeLessThanOrEqual(0.046)
       expect(toOklch(rgb(t['--brand-container-dark'])).l).toBeCloseTo(0.35, 1)
       if (toOklch(rgb(primary)).c > 0.04) {
         const d = Math.abs(toOklch(rgb(t['--brand-container'])).h - toOklch(rgb(primary)).h)
@@ -331,13 +333,55 @@ describe('containers (Material tone 90 / on 10; dark 30 / 90)', () => {
 
 describe('canvas strength', () => {
   it("'vibrant' tints a neutral page more than 'soft', still 7:1 for text", () => {
-    const soft = resolveBrandPalette({ primary: '#611f69', background: '#ffffff' })
+    const soft = resolveBrandPalette({ primary: '#611f69', background: '#ffffff', canvas: 'soft' })
     const vivid = resolveBrandPalette({ primary: '#611f69', background: '#ffffff', canvas: 'vibrant' })
     expect(toOklch(rgb(vivid.slots.background!)).c).toBeGreaterThan(toOklch(rgb(soft.slots.background!)).c)
     expect(toOklch(rgb(vivid.slots.background!)).l).toBeLessThan(toOklch(rgb(soft.slots.background!)).l)
     expect(contrast(rgb(vivid.tokens['--brand-text']!), rgb(vivid.slots.background!))).toBeGreaterThanOrEqual(
       7
     )
+  })
+})
+
+describe('lead: the same colours in a different hierarchy', () => {
+  it("'secondary' leads with the brand's second colour; primary becomes the decoration", () => {
+    const base = { primary: '#002991', secondary: '#3fb6ff', onPrimary: '#ffffff' }
+    const led = resolveBrandPalette({ ...base, lead: 'secondary' })
+    expect(led.slots.primary).toBe('#3fb6ff')
+    expect(led.slots.secondary).toBe('#002991')
+    // onPrimary belonged to navy; text on the new sky-blue lead is derived (ink).
+    expect(led.tokens['--brand-on-primary']).toBe(TRAYO_SURFACES.light.text)
+    expect(led.tokens['--brand-gradient']).toContain('#002991')
+    expect(led.adjustments.join(' ')).toMatch(/lead 'secondary'/)
+  })
+
+  it("'secondary' falls back to the first accent, then to primary with a note", () => {
+    expect(
+      resolveBrandPalette({ primary: '#002991', accents: ['#2eb67d'], lead: 'secondary' }).slots.primary
+    ).toBe('#2eb67d')
+    const none = resolveBrandPalette({ primary: '#002991', lead: 'secondary' })
+    expect(none.slots.primary).toBe('#002991')
+    expect(none.adjustments.join(' ')).toMatch(/no usable colour/)
+  })
+
+  it("'tertiary' leads with the primary's hue + 60°", () => {
+    const led = resolveBrandPalette({ primary: '#002991', lead: 'tertiary' })
+    const d = Math.abs(toOklch(rgb(led.slots.primary)).h - ((toOklch(rgb('#002991')).h + 60) % 360))
+    expect(Math.min(d, 360 - d)).toBeLessThan(8)
+    expect(led.slots.secondary).toBe('#002991')
+    expect(resolveBrandPalette({ primary: '#000000', lead: 'tertiary' }).slots.primary).toBe('#000000')
+  })
+
+  it('every lead keeps the contrast guarantees', () => {
+    for (const lead of ['primary', 'secondary', 'tertiary'] as const) {
+      const p = resolveBrandPalette({ primary: '#002991', secondary: '#3fb6ff', background: '#ffffff', lead })
+      expect(
+        contrast(rgb(p.tokens['--brand-on-primary']), rgb(p.tokens['--brand-primary']))
+      ).toBeGreaterThanOrEqual(TEXT_CONTRAST)
+      expect(
+        contrast(rgb(p.tokens['--brand-accent-text']), rgb(p.tokens['--brand-surface']!))
+      ).toBeGreaterThanOrEqual(TEXT_CONTRAST)
+    }
   })
 })
 
@@ -573,11 +617,25 @@ describe('complete override — surfaces', () => {
     expect(grey['--brand-background-dark']).toBe(TRAYO_SURFACES.dark.shell)
   })
 
-  it('a neutral background takes the primary hue as a soft tint, so brands never share a canvas', () => {
-    // Regression (Ohad, 2026-09-30): every demo contract says #ffffff, so all
+  it('a neutral background stays neutral by default, light and dark', () => {
+    // Calibration (2026-10-01): every shipped product measured kept a page
+    // with no chroma; brand colour went on controls and chrome.
+    const p = resolveBrandPalette({ primary: '#611f69', background: '#ffffff', surface: '#f8f8f8' })
+    expect(p.slots.background).toBe('#ffffff')
+    expect(p.slots.surface).toBe('#f8f8f8')
+    expect(p.adjustments.join(' ')).not.toMatch(/canvas takes the brand's hue/)
+    expect(p.tokens['--brand-background-dark']).toBe(TRAYO_SURFACES.dark.shell)
+    expect(p.tokens['--brand-surface-dark']).toBe(TRAYO_SURFACES.dark.card)
+    // Regression (review): a chromatic ink (PayPal's navy) must not tint dark mode either.
+    const inked = resolveBrandPalette({ primary: '#002991', background: '#ffffff', text: '#001435' })
+    expect(inked.tokens['--brand-background-dark']).toBe(TRAYO_SURFACES.dark.shell)
+  })
+
+  it("canvas: 'soft' tints a neutral background with the primary hue, so brands never share a canvas", () => {
+    // Opt-in (Ohad, 2026-09-30): every demo contract says #ffffff, so all
     // the screenshots had the same white page.
-    const paypal = resolveBrandPalette({ primary: '#002991', background: '#ffffff', surface: '#f5f7fa' })
-    const slack = resolveBrandPalette({ primary: '#611f69', background: '#ffffff', surface: '#f8f8f8' })
+    const paypal = resolveBrandPalette({ primary: '#002991', background: '#ffffff', surface: '#f5f7fa', canvas: 'soft' })
+    const slack = resolveBrandPalette({ primary: '#611f69', background: '#ffffff', surface: '#f8f8f8', canvas: 'soft' })
     for (const [p, hue] of [
       [paypal, toOklch(rgb('#002991')).h],
       [slack, toOklch(rgb('#611f69')).h]

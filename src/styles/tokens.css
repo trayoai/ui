@@ -1275,77 +1275,65 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   DIALECTS — component-level choices an app commits to once (lib/brand-
-   palette dialect.ts): `data-dialect-<axis>="<option>"` on <html>, applied
-   here to every instance so one app never mixes them. None of these touch
-   the Trayo signature. Values not set keep the defaults above.
+   FILLS — which surfaces take the brand's container tone (lib/brand-palette
+   fills.ts): `data-fill-<target>` on <html>, applied to every instance.
+   Colour only; components, type, radius and spacing are untouched. Text on
+   a filled surface uses the container's own readable foreground.
    ═══════════════════════════════════════════════════════════════════════ */
-/* callout: the tone's line colour becomes a thick bar */
-[data-dialect-callout='bar-left'] [data-slot='callout'] { border-left-width: 4px; border-radius: 8px; }
-[data-dialect-callout='bar-right'] [data-slot='callout'] { border-right-width: 4px; border-radius: 8px; }
-[data-dialect-callout='filled'] [data-slot='callout'] {
-  border-color: transparent;
-  background-color: var(--container);
-  color: var(--container-foreground);
-  --text-secondary: var(--container-foreground);
-  --text-muted: color-mix(in srgb, var(--container-foreground) 70%, var(--container));
-  --accent-text: var(--container-foreground);
-}
-[data-dialect-callout='outlined'] [data-slot='callout'] { background-color: transparent; border-width: 1.5px; }
-
-/* card: surfaces, cards and stat tiles */
-[data-dialect-card='flat'] :is([data-slot='surface'], [data-slot='card'], [data-slot='stat-tile']) {
-  background-image: none; background-color: var(--surface-card); box-shadow: none; border: 1px solid var(--border-subtle);
-}
-[data-dialect-card='hairline'] :is([data-slot='surface'], [data-slot='card'], [data-slot='stat-tile']) {
-  background-image: none; background-color: var(--surface-card); box-shadow: 0 0 0 1.5px var(--border-strong);
-}
-[data-dialect-card='lifted'] :is([data-slot='surface'], [data-slot='card'], [data-slot='stat-tile']) {
-  box-shadow: var(--shadow-card-hover);
-}
-[data-dialect-card='tinted'] :is([data-slot='surface'], [data-slot='card'], [data-slot='stat-tile']),
-[data-dialect-tile='tinted'] [data-slot='stat-tile'] {
-  background-image: none; background-color: var(--container); box-shadow: none;
+[data-fill-cards] :is([data-slot='surface'], [data-slot='card']),
+[data-fill-tiles] [data-slot='stat-tile'] {
+  /* Colour only: the hairline shadow and the hover lift are the component's. */
+  background-image: none; background-color: var(--container);
   --text-primary: var(--container-foreground);
   --text-secondary: color-mix(in srgb, var(--container-foreground) 82%, var(--container));
   --text-muted: color-mix(in srgb, var(--container-foreground) 64%, var(--container));
   --foreground: var(--text-primary); --muted-foreground: var(--text-muted);
   --border-subtle: color-mix(in srgb, var(--container-foreground) 14%, transparent);
 }
-
-/* table — resting rows only: hover and selection stay visible in every dialect */
-[data-dialect-table='zebra'] [data-slot='table-body'] [data-slot='table-row']:nth-child(even):not(:hover):not([data-state='selected']) { background-color: var(--surface-well); }
-[data-dialect-table='dense'] [data-slot='table-cell'] { height: 2.25rem; padding-top: 0; padding-bottom: 0; }
-[data-dialect-table='dense'] [data-slot='table-head'] { height: 32px; }
-[data-dialect-table='cards'] [data-slot='table'] { border-collapse: separate; border-spacing: 0 6px; }
-[data-dialect-table='cards'] [data-slot='table-body'] [data-slot='table-row'] { background-color: var(--surface-card); box-shadow: var(--shadow-card); }
-[data-dialect-table='cards'] [data-slot='table-body'] [data-slot='table-row']:hover { background-color: var(--surface-hover); }
-[data-dialect-table='cards'] [data-slot='table-body'] [data-slot='table-row'][data-state='selected'] { background-color: var(--accent-soft); }
-[data-dialect-table='cards'] [data-slot='table-body'] [data-slot='table-cell']:first-child { border-top-left-radius: var(--radius); border-bottom-left-radius: var(--radius); }
-[data-dialect-table='cards'] [data-slot='table-body'] [data-slot='table-cell']:last-child { border-top-right-radius: var(--radius); border-bottom-right-radius: var(--radius); }
-[data-dialect-table='tinted-head'] [data-slot='table-head'] {
+[data-fill-table-head] [data-slot='table-head'] {
   background-color: var(--container); color: var(--container-foreground);
   --text-muted: var(--container-foreground); --text-secondary: var(--container-foreground);
 }
 
-/* button: the primary action's emphasis (Button's default variant carries bg-accent-brand) */
-[data-dialect-button='soft'] [data-slot='button'].bg-accent-brand {
-  background-color: var(--accent-soft); color: var(--accent-text); box-shadow: none;
+/* ═══════════════════════════════════════════════════════════════════════
+   PAGE COLOUR — `data-page` on <html> (applyBrand's `page`). Colour only.
+   canvas: the whole page in the brand's container tone; cards stay light.
+   inverse: the page framed in the brand's shell colour, the content column
+   on its usual sheet inside — every component keeps its tested colours.
+   ═══════════════════════════════════════════════════════════════════════ */
+/* html[…] outranks `:is(.dark) .app-shell-bg`, so the page colour holds in dark. */
+html[data-page='canvas'] .app-shell-bg {
+  background-color: var(--container);
+  background-image: var(--shell-grain), linear-gradient(var(--container), var(--container));
 }
-[data-dialect-button='outline'] [data-slot='button'].bg-accent-brand {
-  background-color: transparent; color: var(--accent-text); box-shadow: inset 0 0 0 1.5px var(--accent-line);
+html[data-page='inverse'] .app-shell-bg {
+  background-color: var(--brand-shell, var(--accent-brand));
+  background-image: var(--shell-grain);
 }
-/* Button sets outline-none and draws its focus ring as a box-shadow utility;
-   the dialects replace that shadow, so they draw the ring themselves. */
-[data-dialect-button='soft'] [data-slot='button'].bg-accent-brand:focus-visible {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent);
+[data-page='inverse'] .app-shell-bg [data-slot='page-container'] {
+  width: calc(100% - 2rem);
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  border-radius: calc(var(--radius) + 8px);
+  background-color: var(--surface-shell);
+  background-image: var(--shell-grain), var(--gradient-shell);
 }
-[data-dialect-button='outline'] [data-slot='button'].bg-accent-brand:focus-visible {
-  box-shadow: inset 0 0 0 1.5px var(--accent-line), 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent);
+@media (min-width: 768px) {
+  [data-page='inverse'] .app-shell-bg [data-slot='page-container'] {
+    width: calc(100% - 7rem);
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+  }
 }
 
-/* stat tile */
-[data-dialect-tile='big-number'] [data-slot='stat-tile'] .text-page-title { font-size: 2.25rem; line-height: 1.05; }
+/* BrandBand: text in the band takes the brand's readable foreground,
+   whatever role class it carries (4.5:1 on the fill, from the resolver). */
+[data-slot='brand-band'] {
+  --text-primary: var(--accent-brand-foreground);
+  --text-secondary: var(--accent-brand-foreground);
+  --text-muted: var(--accent-brand-foreground);
+  --accent-text: var(--accent-brand-foreground);
+}
 
 @theme inline {
   /* Clash Display — optional display face for a wordmark. Not bundled: load it

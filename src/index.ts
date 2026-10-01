@@ -51,6 +51,7 @@ export {
 export {
   AppShell,
   AppShellNavLink,
+  BrandBand,
   BrandMesh,
   EmptyState,
   GradientText,
@@ -177,11 +178,13 @@ export {
   fromBrandThemeContract,
   resolveBrandPalette,
   applyBrand,
-  DIALECT_AXES,
-  DIALECT_PRESETS,
-  checkDialect,
-  dialectAgentGuide,
-  dialectAttributes,
+  FILL_PRESETS,
+  FILL_TARGETS,
+  checkFills,
+  fillsAttributes,
+  brandLeads,
+  brandVariant,
+  brandVariantOptions,
 } from './lib/brand-palette'
 export type {
   BrandPaletteInput,
@@ -192,8 +195,10 @@ export type {
   ContractOptions,
   ResolvedBrandPalette,
   ApplyBrandOptions,
-  Dialect,
-  DialectAxis,
+  Fills,
+  FillTarget,
+  BrandSilhouette,
+  BrandVariant,
 } from './lib/brand-palette'
 
 /* ----------------------------------------------------------------- helpers */
