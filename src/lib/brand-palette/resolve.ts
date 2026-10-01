@@ -592,6 +592,15 @@ function derivedShell(primary: RGB): RGB {
  * (decoration). A supplied `onPrimary` belonged to the old primary and is
  * dropped so the text on the new lead is derived.
  */
+/** The leads this palette can actually take (primary always; the others when the brand has a usable colour for them). */
+export function brandLeads(input: BrandPaletteInput): NonNullable<BrandPaletteInput['lead']>[] {
+  return (['primary', 'secondary', 'tertiary'] as const).filter((lead) => {
+    // reorderForLead hands its input back unchanged when the lead is unusable.
+    const probe = { ...input, lead }
+    return lead === 'primary' || reorderForLead(probe, []) !== probe
+  })
+}
+
 function reorderForLead(input: BrandPaletteInput, adjustments: string[]): BrandPaletteInput {
   const lead = input.lead ?? 'primary'
   if (lead === 'primary') return input

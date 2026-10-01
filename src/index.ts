@@ -182,6 +182,9 @@ export {
   FILL_TARGETS,
   checkFills,
   fillsAttributes,
+  brandLeads,
+  brandVariant,
+  brandVariantOptions,
 } from './lib/brand-palette'
 export type {
   BrandPaletteInput,
@@ -194,6 +197,8 @@ export type {
   ApplyBrandOptions,
   Fills,
   FillTarget,
+  BrandSilhouette,
+  BrandVariant,
 } from './lib/brand-palette'
 
 /* ----------------------------------------------------------------- helpers */

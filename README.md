@@ -628,6 +628,14 @@ console.log(palette.theme, palette.adjustments)
 - `<AppShell rail={…}>` adds a left rail of `<AppShellNavLink>`s in the same shell colour as the top bar.
 - `<BrandBand>` is a headline band in the brand's own colour; text inside takes the brand's readable foreground.
 
+**Variety across a batch: `brandVariant`.** A generator building many apps (one per recipe) shouldn't pick looks by judgement — it tends to pick the same one. `brandVariant(seed, contract)` returns a calm variant from a fixed rotation: a silhouette (`band` → render a `<BrandBand>`; `rail` → `<AppShell rail>`; `quiet` → neither, the brand sits in pale tiles or cards), a theme, a lead and fills. Pass the recipe's index (neighbours always differ in silhouette and theme; 18 in a row never repeat) or a string id. Every variant keeps the page neutral and one coloured region, and skips a lead the brand cannot take:
+
+```ts
+const variant = brandVariant(recipeIndex, contract)
+applyBrand(document, contract, brandVariantOptions(variant))
+// then render variant.silhouette: <BrandBand> for 'band', <AppShell rail={…}> for 'rail'
+```
+
 **What a brand never changes:** fonts and the type roles, radius, spacing, the components themselves, pill buttons, the faces and the grain. The brand is its colours — the 8–10 in the contract and what the kit derives from them — placed differently per app (looks, fills, lead, theme). That is the whole design: one product, the customer's colours.
 
 You choose **what** the colours are; the kit works out **how** to use them.

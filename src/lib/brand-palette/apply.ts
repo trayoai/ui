@@ -39,6 +39,8 @@ export interface ApplyBrandOptions extends ContractOptions {
   page?: 'default' | 'canvas' | 'inverse'
   /** The canvas tint strength; see `BrandPaletteInput.canvas`. */
   canvas?: BrandPaletteInput['canvas']
+  /** Whether a brand with no coloured shell gets a derived bar; see `BrandPaletteInput.emphasis`. */
+  emphasis?: BrandPaletteInput['emphasis']
 }
 
 const STYLE_ID = 'trayo-brand'
@@ -56,7 +58,7 @@ const STYLE_ID = 'trayo-brand'
 export function applyBrand(
   doc: BrandDocument,
   contract: BrandThemeContract | BrandPaletteInput,
-  { theme = 'auto', fills, lead, canvas, page, ...contractOptions }: ApplyBrandOptions = {}
+  { theme = 'auto', fills, lead, canvas, page, emphasis, ...contractOptions }: ApplyBrandOptions = {}
 ): ResolvedBrandPalette {
   // A raw BrandPaletteInput can carry every contract field too; mapping it
   // through the contract must not lose the fields only the raw shape has.
@@ -68,6 +70,7 @@ export function applyBrand(
     : { ...contract }
   if (canvas) input.canvas = canvas
   if (lead) input.lead = lead
+  if (emphasis) input.emphasis = emphasis
   const problems = checkBrandPalette(input)
   if (problems.length) {
     throw new Error(`applyBrand: invalid brand palette — ${problems.map((p) => p.message).join(' ')}`)

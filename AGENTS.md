@@ -145,7 +145,9 @@ the wrong place or not at all. Nothing errors at build time.
     inverse), the theme, `<AppShell rail>` and a `<BrandBand>` headline —
     once per app, never per screen. Keep it calm: leave `canvas` at its
     neutral default and give a screen one coloured region (bar or rail, or a
-    band), as shipped products do. For the brand on a surface use `bg-container
+    band), as shipped products do. Generating many apps? Take the choices
+    from `brandVariant(index, contract)` + `brandVariantOptions` instead of
+    picking them yourself. For the brand on a surface use `bg-container
     text-container-foreground`, never a hand-mixed tint. Never hand-set
     `--brand-*` or `--accent-*`, and never adjust a colour for contrast — the
     resolver does. Status colours, type, radius and the warm glow stay the
