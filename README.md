@@ -628,7 +628,7 @@ console.log(palette.theme, palette.adjustments)
 - `<AppShell rail={…}>` adds a left rail of `<AppShellNavLink>`s in the same shell colour as the top bar.
 - `<BrandBand>` is a headline band in the brand's own colour; text inside takes the brand's readable foreground.
 
-**Variety across a batch: `brandVariant`.** A generator building many apps (one per recipe) shouldn't pick looks by judgement — it tends to pick the same one. `brandVariant(seed, contract)` returns a calm variant from a fixed rotation: a silhouette (`band` → render a `<BrandBand>`; `rail` → `<AppShell rail>`; `quiet` → neither, the brand sits in pale tiles or cards), a theme, a lead and fills. Pass the recipe's index (neighbours always differ in silhouette and theme; 18 in a row never repeat) or a string id. Every variant keeps the page neutral and one coloured region, and skips a lead the brand cannot take:
+**Variety across a batch: `brandVariant`.** A generator building many apps (one per recipe) shouldn't pick looks by judgement — it tends to pick the same one. `brandVariant(seed, contract)` returns a calm variant from a fixed rotation: a silhouette (`band` → render a `<BrandBand>`; `rail` → `<AppShell rail>`; `quiet` → neither, the brand sits in pale tiles or cards), a theme, a lead and fills. Pass the recipe's index (neighbours always differ in silhouette and theme; 12 in a row never repeat) or a string id. Every variant keeps the page neutral and one coloured region, and is led only by a colour the brand owns — its primary, or its own second colour when it has one (never the derived tertiary):
 
 ```ts
 const variant = brandVariant(recipeIndex, contract)
