@@ -426,13 +426,13 @@ export function DataTable<T>({
                 <TableCell
                   key={c.id}
                   className={cn(
-                    // Compact rows: pin the row height (h-11) and use horizontal-
-                    // only padding so rows are a fixed 44px regardless of cell
-                    // content (avatars/controls) or the body line-height —
-                    // rather than the base TableCell's `p-2`, which let rows
-                    // float to ~50px. (Height is a min for table cells, so the
-                    // vertical padding must be dropped, not just capped.)
-                    'h-11 px-2.5 py-0 text-body-sm',
+                    // Compact rows: a 44px minimum (h-11) with `py-1.5`, so
+                    // content up to 32px (avatars, sm controls, one text line)
+                    // still gives a 44px row — the base TableCell's `p-2` let
+                    // those float to ~50px. Taller content (a two-line Company
+                    // with its 40px logo) grows the row and keeps 6px of air
+                    // above and below instead of touching the row borders.
+                    'h-11 px-2.5 py-1.5 text-body-sm',
                     colIndex === 0 ? 'text-text-primary' : 'text-text-muted',
                     alignClass(c.align),
                     c.className,

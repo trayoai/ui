@@ -89,7 +89,7 @@ function TableCell({ className, ...props }: React.ComponentProps<'td'>) {
       // `px-2 py-2` (not the shorthand `p-2`) so a consumer can override a
       // single axis cleanly — tailwind-merge keeps `p-2` alongside an incoming
       // `px-*`/`py-*` (different groups), leaving padding to fragile CSS source
-      // order. The DataTable relies on this to set `py-0`/`px-2.5`. Mirrors
+      // order. The DataTable relies on this to set `py-1.5`/`px-2.5`. Mirrors
       // TableHead, which already uses `px-2`. Visually identical to `p-2`.
       className={cn(
         'px-2 py-2 align-middle whitespace-nowrap [&>[role=checkbox]]:translate-y-[2px]',
