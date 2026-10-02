@@ -859,7 +859,7 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
               component='<DataTable pagination>'
               className='mb-8'
             >
-              <Surface padded={false} className='overflow-hidden p-1'>
+              <Surface padded={false} className='overflow-hidden'>
                 <DataTable
                   columns={ACCOUNT_COLUMNS}
                   rows={sortedAccounts}
@@ -885,7 +885,7 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
               component='<DataTable>'
               className='mb-8'
             >
-              <Surface padded={false} className='overflow-hidden p-1'>
+              <Surface padded={false} className='overflow-hidden'>
                 <DataTable
                   columns={PEOPLE_COLUMNS}
                   rows={PEOPLE}
@@ -924,7 +924,7 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                 note='Skeleton rows, never a false “empty”.'
                 component='<DataTable loading>'
               >
-                <Surface padded={false} className='flex-1 overflow-hidden p-1'>
+                <Surface padded={false} className='flex-1 overflow-hidden'>
                   <DataTable
                     columns={PEOPLE_COLUMNS.slice(0, 2)}
                     rows={[]}
