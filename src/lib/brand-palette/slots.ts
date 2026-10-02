@@ -276,7 +276,7 @@ export function brandSlotsAgentGuide(): string {
   }
   lines.push(
     '',
-    "Status colours (success, warning, danger), typography, radius and the warm glow stay Trayo's in every brand."
+    "Status colours (success, warning, danger), typography and radius stay Trayo's in every brand; the shell's warm glow stays only when the page keeps Trayo's surfaces."
   )
   return lines.join('\n')
 }

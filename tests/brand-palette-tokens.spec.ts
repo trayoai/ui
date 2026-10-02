@@ -325,6 +325,17 @@ describe('page colour and brand band', () => {
     expect(rules).toContain("html[data-page='inverse'] .app-shell-bg {")
     expect(rules).toContain("[data-page='inverse'] .app-shell-bg [data-slot='page-container']")
   })
+  it('a brand that owns the surfaces drops the warm glow, in both themes', () => {
+    const decor = stripComments(css.slice(css.indexOf('.app-shell-bg {'), css.indexOf('.brand-mesh {')))
+    // After `:is(.dark) .app-shell-bg` at equal specificity, so it holds in dark too.
+    const at = decor.indexOf('[data-brand-surfaces] .app-shell-bg')
+    expect(at).toBeGreaterThan(decor.indexOf(':is(.dark) .app-shell-bg'))
+    const rule = decor.slice(at, decor.indexOf('}', at))
+    expect(rule).toContain('.app-shell-bg[data-brand-surfaces]')
+    expect(rule).not.toMatch(/255, 201, 168|255, 161, 130/)
+    expect(rule).toContain('--shell-glow-cool-rgb')
+    expect(rule).toContain('var(--gradient-shell)')
+  })
   it('page rules change colour and the frame only — no type', () => {
     expect(rules).not.toMatch(/font-|letter-spacing|text-transform/)
   })

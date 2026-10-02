@@ -594,8 +594,9 @@ the kit supply the language. Two depths:
   text, buttons, links, focus rings, selection, the brand gradient, the charts
   and, when the brand has one, the top bar. Trayo contributes what makes it
   recognisably Trayo: the components, pill buttons, type roles, radius, grain,
-  motion and status colours. Dark mode keeps the kit's dark ladder tinted with
-  the brand's hue.
+  motion and status colours. The shell's warm corner glow is dropped, so the
+  page carries no Trayo colour. Dark mode keeps the kit's dark ladder tinted
+  with the brand's hue.
 - **Accent only** (`surfaces: 'trayo'`): the page, cards and text stay the
   kit's cream; only the accent, charts and chrome take the brand.
 

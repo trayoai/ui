@@ -150,8 +150,8 @@ the wrong place or not at all. Nothing errors at build time.
     picking them yourself. For the brand on a surface use `bg-container
     text-container-foreground`, never a hand-mixed tint. Never hand-set
     `--brand-*` or `--accent-*`, and never adjust a colour for contrast — the
-    resolver does. Status colours, type, radius and the warm glow stay the
-    kit's in every brand.
+    resolver does. Status colours, type and radius stay the kit's in every
+    brand; the shell's warm glow stays only with `{ surfaces: 'trayo' }`.
 
 The files are yours once copied, so editing them is allowed. Prefer extending a
 variant over forking a component, and keep the token vocabulary intact.

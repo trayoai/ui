@@ -859,8 +859,8 @@
 
    What a brand does NOT change (Trayo DNA): page and card surfaces, grain,
    text outside shell regions, status
-   colours, charts, radius, pill buttons, typography, the warm glow layers
-   and --gradient-cta. Without `data-brand` every token below keeps the
+   colours, charts, radius, pill buttons, typography and --gradient-cta. The
+   shell's warm glow stays too, except under data-brand-surfaces, which drops it. Without `data-brand` every token below keeps the
    Trayo value, byte for byte.
 
    Fallbacks: an agent that sets only --brand-primary still gets a working
@@ -967,7 +967,8 @@
    (contract background/surface/text/mutedText, resolved with the well, hover
    row, raised surface, text scale and borders derived). Every token that
    aliases one of these is restated — they resolve where they are declared.
-   Grain, shadows, radius, status colours and the warm glow stay Trayo's. */
+   The shell's warm glow is dropped (see `.app-shell-bg`); grain, shadows,
+   radius and status colours stay Trayo's. */
 [data-brand-surfaces],
 [data-brand-surfaces] .light,
 .light[data-brand-surfaces] {
@@ -1536,6 +1537,18 @@ html[data-page='inverse'] .app-shell-bg {
     radial-gradient(90% 70% at 0% 100%, rgb(var(--shell-glow-cool-rgb) / var(--shell-glow-cool-alpha)) 0%, rgb(var(--shell-glow-cool-rgb) / 0) 46%),
     var(--shell-grain),
     var(--gradient-shell);
+}
+/* A brand that owns the surfaces carries no Trayo colour: the warm glow is
+   dropped and only the cool one, in the brand's primary, stays. Accent-only
+   (`surfaces: 'trayo'`) keeps the kit's cream page and its glow. Placed after
+   the .dark rule, which it matches in specificity, so it holds in dark too. */
+[data-brand-surfaces] .app-shell-bg,
+.app-shell-bg[data-brand-surfaces] {
+  background-image:
+    radial-gradient(90% 70% at 0% 100%, rgb(var(--shell-glow-cool-rgb) / var(--shell-glow-cool-alpha)) 0%, rgb(var(--shell-glow-cool-rgb) / 0) 46%),
+    var(--shell-grain),
+    var(--gradient-shell);
+  background-repeat: no-repeat, repeat, no-repeat;
 }
 
 /* Brand mesh: a soft, slowly drifting "flow" gradient in the brand accents
