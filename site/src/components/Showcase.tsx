@@ -720,7 +720,7 @@ type Band = (typeof BANDS)[number]['value']
 /**
  * Customer palettes for the brand switcher, in the brand theme contract shape a
  * brand-research agent writes. The kit maps them onto its slots: page, cards
- * and text stay Trayo's; primary, accents and (Slack) the top bar change.
+ * and text take the brand's colours, as do primary, accents and the top bar.
  */
 const DEMO_BRANDS: Record<Exclude<DemoBrand, 'trayo'>, BrandThemeContract> = {
   paypal: {
@@ -759,10 +759,16 @@ function useDemoBrand(brand: DemoBrand, full: boolean) {
   useEffect(() => {
     if (brand === 'trayo') return
     const root = document.documentElement
-    const palette = resolveBrandPalette(
-      fromBrandThemeContract(DEMO_BRANDS[brand], { surfaces: full ? 'brand' : 'trayo' }).input
-    )
-    const attrs = brandAttributes(palette)
+    // A showcase, so the page takes the brand's hue ('vibrant'); the resolver's
+    // default keeps a white page white and dark mode the kit's slate, which
+    // leaves every brand on the same background.
+    const palette = resolveBrandPalette({
+      ...fromBrandThemeContract(DEMO_BRANDS[brand], { surfaces: full ? 'brand' : 'trayo' }).input,
+      canvas: 'vibrant'
+    })
+    // Full also paints the page in the brand's container tone (applyBrand's
+    // `page: 'canvas'`): the tinted dark page alone is near-black for every brand.
+    const attrs: Record<string, string> = { ...brandAttributes(palette), ...(full ? { 'data-page': 'canvas' } : {}) }
     const style = brandPaletteStyle(palette)
     for (const [k, v] of Object.entries(attrs)) root.setAttribute(k, v)
     for (const [k, v] of Object.entries(style)) root.style.setProperty(k, v)
