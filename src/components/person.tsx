@@ -415,8 +415,8 @@ export function PersonBanner({ person, actions, contacted, href, className }: Pe
         'relative isolate flex min-w-0 items-center gap-4 rounded-xl bg-accent-brand px-5 py-4 text-accent-brand-foreground',
         // Same 160deg direction as the card and strip gradients: the brand
         // fill at the top-left, where the name sits, deepening toward the
-        // bottom-right. It only ever darkens, so the foreground the resolver
-        // checked against the fill stays readable.
+        // bottom-right. Darkening keeps a light foreground readable; a brand
+        // whose foreground is dark loses some contrast toward that corner.
         'bg-[image:linear-gradient(160deg,var(--accent-brand),color-mix(in_oklab,var(--accent-brand)_74%,black))]',
         '[--text-primary:var(--accent-brand-foreground)]',
         '[--text-secondary:var(--accent-brand-foreground)]',

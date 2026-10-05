@@ -27,8 +27,8 @@ const ROW_STAGGER_MS = 80;
 
 /** A single shimmer placeholder row matching DataTable's body geometry (60px
  *  tall, 10px horizontal padding) so swapping in real data causes no reflow.
- *  Reuses each column's `className`/`align` and the shared Skeleton on the
- *  table's `surface-well` band; a column's `skeleton` hint picks a placeholder
+ *  Reuses each column's `className`/`align` and the shared Skeleton in the
+ *  `surface-well` tone; a column's `skeleton` hint picks a placeholder
  *  shaped like its cell. Decorative — marked aria-hidden. */
 export function DataTableSkeletonRow<T>({
   columns,

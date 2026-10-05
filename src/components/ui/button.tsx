@@ -54,7 +54,6 @@ const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-300 ease-in-out cursor-pointer active:scale-[0.97] active:duration-100 motion-reduce:active:scale-100 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
   {
     variants: {
-      /** Full enum: default | secondary | tertiary | quiet | destructive | destructive-outline | destructive-quiet. */
       variant: {
         // Primary action — the solid-accent pill. There is no rounded-md solid
         // primary in the design. A compact in-row CTA is just this variant at
@@ -84,9 +83,7 @@ const buttonVariants = cva(
         // removes, where a solid red `destructive` pill would out-shout the
         // row's real CTA. Same outline geometry as `tertiary`, tinted danger:
         // danger-hairline + danger label at rest, deepening to a danger wash on
-        // hover. Three surfaces had hand-written this exact class string
-        // (Signals delete, Lists row delete, audience-drawer remove) and one
-        // carried the comment "no Button variant matches" — this is it.
+        // hover.
         //
         // Use `destructive` (solid) for the confirming action in a dialog; use
         // this for the affordance that OPENS that confirmation.
@@ -94,17 +91,16 @@ const buttonVariants = cva(
           'rounded-full border border-destructive/30 bg-transparent font-normal text-destructive hover:border-destructive/55 hover:bg-destructive/10 hover:text-destructive',
         // Same danger hover as `destructive-outline`, but BARE at rest — just a
         // muted glyph, no ring, no fill. For destructive controls that are
-        // already conditionally revealed: the Lists row delete and the
-        // audience-drawer remove appear on row hover, and a red (or even
-        // outlined) control arriving with the row reads as an alarm on every
-        // pass of the mouse. The whole affordance only resolves once the
-        // pointer is on the control itself.
+        // already conditionally revealed: a delete or remove that appears on
+        // row hover, where a red (or even outlined) control arriving with the
+        // row reads as an alarm on every pass of the mouse. The whole
+        // affordance only resolves once the pointer is on the control itself.
         //
         // `border-transparent` rather than no border: the 1px is still reserved,
         // so the button does not resize when the hover ring appears.
         //
         // Pick by whether the control is always visible: `destructive-outline`
-        // when it is (Signals' labelled Delete), this when it is not.
+        // when it is (a labelled Delete), this when it is not.
         'destructive-quiet':
           'rounded-full border border-transparent bg-transparent font-normal text-text-muted hover:border-destructive/55 hover:bg-destructive/10 hover:text-destructive',
         // The neutral sibling of `destructive-quiet` — same shape and the same
@@ -213,7 +209,7 @@ type ButtonProps = React.ComponentProps<'button'> &
      * Which side the loading spinner sits on. Defaults to `start` (leading) —
      * the system's standard. Use `end` to trail the label (e.g. to match a
      * trailing-icon button). Multi-state buttons should pin a width so the
-     * spinner doesn't reflow the label (design rule #1).
+     * spinner doesn't reflow the label.
      */
     loadingIconPosition?: 'start' | 'end'
   }

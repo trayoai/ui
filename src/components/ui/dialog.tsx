@@ -101,11 +101,11 @@ function DialogContent({
       >
         {children}
         {showCloseButton && (
-          // Same control as the drawer header's close (DrawerShell) — a bare
-          // 28px `quiet` circle with a muted glyph that resolves on hover — so
-          // every dismissable surface reads the same. The `quiet` variant
-          // exists for exactly this chrome, so compose the Button rather than
-          // re-skinning the raw Radix close.
+          // The same close control as the toast's — a bare 28px `quiet` circle
+          // with a muted glyph that resolves on hover — so every dismissable
+          // surface reads the same. The `quiet` variant exists for exactly this
+          // chrome, so compose the Button rather than re-skinning the raw Radix
+          // close.
           <DialogPrimitive.Close data-slot='dialog-close' asChild>
             <Button
               variant='quiet'
@@ -134,12 +134,11 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
 }
 
 /**
- * Scrollable body region — the design-system base for dialog content (TRA base
- * dialog). Encapsulates the max-height + vertical scroll + inner spacing that
- * every feature dialog used to hand-roll as
- * `flex max-h-[60vh] flex-col gap-4 overflow-y-auto py-4`. Pair with a
- * `DialogContent` that caps total height (e.g. `max-h-[90vh] overflow-hidden`)
- * so a long body scrolls within the shell while the header/footer stay pinned.
+ * Scrollable body region for dialog content: the max-height, vertical scroll
+ * and inner spacing in one place, so dialogs do not each hand-roll them. Pair
+ * with a `DialogContent` that caps total height (e.g. `max-h-[90vh]
+ * overflow-hidden`) so a long body scrolls within the shell while the
+ * header/footer stay pinned.
  * Override the default cap via `className` (e.g. `max-h-[70vh]`).
  */
 function DialogBody({ className, ...props }: React.ComponentProps<'div'>) {

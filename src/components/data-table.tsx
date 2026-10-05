@@ -231,9 +231,6 @@ export function DataTable<T>({
             reserved space then sits harmlessly at the end. The flex `gap-1` owns
             the spacing (the pill carries no margin of its own). */}
         {countNode}
-        {/* A single chevron-down, hidden until hover,
-            full + brand when this column is the active sort, rotated 180° for
-            ascending. */}
         <ChevronDown
           aria-hidden
           className={cn(
@@ -294,7 +291,6 @@ export function DataTable<T>({
               // Non-sortable headers inherit these directly; the sortable
               // button inherits the type + sets its color.
               className={cn(
-                // 40px tall, 10px horizontal (px-2.5).
                 'h-10 bg-transparent px-2.5 text-xs font-medium text-text-secondary',
                 alignClass(c.align),
                 c.className,
@@ -314,11 +310,9 @@ export function DataTable<T>({
                     variant="count"
                     data-testid="data-table-count"
                     className={cn(
-                      // Rest fill is `surface-card` — a step LIGHTER than the
-                      // header's `surface-well` band — so the pill reads as a
-                      // subtle raised chip rather than blending into the header.
-                      // `rounded-md` squares it off from the variant's pill shape
-                      // to match the header cells / controls.
+                      // Neutral at rest: the card fill and secondary text
+                      // instead of the variant's accent, with the corners of
+                      // the header's controls.
                       'rounded-md border-transparent bg-surface-card text-text-secondary',
                       'group-hover:bg-accent-soft group-hover:text-accent-text',
                       'group-focus-visible:bg-accent-soft group-focus-visible:text-accent-text',
@@ -412,7 +406,7 @@ export function DataTable<T>({
                 // `.text-body-sm` role = the compact table density
                 // (system / 400 / 13px). Entity-name cells override with
                 // `.text-name-sm` (Figtree / 600 / 13px) to stay the focal
-                // element; the header keeps its 11px caption.
+                // element; the header is a 12px control label.
                 //
                 // Text tier: the first/leading column is the focal entity, so it
                 // reads at `text-text-primary`; every other column is
@@ -423,12 +417,13 @@ export function DataTable<T>({
                 <TableCell
                   key={c.id}
                   className={cn(
-                    // Compact rows: pin the row height (h-15) and use horizontal-
-                    // only padding so rows are a fixed 60px regardless of cell
-                    // content (avatars/controls) or the body line-height —
-                    // rather than the base TableCell's `p-2`, which let rows
-                    // float to ~50px. (Height is a min for table cells, so the
-                    // vertical padding must be dropped, not just capped.)
+                    // Fixed-height rows: pin the row height (h-15) and use
+                    // horizontal-only padding so every row is 60px regardless
+                    // of cell content (avatars/controls) or the body
+                    // line-height — the base TableCell's `p-2` would let rows
+                    // vary with their content. (Height is a min for table
+                    // cells, so the vertical padding must be dropped, not just
+                    // capped.)
                     'h-15 px-2.5 py-0 text-body-sm',
                     colIndex === 0 ? 'text-text-primary' : 'text-text-muted',
                     alignClass(c.align),

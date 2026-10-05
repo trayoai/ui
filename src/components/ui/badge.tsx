@@ -16,9 +16,10 @@ const badgeVariants = cva(
           'border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
         outline:
           'text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
-        // A compact result-count pill (e.g. next to a table's identity header):
-        // a soft accent fill with the readable accent text, tabular so digits don't jitter. `normal-case`/`tracking-normal` shrug
-        // off an uppercase/tracked header context.
+        // A compact result count (e.g. next to a table's identity header): a
+        // soft accent fill with the readable accent text, tabular so digits
+        // don't jitter. `normal-case`/`tracking-normal` keep it plain inside an
+        // uppercase or tracked parent.
         count:
           'min-w-5 border-transparent bg-accent-soft px-1.5 font-semibold tabular-nums normal-case tracking-normal text-accent-text',
         // The neutral tag — attributes, segments, industries: a hairline on

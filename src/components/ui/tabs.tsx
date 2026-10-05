@@ -31,7 +31,6 @@ function TabsList({
         // control-pill.ts) so the two navs read as one family in both themes;
         // only the geometry differs — tabs are a taller, squarer track.
         'bg-seg-track text-seg-text-idle inline-flex h-11 w-fit items-center justify-center rounded-lg border border-seg-track-line p-1',
-        // Override display and width when grid classes are present
         hasGrid && '!grid !w-full',
         className
       )}
