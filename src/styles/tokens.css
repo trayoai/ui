@@ -333,10 +333,11 @@
 
   /* Card edge — a 1px hairline ring at border strength plus a 1px contact
      shadow, so a panel reads as a sheet on the canvas; flips per theme.
-     The ring IS the card's border, so it reads the border token rather than
-     repeating its sand value: a branded palette recolours it with its other
-     hairlines. */
-  --shadow-card: 0 0 0 1px var(--border-subtle), 0 1px 2px rgba(60, 40, 20, 0.05);
+     The ring IS the card's border. It repeats the border token's sand value
+     here rather than reading it (a token that aliases another must be
+     restated by every scope that overrides the other); the
+     `[data-brand-surfaces]` blocks restate it from the brand's hairline. */
+  --shadow-card: 0 0 0 1px rgb(120 90 40 / 0.14), 0 1px 2px rgba(60, 40, 20, 0.05);
   /* Card hover lift — the hairline ring plus the layered "float" drop the
      trayo.ai research cards use on hover (their --shadow-float): five stacked
      warm-sand shadows, each twice the reach of the last, so the card lifts
@@ -349,7 +350,7 @@
     0 6.6px 8.3px -1.2px rgb(132 106 42 / 0.075),
     0 14.2px 17.8px -1.9px rgb(132 106 42 / 0.075),
     0 28px 35px -2.5px rgb(132 106 42 / 0.075);
-  --shadow-card-hover: 0 0 0 1px var(--border-strong), var(--shadow-card-float);
+  --shadow-card-hover: 0 0 0 1px rgb(120 90 40 / 0.24), var(--shadow-card-float);
   /* A sheet that is ALWAYS raised (the body of a card with a footer strip):
      the first two layers of the float only, a touch lighter, so it stands
      off its frame by a hairline of shade rather than a visible drop. */
@@ -388,7 +389,7 @@
      hairline ring in the border tone plus the first layers of the card float,
      a little stronger than a card's because the thumb is small and sits on a
      tinted track. */
-  --shadow-seg-active: 0 0 0 1px var(--border-subtle),
+  --shadow-seg-active: 0 0 0 1px rgb(120 90 40 / 0.14),
     0 1px 1.2px rgb(132 106 42 / 0.14),
     0 2.9px 3.6px -0.6px rgb(132 106 42 / 0.14),
     0 6.6px 8.3px -1.2px rgb(132 106 42 / 0.1);
@@ -1021,10 +1022,14 @@
 [data-brand-surfaces],
 [data-brand-surfaces] .light,
 .light[data-brand-surfaces] {
-  /* The card ring is a border, not a shadow: restated so it picks up the
-     brand's hairline here, even when this scope is not the root. */
+  /* The card and active-segment rings are borders, not shadows: restated
+     here from the brand's hairlines, since :root spells out Trayo's sand. */
   --shadow-card: 0 0 0 1px var(--border-subtle), 0 1px 2px rgba(60, 40, 20, 0.05);
   --shadow-card-hover: 0 0 0 1px var(--border-strong), var(--shadow-card-float);
+  --shadow-seg-active: 0 0 0 1px var(--border-subtle),
+    0 1px 1.2px rgb(132 106 42 / 0.14),
+    0 2.9px 3.6px -0.6px rgb(132 106 42 / 0.14),
+    0 6.6px 8.3px -1.2px rgb(132 106 42 / 0.1);
   --color-app-shell: var(--brand-background);
   --color-app-card: var(--brand-surface);
   --color-app-well: var(--brand-well);
@@ -1080,6 +1085,13 @@
 .dark[data-brand-surfaces],
 .dark [data-brand-surfaces],
 [data-brand-surfaces] .dark {
+  /* Restated with the .dark values: the light block above also matches a
+     dark branded root and would otherwise win with its light rings. */
+  --shadow-card: inset 0 0 0 1px rgba(255, 255, 255, 0.11), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-card-hover: inset 0 0 0 1px rgba(255, 255, 255, 0.10), var(--shadow-card-float);
+  --shadow-seg-active: inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 1px 1.2px rgb(0 0 0 / 0.3),
+    0 2.9px 3.6px -0.6px rgb(0 0 0 / 0.3);
   --color-app-shell: var(--brand-background-dark);
   --color-app-card: var(--brand-surface-dark);
   --color-app-well: var(--brand-well-dark);
