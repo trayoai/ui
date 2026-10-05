@@ -132,7 +132,7 @@ export const RULES = [
 export const INVENTORY = [
   { group: 'Entities', items: 'Person, PersonCard, PersonContactLinks, Company, CompanyCard, CompanyMeta, PersonAvatar, CompanyLogo, ToneAvatar' },
   { group: 'Tables', items: 'DataTable (sortable, selectable, paged via `pagination`, skeleton loading), Pagination + usePagination, and the raw Table primitives' },
-  { group: 'Page scaffolding', items: 'AppShell (with brand / nav / actions top bar), AppShellNavLink, PageContainer, PageHeader, Surface, Well, StatGrid' },
+  { group: 'Page scaffolding', items: 'AppShell (with brand / nav / actions top bar), AppShellNavLink, PageContainer, PageHeader, Surface (title / description / icon / actions for a framed panel), IconTile, Well, StatGrid' },
   { group: 'Decorative', items: 'BrandMesh, GradientText' },
   { group: 'States', items: 'EmptyState, StatTile, Callout, Skeleton, Progress' },
   { group: 'Type', items: 'PageTitle, SectionTitle, CardTitle, EntityName, Body, Meta, Eyebrow, SectionLabel, DataLabel' },

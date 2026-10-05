@@ -26,6 +26,37 @@
   animation: shimmer 3s ease-in-out infinite;
 }
 
+/* Skeleton placeholder (components/ui/skeleton.tsx): a soft highlight sweeps
+   across the block instead of the whole block blinking. The highlight always
+   LIGHTENS the bar: in light it is the card surface showing through (a darker
+   sweep read as a smudge on the pale bars), in dark a faint tint of the light
+   text colour. `--skeleton-delay` is read from the nearest ancestor that sets
+   it — DataTable's skeleton rows step it per row so the sweep cascades down
+   the table. */
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    var(--skeleton-shine, color-mix(in oklab, var(--surface-card) 80%, transparent)),
+    transparent
+  );
+  transform: translateX(-100%);
+  animation: shimmer 1.6s ease-in-out infinite;
+  animation-delay: var(--skeleton-delay, 0ms);
+}
+.dark .skeleton-shimmer {
+  --skeleton-shine: color-mix(in oklab, var(--text-primary) 9%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  /* No sweep; the component falls back to an opacity pulse. */
+  .skeleton-shimmer::after {
+    display: none;
+  }
+}
+
 @keyframes tooltip-fade-in {
   from {
     opacity: 0;
@@ -57,6 +88,158 @@
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Solid buttons (`default`, `destructive` in components/ui/button.tsx): the
+   depth that makes the pill read as pressable rather than as a coloured label.
+   - A sheen over the fill: lit from the top, a touch darker at the foot. It is
+     an overlay, so it works on any fill colour, including a custom brand.
+   - A shadow tinted with the fill (`--btn-tone`) instead of neutral grey, so
+     the button appears to cast its own colour onto the surface.
+   - Hover lifts it 1px and deepens the shadow; pressing sets it back down.
+   The shadows are written into Tailwind's `--tw-shadow` / `--tw-inset-shadow`
+   slots rather than straight into `box-shadow`, because the focus ring
+   (`focus-visible:ring-[3px]`) rebuilds `box-shadow` from those slots: set
+   this way, a focused button keeps its depth and gains the ring. In
+   `@layer components` so a caller's utility class can still override it. */
+@layer components {
+  .btn-solid {
+    --btn-tone: var(--accent-brand);
+    --tw-inset-shadow: inset 0 1px 0 rgb(255 255 255 / 0.26),
+      inset 0 -1px 0 rgb(0 0 0 / 0.1);
+    --tw-shadow: 0 1px 2px color-mix(in oklab, var(--btn-tone) 40%, transparent),
+      0 3px 8px -3px color-mix(in oklab, var(--btn-tone) 55%, transparent);
+    background-image: linear-gradient(
+      180deg,
+      rgb(255 255 255 / 0.16),
+      rgb(255 255 255 / 0) 55%,
+      rgb(0 0 0 / 0.07)
+    );
+    box-shadow: var(--tw-inset-shadow), var(--tw-shadow);
+    position: relative;
+  }
+  /* The hover lift moves the button 1px up, which would slide its bottom edge
+     out from under a pointer resting there and make it flicker between
+     states. This keeps that last pixel part of the button. */
+  .btn-solid::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 -2px;
+    border-radius: inherit;
+  }
+  .btn-solid-danger {
+    --btn-tone: var(--destructive);
+  }
+  /* Hover only where there is a real pointer: on touch it would stick. */
+  @media (hover: hover) {
+    .btn-solid:hover {
+      translate: 0 -1px;
+      --tw-shadow: 0 2px 4px color-mix(in oklab, var(--btn-tone) 32%, transparent),
+        0 8px 16px -6px color-mix(in oklab, var(--btn-tone) 60%, transparent);
+    }
+  }
+  .btn-solid:active {
+    translate: 0 0;
+    --tw-shadow: 0 1px 1px color-mix(in oklab, var(--btn-tone) 40%, transparent);
+  }
+  /* A disabled button casts no glow: at half opacity the tinted shadow made
+     it look faded but still live. */
+  .btn-solid:disabled {
+    --tw-shadow: 0 0 rgb(0 0 0 / 0);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .btn-solid:hover,
+    .btn-solid:active {
+      translate: none;
+    }
+  }
+}
+
+/* The well strip beside a sheet (the footer of <PersonCard> / <CompanyCard>,
+   the header of a titled <Surface>): the counterpart of the sheet's `--gradient-card`, in the
+   same 160deg direction. The well colour is the DARK end, bottom-right; the
+   top-left is a lighter version of it, mixed halfway toward the card surface.
+   Mixed at the element from the surface tokens, so it flips with the theme
+   and follows a custom brand's surfaces. */
+@layer components {
+  .well-gradient {
+    background-image: linear-gradient(
+      160deg,
+      color-mix(in oklab, var(--surface-well) 45%, var(--surface-card)) 0%,
+      var(--surface-well) 100%
+    );
+  }
+}
+
+/* Noise texture: the trayo.ai website's grain (its `noise.svg` — greyscale
+   fractal noise, contrast-stretched), applied the way the site applies it: at
+   70% opacity, soft-light blended into whatever is underneath, so it lightens
+   and darkens the surface slightly instead of sitting on it as grey speckle.
+   Use it on an absolutely positioned, aria-hidden layer inside an `isolate`
+   parent, behind the content. */
+@layer components {
+  .noise-grain {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'><feTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='4' seed='15' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/><feComponentTransfer><feFuncR type='linear' slope='1.6' intercept='-0.3'/><feFuncG type='linear' slope='1.6' intercept='-0.3'/><feFuncB type='linear' slope='1.6' intercept='-0.3'/></feComponentTransfer></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+    background-repeat: repeat;
+    opacity: 0.7;
+    mix-blend-mode: soft-light;
+  }
+}
+
+/* Diagonal hatch fill: stripes in the element's text colour over a faint
+   tint of the same colour, so one class works for any tone — set the tone
+   with a `text-*` class (`text-primary`, `text-destructive`, …). Used by
+   <Progress target> : hatched means "not the settled number" (the plan, or
+   the part past it), solid means it is. Add `hatch-soft` for the quieter
+   version used for the plan. (Not named `bg-…`: tailwind-merge would treat
+   it as a rival background and drop `bg-hatch`.) */
+@layer components {
+  .bg-hatch {
+    --hatch-ink: currentColor;
+    background-color: color-mix(in oklab, currentColor 16%, transparent);
+    background-image: repeating-linear-gradient(
+      120deg,
+      var(--hatch-ink) 0 1.5px,
+      transparent 2px 4px,
+      var(--hatch-ink) 4.5px
+    );
+  }
+  .hatch-soft {
+    --hatch-ink: color-mix(in oklab, currentColor 50%, transparent);
+    background-color: color-mix(in oklab, currentColor 10%, transparent);
+  }
+}
+
+/* Dot grid: the trayo.ai homepage backdrop, for the EMPTY parts of a screen —
+   an empty state, a hero, an idle panel. Never behind a table or body text.
+   Same construction as the website's `bg-diamonds`: four corner triangles per
+   10px tile meet to form one 3px diamond, which reads as a dot.
+   It is never shown flat. The mask is part of the class: faint in the middle,
+   where the content sits, strongest in a ring around it, and gone by the
+   edge, so the grid never runs into a border.
+     --dot         colour (defaults to the strong hairline tone, per theme)
+     --dot-size    reach of each dot: 7.5% = 3px across (default), 5% = 2px
+     --dots-at     where the pattern is centred (default: center)
+     --dots-reach  how far it extends: closest-side (default) | farthest-side
+   Use it on an absolutely positioned, aria-hidden layer behind the content. */
+@layer components {
+  .bg-dot-grid {
+    --c: var(--dot, var(--border-strong));
+    --d: var(--dot-size, 7.5%);
+    background-image:
+      linear-gradient(45deg, var(--c) var(--d), transparent calc(var(--d) + 3%)),
+      linear-gradient(135deg, var(--c) var(--d), transparent calc(var(--d) + 3%)),
+      linear-gradient(225deg, var(--c) var(--d), transparent calc(var(--d) + 3%)),
+      linear-gradient(315deg, var(--c) var(--d), transparent calc(var(--d) + 3%));
+    background-size: 10px 10px;
+    background-position: center;
+    mask-image: radial-gradient(
+      ellipse var(--dots-reach, closest-side) at var(--dots-at, center),
+      rgb(0 0 0 / 0.3) 20%,
+      black 55%,
+      transparent
+    );
+  }
 }
 
 /* Staggered card entry: put `.ec-enter` on a card and its direct children fade
@@ -196,6 +379,30 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .animate-bulk-bar-in {
+    animation: none;
+  }
+}
+
+/* Chart bar entrance: an SVG <rect> (or any block) grows up from its
+   baseline. `transform-box: fill-box` makes the origin the bar's own bottom
+   edge rather than the SVG's. Stagger bars with an inline `animation-delay`;
+   `both` holds each one flat until its delay elapses. To wait for the chart
+   to scroll into view, set `animation-play-state: paused` until it does. */
+@keyframes bar-grow {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+.animate-bar-grow {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: bar-grow 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-bar-grow {
     animation: none;
   }
 }

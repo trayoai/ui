@@ -161,27 +161,138 @@ export function PageContainer({
 }
 
 /**
- * The elevated card surface: the white→cream gradient plus the 1px hairline
- * ring that every Trayo panel stands on. `interactive` adds the hover lift.
+ * A glyph on a small bordered tile — the mark at the head of a panel, a list
+ * row or an empty state. The tile is neutral; the icon inherits its colour.
+ */
+export function IconTile({ className, ...props }: React.ComponentProps<'span'>) {
+  return (
+    <span
+      data-slot='icon-tile'
+      className={cn(
+        'flex size-9 shrink-0 items-center justify-center rounded-md border border-border-subtle bg-surface-card text-text-secondary shadow-xs [&_svg]:size-4',
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+/**
+ * The elevated card surface: the card fill, a 1px hairline and a contact
+ * shadow — the sheet every Trayo panel stands on. `interactive` adds the
+ * hover lift.
+ *
+ * Give it a `title` (and optionally `description`, `icon`, `actions`) and it
+ * becomes a framed panel: a header strip on the well, with the content on its
+ * own sheet below. That is the default shape for a chart, a table or a list
+ * with a name and a control beside it. `framed={false}` keeps the header
+ * inside the one sheet instead, for a summary card.
+ *
+ *   <Surface title="Signals per week" actions={<SegmentedControl … />}>
+ *     <Chart />
+ *   </Surface>
  */
 export function Surface({
   className,
   interactive = false,
   padded = true,
+  title,
+  description,
+  icon,
+  actions,
+  framed = true,
+  children,
   ...props
-}: React.ComponentProps<'div'> & { interactive?: boolean; padded?: boolean }) {
+}: Omit<React.ComponentProps<'div'>, 'title'> & {
+  interactive?: boolean
+  padded?: boolean
+  /** Names the panel; turns the surface into a framed panel with a header. */
+  title?: React.ReactNode
+  /** A second line under the title — a count, a period, a scope. */
+  description?: React.ReactNode
+  /** A glyph for the header, set on an `IconTile`. */
+  icon?: React.ReactNode
+  /** Right side of the header: a filter, a period switch, one button. */
+  actions?: React.ReactNode
+  /** With a `title`: header strip outside the sheet (default) or inside it. */
+  framed?: boolean
+}) {
+  const sheet = cn(
+    'rounded-xl bg-[image:var(--gradient-card)] shadow-[var(--shadow-card)]',
+    interactive &&
+      'cursor-pointer transition-all hover:bg-[image:var(--gradient-card-hover)] hover:shadow-[var(--shadow-card-hover)]'
+  )
+
+  if (title == null && actions == null) {
+    return (
+      <div data-slot='surface' className={cn(sheet, padded && 'p-4', className)} {...props}>
+        {children}
+      </div>
+    )
+  }
+
+  const header = (
+    <div
+      data-slot='surface-header'
+      className={cn(
+        'flex min-h-12 items-center gap-3 px-4 py-2',
+        // Framed: the header strip carries the same light-to-well gradient as
+        // a card's footer strip (`well-gradient`). It runs 12px under the
+        // sheet (-mb-3, with padding and min-height to match) so the gradient,
+        // not the frame's flat well, shows beside the sheet's rounded top
+        // corners.
+        // `relative isolate` holds the noise layer's -z-10 inside the strip.
+        framed && 'well-gradient relative isolate -mb-3 min-h-15 rounded-t-xl pb-5'
+      )}
+    >
+      {/* Framed: the website's noise texture over the strip's gradient. */}
+      {framed && (
+        <span
+          aria-hidden
+          className='noise-grain pointer-events-none absolute inset-0 -z-10 rounded-t-xl'
+        />
+      )}
+      {icon != null && <IconTile>{icon}</IconTile>}
+      <div className='flex min-w-0 flex-1 flex-col'>
+        {title != null && <span className='truncate text-card-title text-text-primary'>{title}</span>}
+        {description != null && <span className='truncate text-meta'>{description}</span>}
+      </div>
+      {actions != null && <div className='flex shrink-0 items-center gap-2'>{actions}</div>}
+    </div>
+  )
+
+  if (!framed) {
+    return (
+      <div data-slot='surface' className={cn(sheet, 'flex flex-col', className)} {...props}>
+        {header}
+        <div className={cn('flex-1', padded && 'px-4 pb-4')}>{children}</div>
+      </div>
+    )
+  }
+
   return (
     <div
-      data-slot='surface'
-      className={cn(
-        'rounded-[var(--radius)] bg-[image:var(--gradient-card)] shadow-[var(--shadow-card)]',
-        padded && 'p-4',
-        interactive &&
-          'cursor-pointer transition-all hover:bg-[image:var(--gradient-card-hover)] hover:shadow-[var(--shadow-card-hover)]',
-        className
-      )}
+      data-slot='surface-frame'
+      className={cn('flex flex-col rounded-xl border border-border-subtle bg-surface-well', className)}
       {...props}
-    />
+    >
+      {header}
+      {/* Same idea as the cards' footer strip, upside down: the sheet keeps
+          its hairline ring (`--shadow-card`), which lands on the frame's
+          border and draws the line under the header strip, and is raised by a
+          short shadow cast upward onto that strip. */}
+      <div
+        data-slot='surface'
+        className={cn(
+          sheet,
+          // `relative` so the sheet paints over the header tucked beneath it.
+          'relative flex-1 overflow-hidden shadow-[var(--shadow-card),var(--shadow-card-raised-up)]',
+          padded && 'p-4'
+        )}
+      >
+        {children}
+      </div>
+    </div>
   )
 }
 
@@ -269,7 +380,10 @@ export function PageHeader({
   )
 }
 
-/** Nothing-here state. Give it an icon, a line of copy, and one action. */
+/**
+ * Nothing-here state. Give it an icon, a line of copy, and one action.
+ * A faded dot grid (`bg-dot-grid`) fills the blank space around the message.
+ */
 export function EmptyState({
   icon,
   title,
@@ -287,15 +401,19 @@ export function EmptyState({
     <div
       data-slot='empty-state'
       className={cn(
-        'flex flex-col items-center justify-center gap-3 rounded-[var(--radius)] border border-dashed border-border-subtle px-6 py-14 text-center',
+        // `isolate` so the dot layer's -z-10 stays inside this box.
+        'relative isolate flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border-subtle px-6 py-14 text-center',
         className
       )}
       {...props}
     >
+      <span aria-hidden className='bg-dot-grid pointer-events-none absolute inset-0 -z-10' />
       {icon && (
-        <span className='flex size-10 items-center justify-center rounded-full bg-accent-soft text-accent-text [&_svg]:size-5'>
+        // Dashed, like the state's own outline: the tile reads as a placeholder
+        // for what is missing rather than as a button.
+        <IconTile className='size-10 border-dashed border-border-strong text-accent-text shadow-none [&_svg]:size-5'>
           {icon}
-        </span>
+        </IconTile>
       )}
       <span className='text-card-title text-text-primary'>{title}</span>
       {description && (
@@ -334,7 +452,7 @@ export function StatTile({
     <div
       data-slot='stat-tile'
       className={cn(
-        'flex flex-col gap-1 rounded-[var(--radius)] bg-[image:var(--gradient-card)] p-4 shadow-[var(--shadow-card)]',
+        'flex flex-col gap-1 rounded-xl bg-[image:var(--gradient-card)] p-4 shadow-[var(--shadow-card)]',
         className
       )}
       {...props}

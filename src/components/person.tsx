@@ -179,7 +179,7 @@ export function Person({
         {subtitle && (
           <span className='text-meta flex min-w-0 items-center gap-1.5 truncate'>
             {person.company && person.companyDomain && (
-              <CompanyLogo name={person.company} domain={person.companyDomain} size='xs' />
+              <CompanyLogo name={person.company} domain={person.companyDomain} size='2xs' />
             )}
             <span className='truncate'>{subtitle}</span>
           </span>
@@ -262,15 +262,15 @@ export function PersonCard({
   href,
   className,
 }: PersonCardProps) {
-  return (
-    <div
-      data-slot='person-card'
-      className={cn(
-        'flex flex-col gap-3 rounded-[var(--radius)] bg-[image:var(--gradient-card)] p-4',
-        'shadow-[var(--shadow-card)] transition-all hover:shadow-[var(--shadow-card-hover)]',
-        className
-      )}
-    >
+  // With a footer the card is built like a titled <Surface>, upside down: the
+  // body is a sheet standing on a `surface-well` frame, and the footer is the
+  // strip of well left showing beneath it. Without one it is a plain sheet.
+  const hasFooter = showContact || !!footer
+  const sheet =
+    'flex flex-col gap-3 rounded-xl bg-[image:var(--gradient-card)] p-4 shadow-[var(--shadow-card)]'
+
+  const body = (
+    <>
       <div className='flex items-start gap-3'>
         <PersonAvatar
           name={person.name}
@@ -288,15 +288,25 @@ export function PersonCard({
             <span className='text-card-title truncate text-text-primary'>{person.name}</span>
           )}
           {person.title && <span className='text-body-sm truncate text-text-secondary'>{person.title}</span>}
-          {person.company && (
-            <span className='mt-1 inline-flex min-w-0 items-center gap-1.5'>
-              <CompanyLogo name={person.company} domain={person.companyDomain} size='sm' />
-              <span className='text-body-sm truncate text-text-secondary'>{person.company}</span>
-            </span>
-          )}
-          {person.location && (
-            <span className='text-meta mt-0.5 inline-flex items-center gap-1'>
-              <MapPin className='size-3 shrink-0' /> {person.location}
+          {/* Company and location share one line; the location is the part
+              that gives way (truncates) when the card is narrow. */}
+          {(person.company || person.location) && (
+            <span className='mt-1 flex min-w-0 items-center gap-2'>
+              {person.company && (
+                <span className='inline-flex min-w-0 shrink-0 items-center gap-1.5'>
+                  <CompanyLogo name={person.company} domain={person.companyDomain} size='sm' />
+                  <span className='text-body-sm truncate text-text-secondary'>{person.company}</span>
+                </span>
+              )}
+              {person.company && person.location && (
+                <span aria-hidden className='text-text-muted'>·</span>
+              )}
+              {person.location && (
+                <span className='text-meta inline-flex min-w-0 items-center gap-1'>
+                  <MapPin className='size-3 shrink-0' />
+                  <span className='truncate'>{person.location}</span>
+                </span>
+              )}
             </span>
           )}
         </div>
@@ -315,12 +325,50 @@ export function PersonCard({
         </div>
       )}
 
-      {(showContact || footer) && (
-        <div className='mt-auto flex items-center justify-between gap-3 border-t border-border-subtle pt-3'>
-          {showContact ? <PersonContactLinks person={person} /> : <span />}
-          {footer}
-        </div>
+    </>
+  )
+
+  if (!hasFooter) {
+    return (
+      <div
+        data-slot='person-card'
+        className={cn(sheet, 'transition-all hover:shadow-[var(--shadow-card-hover)]', className)}
+      >
+        {body}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      data-slot='person-card'
+      className={cn(
+        'flex flex-col rounded-xl border border-border-subtle bg-surface-well',
+        className
       )}
+    >
+      {/* The sheet keeps its hairline ring (`--shadow-card`), which lands on
+          the frame's border at the sides and draws the line against the
+          footer strip, and is permanently raised by a short drop
+          (`--shadow-card-raised`) that falls across that strip. Nothing
+          changes on hover. */}
+      <div
+        className={cn(
+          sheet,
+          'relative flex-1 shadow-[var(--shadow-card),var(--shadow-card-raised)]'
+        )}
+      >
+        {body}
+      </div>
+      {/* The strip's gradient starts lighter than the frame behind it, so the
+          strip is pulled up 12px under the sheet (-mt-3, with the padding to
+          match): otherwise the frame's flat well would show as two darker
+          notches beside the sheet's rounded bottom corners. The sheet is
+          `relative` so it paints over the part tucked beneath it. */}
+      <div className='well-gradient -mt-3 flex items-center justify-between gap-3 rounded-b-xl px-4 pt-5.5 pb-2.5'>
+        {showContact ? <PersonContactLinks person={person} /> : <span />}
+        {footer}
+      </div>
     </div>
   )
 }

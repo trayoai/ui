@@ -54,6 +54,7 @@ export {
   BrandMesh,
   EmptyState,
   GradientText,
+  IconTile,
   PageContainer,
   PageHeader,
   StatGrid,

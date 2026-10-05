@@ -166,7 +166,8 @@ const columns: Column<AccountRow>[] = [
   {
     id: 'account',
     header: 'Account',
-    accessor: (r) => <Company company={r.company} showWebsite />,
+    // size="md" in a table: the default 40px tile crowds the 60px row.
+    accessor: (r) => <Company company={r.company} size="md" showWebsite />,
     className: 'min-w-[260px]',
     sortable: true,
   },
@@ -253,12 +254,14 @@ same props.
 | `align` | `left` (default), `center`, `right` |
 | `width` / `className` | Sizing and responsive hiding, e.g. `w-40`, `hidden lg:table-cell`. Applied to the header **and** every body cell so they can't drift |
 | `sortable` | Turns the header into a sort toggle keyed on `id` |
+| `skeleton` | Placeholder shape while `loading`: `person`, `company`, `badge`, or the default text bar |
 
 ### Behaviour worth knowing
 
 - **`loading`** renders skeleton rows instead of `rows`, so a list never flashes
   a false "nothing found" while a query is in flight. The `empty` fallback only
-  shows when `!loading && rows.length === 0`.
+  shows when `!loading && rows.length === 0`. Set a column's `skeleton` so the
+  placeholder matches its cell (`person` for a `<Person>` column, and so on).
 - **`selection`** is fully controlled — you hold the selected-key set, so it can
   span pages. Omit it entirely and no checkbox column renders.
 - **`onToggleAllPage(selected, pageKeys)`** selects the *current page*, not the
@@ -336,13 +339,13 @@ works too, but `domain` alone is the common and better case.
 <ToneAvatar name="Ada Lovelace" tone="violet" />   // non-person identities: teams, workspaces, bots
 ```
 
-Sizes: `xs sm md lg xl 2xl`.
+Sizes: `2xs xs sm md lg xl 2xl`.
 
 ## Everything else
 
 | What | Components |
 |---|---|
-| Page scaffolding | `AppShell` `AppShellNavLink` `PageContainer` `PageHeader` `Surface` `Well` `StatGrid` |
+| Page scaffolding | `AppShell` `AppShellNavLink` `PageContainer` `PageHeader` `Surface` `IconTile` `Well` `StatGrid` |
 | Decorative | `BrandMesh` (drifting brand gradient) `GradientText` |
 | States | `EmptyState` `StatTile` `Callout` `Skeleton` `Progress` |
 | Type | `PageTitle` `SectionTitle` `CardTitle` `EntityName` `Body` `Meta` `Eyebrow` `SectionLabel` `Code` `DataLabel` |
@@ -362,6 +365,19 @@ take the soft accent when `active`; use `asChild` to wrap your router's link.
 A filter group is a `SegmentedControl`; a row of `StatTile`s goes in a
 `StatGrid`, which is two columns on a phone and lets an odd last tile span both
 so nothing dangles.
+
+A panel with a name is a `Surface` with a `title`: the header strip (title,
+optional `description`, `icon` and right-aligned `actions`) sits on the well
+and the content on its own sheet below. Use it for a table, a chart or a list;
+pass `padded={false}` when the content brings its own edges, as a `DataTable`
+does. `framed={false}` keeps the header inside the one sheet.
+
+```tsx
+<Surface title="Accounts" description="62 accounts" padded={false}
+         actions={<Button variant="secondary" size="sm">Export</Button>}>
+  <DataTable … />
+</Surface>
+```
 
 ```tsx
 <AppShell

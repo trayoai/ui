@@ -33,7 +33,7 @@ export function TagChip({
       // without its color; the chip's own neutral surface tone takes over.
       variant='outline'
       className={cn(
-        'rounded-full border-border-subtle bg-surface-well pl-2.5 font-medium text-text-secondary',
+        'border-border-subtle bg-surface-card pl-2 font-medium text-text-secondary',
         onRemove && 'pr-1',
         className,
       )}
