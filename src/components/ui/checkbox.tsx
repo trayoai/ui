@@ -20,8 +20,8 @@ function Checkbox({
         data-slot='checkbox-indicator'
         className='absolute inset-0 flex items-center justify-center text-current transition-none'
       >
-        {/* Partial selection (some of the account's people picked): filled box
-            with a horizontal line instead of the checkmark. */}
+        {/* Partial selection: filled box with a horizontal line instead of the
+            checkmark. */}
         {props.checked === 'indeterminate' ? <Minus size={12} /> : <CheckIcon size={14} />}
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>

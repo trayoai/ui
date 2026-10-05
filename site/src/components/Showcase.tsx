@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type RefObject } from 'react'
 import {
   AlertTriangle,
   ArrowRight,
   Building2,
   Check,
   CheckCircle2,
+  Mail,
   Moon,
   Plus,
   Search,
@@ -38,7 +39,9 @@ import {
   PageTitle,
   Person,
   PersonAvatar,
+  PersonBanner,
   PersonCard,
+  Progress,
   SectionTitle,
   SegmentedControl,
   Select,
@@ -195,6 +198,7 @@ const PEOPLE_COLUMNS: Column<PersonLike>[] = [
     accessor: (p) => <Person person={p} size='md' />,
     className: 'min-w-[260px]',
     sortable: true,
+    skeleton: 'person',
   },
   {
     id: 'company',
@@ -207,6 +211,7 @@ const PEOPLE_COLUMNS: Column<PersonLike>[] = [
         />
       ) : null,
     className: 'w-56',
+    skeleton: 'company',
   },
   {
     id: 'location',
@@ -226,6 +231,7 @@ const PEOPLE_COLUMNS: Column<PersonLike>[] = [
         <Badge variant='soft'>Needs enrichment</Badge>
       ),
     className: 'w-40',
+    skeleton: 'badge',
   },
   {
     id: 'action',
@@ -298,7 +304,9 @@ const STAGE_VARIANT = {
 function ScoreCell({ value }: { value: number }) {
   return (
     <span className='flex items-center gap-2'>
-      <span className='h-1.5 w-12 shrink-0 overflow-hidden rounded-full bg-surface-well'>
+      {/* The track is a translucent tint of the fill, not `surface-well`: a
+          hovered row IS surface-well, and a well-coloured track vanished into it. */}
+      <span className='h-1.5 w-12 shrink-0 overflow-hidden rounded-full bg-accent-brand/20'>
         <span className='block h-full rounded-full bg-accent-brand' style={{ width: `${value}%` }} />
       </span>
       <span className='text-body-sm tabular-nums text-text-secondary'>{value}</span>
@@ -310,7 +318,9 @@ const ACCOUNT_COLUMNS: Column<AccountRow>[] = [
   {
     id: 'account',
     header: 'Account',
-    accessor: (r) => <Company company={r.company} showWebsite />,
+    // size='md' (32px), not the row default of 40px: the larger tile crowds
+    // a 60px table row and the logos read as a solid strip.
+    accessor: (r) => <Company company={r.company} size='md' showWebsite />,
     className: 'min-w-[260px]',
     sortable: true,
   },
@@ -416,52 +426,34 @@ function DemoHeader({ compact }: { compact?: boolean }) {
 }
 
 /**
- * Light/dark toggle for the demo: a sun and a moon either side of the switch,
- * so both ends are named and the current one is lit. The icons are shortcuts
- * straight to their theme; the switch stays the single keyboard stop.
+ * Light/dark toggle for the demo: one round icon button showing the theme it
+ * switches TO — a moon in light, a sun in dark.
  */
-function ThemeSwitch({
+function ThemeToggle({
   dark,
   onChange,
 }: {
   dark: boolean
   onChange: (dark: boolean) => void
 }) {
-  const icon = (active: boolean) =>
-    cn(
-      'grid size-6 cursor-pointer place-items-center rounded-full transition-colors [&>svg]:size-4',
-      active ? 'text-accent-text' : 'text-text-muted hover:text-text-secondary'
-    )
   return (
-    <div className='flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface-card px-1.5 py-1'>
-      <button
-        type='button'
-        tabIndex={-1}
-        aria-label='Light theme'
-        className={icon(!dark)}
-        onClick={() => onChange(false)}
-      >
-        <Sun />
-      </button>
-      <Switch
-        checked={dark}
-        onCheckedChange={onChange}
-        aria-label='Dark theme'
-        // The library's off-state track is --input (the 14% hairline), which
-        // all but vanishes on a card; the strong border tone and a lifted
-        // thumb keep the control visible before it has ever been pressed.
-        className='data-[state=unchecked]:bg-border-strong dark:data-[state=unchecked]:bg-border-strong [&>span]:shadow-sm'
-      />
-      <button
-        type='button'
-        tabIndex={-1}
-        aria-label='Dark theme'
-        className={icon(dark)}
-        onClick={() => onChange(true)}
-      >
-        <Moon />
-      </button>
-    </div>
+    <Button
+      variant='tertiary'
+      size='icon-sm'
+      aria-label='Dark theme'
+      aria-pressed={dark}
+      title={dark ? 'Switch to light theme' : 'Switch to dark theme'}
+      // Hovering grows the button a touch while the icon turns a quarter and
+      // swells; pressing squeezes the button and spins it half a turn.
+      className={cn(
+        'bg-surface-card hover:scale-[1.08] active:scale-90 active:rotate-180 active:duration-200',
+        '[&_svg]:transition-transform [&_svg]:duration-350 [&_svg]:ease-out hover:[&_svg]:scale-115 hover:[&_svg]:rotate-90',
+        'motion-reduce:hover:scale-100 motion-reduce:active:scale-100 motion-reduce:active:rotate-0 motion-reduce:hover:[&_svg]:scale-100 motion-reduce:hover:[&_svg]:rotate-0'
+      )}
+      onClick={() => onChange(!dark)}
+    >
+      {dark ? <Sun /> : <Moon />}
+    </Button>
   )
 }
 
@@ -483,7 +475,7 @@ function SpecimenLabel({
   return (
     <div className={cn('mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-0.5', className)}>
       <span className='flex items-center gap-2 self-center'>
-        <span aria-hidden className='size-1.5 rounded-full bg-accent-brand' />
+        <span aria-hidden className='size-1.5 rounded-full bg-text-muted' />
         <Eyebrow className='font-medium text-text-primary'>{name}</Eyebrow>
       </span>
       {children && <Meta className='text-text-secondary'>{children}</Meta>}
@@ -523,7 +515,9 @@ function Specimen({
     >
       {/* The dashed outline is an SVG rect, not a CSS border, for the same
           reason as the site's Install block: CSS can't set the dash length.
-          This matches its 2px-dash / 8px-gap rhythm, in a themed stroke. */}
+          This matches its 2px-dash / 8px-gap rhythm, in the hairline border
+          tone so the frame groups the caption with its specimen without
+          competing with the component inside. */}
       <svg
         aria-hidden
         className='pointer-events-none absolute inset-0 size-full overflow-visible'
@@ -535,7 +529,7 @@ function Specimen({
           height='calc(100% - 1px)'
           rx='17.5'
           fill='none'
-          stroke='var(--text-muted)'
+          stroke='var(--border-strong)'
           strokeDasharray='2 8'
         />
       </svg>
@@ -592,6 +586,90 @@ function useMeasuredWidth<T extends HTMLElement>(fallback: number) {
   return [ref, width] as const
 }
 
+/* Plan-against-actual rows. Placeholder figures, in outreach credits. */
+const PLAN_ROWS = [
+  { id: 'enrich', label: 'Enrichment', detail: '640 contacts planned, 1,060 enriched', plan: 640, actual: 1060 },
+  { id: 'research', label: 'Account research', detail: 'Briefs for tier-one accounts', plan: 720, actual: 900 },
+  { id: 'signals', label: 'Signal monitoring', detail: 'Hiring and funding events', plan: 400, actual: 400 },
+  { id: 'outreach', label: 'Outreach drafts', detail: 'First-touch emails', plan: 300, actual: 210 },
+] as const
+const PLAN_MAX = Math.max(...PLAN_ROWS.map((r) => Math.max(r.plan, r.actual)))
+
+/**
+ * Plan against actual, one `<Progress target>` per row on a shared scale:
+ * the hatched bar is the plan, the solid one what happened, and the red
+ * hatch is the part that ran past the plan.
+ */
+function PlanVsActual() {
+  const fmt = (n: number) => n.toLocaleString('en-US')
+  return (
+    <div className='flex flex-col gap-3'>
+      <div className='flex flex-wrap items-center gap-x-5 gap-y-1'>
+        {[
+          { label: 'Plan', swatch: 'bg-hatch hatch-soft text-primary' },
+          { label: 'Actual', swatch: 'bg-primary' },
+          { label: 'Over plan', swatch: 'bg-hatch text-destructive' },
+        ].map((k) => (
+          <span key={k.label} className='inline-flex items-center gap-2'>
+            <span aria-hidden className={cn('h-1.5 w-5 rounded-full', k.swatch)} />
+            <span className='text-meta text-text-secondary'>{k.label}</span>
+          </span>
+        ))}
+      </div>
+      <div className='flex flex-col'>
+        {PLAN_ROWS.map((r) => {
+          const delta = r.actual - r.plan
+          return (
+            <div
+              key={r.id}
+              className='grid grid-cols-[minmax(0,11rem)_minmax(0,1fr)_auto] items-center gap-x-5 border-b border-border-subtle py-3 last:border-b-0'
+            >
+              <div className='flex min-w-0 flex-col'>
+                <span className='text-name truncate text-text-primary'>{r.label}</span>
+                <span className='text-meta truncate'>{r.detail}</span>
+              </div>
+              <Progress aria-label={r.label} value={r.actual} target={r.plan} max={PLAN_MAX} />
+              <div className='flex items-center gap-4'>
+                <span className='text-body-sm inline-flex items-center gap-1.5 tabular-nums text-text-secondary'>
+                  {fmt(r.plan)} <ArrowRight className='size-3' /> {fmt(r.actual)}
+                </span>
+                <span
+                  className={cn(
+                    'text-body-sm w-16 text-right tabular-nums',
+                    delta > 0 ? 'text-destructive' : 'text-text-muted'
+                  )}
+                >
+                  {delta > 0 ? `+${fmt(delta)}` : delta < 0 ? `−${fmt(-delta)}` : 'On plan'}
+                </span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/** True once the element has scrolled into view; stays true afterwards. */
+function useInView<T extends Element>(ref: RefObject<T | null>) {
+  const [inView, setInView] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return
+        setInView(true)
+        io.disconnect()
+      },
+      { threshold: 0.4 },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [ref])
+  return inView
+}
+
 /**
  * Grouped bars in plain SVG — what an agent's own chart should look like:
  * every fill is `chartColor(i)` or `CHART_MUTED`, every label is a
@@ -601,9 +679,19 @@ function useMeasuredWidth<T extends HTMLElement>(fallback: number) {
  * The SVG is sized in PIXELS from the measured container, not scaled through
  * a fixed viewBox: a scaled viewBox scales the text with it, and an 11px
  * label drawn at 1.8× is no longer 11px.
+ *
+ * Motion and interaction stay in CSS and React state, no chart library: the
+ * bars grow from the baseline one after another when the chart scrolls into
+ * view (`animate-bar-grow`), pointing at a week lifts it out of the others
+ * and prints its values, and the out-of-scope week is drawn in the diagonal
+ * hatch the progress bars use for "not the settled number", so "n/a" does
+ * not rest on colour alone.
  */
 function SignalsBarChart() {
   const [wrapRef, W] = useMeasuredWidth<HTMLDivElement>(420)
+  const inView = useInView(wrapRef)
+  const [activeWeek, setActiveWeek] = useState<number | null>(null)
+  const hatchId = useId()
   const H = 180
   const PAD = { t: 8, r: 8, b: 24, l: 28 }
   const max = 32
@@ -626,7 +714,23 @@ function SignalsBarChart() {
         className='block'
         role='img'
         aria-label='Signals per week by type, four weeks'
+        onPointerLeave={() => setActiveWeek(null)}
       >
+        <defs>
+          {/* The same diagonal hatch as <Progress target> (`bg-hatch`), as an
+              SVG pattern: a faint tint with 1.5px stripes every 4px, leaning
+              30 degrees. */}
+          <pattern
+            id={hatchId}
+            width={4}
+            height={4}
+            patternUnits='userSpaceOnUse'
+            patternTransform='rotate(30)'
+          >
+            <rect width={4} height={4} fill={CHART_MUTED} opacity={0.3} />
+            <rect width={1.5} height={4} fill={CHART_MUTED} />
+          </pattern>
+        </defs>
         {ticks.map((t) => (
           <g key={t}>
             <line
@@ -644,23 +748,64 @@ function SignalsBarChart() {
         {SIGNAL_WEEKS.map((week, wi) => {
           const x0 = PAD.l + wi * groupW + (groupW - groupInner) / 2
           const muted = wi === OUT_OF_SCOPE_WEEK
+          const active = activeWeek === wi
           return (
-            <g key={week}>
+            <g
+              key={week}
+              className='transition-opacity duration-200'
+              opacity={activeWeek === null || active ? 1 : 0.35}
+            >
+              {active && (
+                <rect
+                  x={PAD.l + wi * groupW + 2}
+                  y={PAD.t}
+                  width={groupW - 4}
+                  height={plotH}
+                  rx={4}
+                  className='fill-surface-well'
+                />
+              )}
               {SIGNAL_SERIES.map((s, si) => {
                 const v = s.values[wi]
                 const x = x0 + si * (barW + gap)
                 return (
-                  <rect
-                    key={s.id}
-                    x={x}
-                    y={y(v)}
-                    width={barW}
-                    height={y(0) - y(v)}
-                    rx={2}
-                    fill={muted ? CHART_MUTED : chartColor(si)}
-                  />
+                  <g key={s.id}>
+                    <rect
+                      x={x}
+                      y={y(v)}
+                      width={barW}
+                      height={y(0) - y(v)}
+                      rx={2}
+                      fill={muted ? `url(#${hatchId})` : chartColor(si)}
+                      className='animate-bar-grow'
+                      style={{
+                        animationDelay: `${wi * 90 + si * 40}ms`,
+                        animationPlayState: inView ? 'running' : 'paused',
+                      }}
+                    />
+                    {active && (
+                      <DataLabel
+                        as='text'
+                        x={x + barW / 2}
+                        y={y(v) - 4}
+                        textAnchor='middle'
+                        className='text-text-primary'
+                      >
+                        {v}
+                      </DataLabel>
+                    )}
+                  </g>
                 )
               })}
+              {/* Hit area: the whole column, so the gaps between bars count. */}
+              <rect
+                x={PAD.l + wi * groupW}
+                y={PAD.t}
+                width={groupW}
+                height={plotH + PAD.b}
+                fill='transparent'
+                onPointerEnter={() => setActiveWeek(wi)}
+              />
               <DataLabel
                 as='text'
                 x={x0 + groupInner / 2}
@@ -680,7 +825,7 @@ function SignalsBarChart() {
           swatch='square'
           items={[
             ...SIGNAL_SERIES.map((s, i) => ({ label: s.name, color: chartColor(i) })),
-            { label: 'Outside ICP', color: CHART_MUTED },
+            { label: 'Outside ICP', swatchClassName: 'bg-hatch text-chart-muted' },
           ]}
         />
         {/* An intensity key is a ramp strip, not a legend: the steps have no names. */}
@@ -834,7 +979,7 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
               />
               Full
             </label>
-            <ThemeSwitch dark={dark} onChange={setDark} />
+            <ThemeToggle dark={dark} onChange={setDark} />
           </>
         }
       >
@@ -850,10 +995,16 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
             <Specimen
               name='Account table'
               note='Sortable and paged — 62 accounts, ten to a page, with a fit score, signal counts and owners.'
-              component='<DataTable pagination>'
+              component='<Surface title> <DataTable pagination>'
               className='mb-8'
             >
-              <Surface padded={false} className='overflow-hidden p-1'>
+              <Surface
+                title='Accounts'
+                description={`${sortedAccounts.length} accounts · sorted by fit`}
+                icon={<Building2 />}
+                actions={<Button variant='secondary' size='sm'>Export</Button>}
+                padded={false}
+              >
                 <DataTable
                   columns={ACCOUNT_COLUMNS}
                   rows={sortedAccounts}
@@ -879,7 +1030,11 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
               component='<DataTable>'
               className='mb-8'
             >
-              <Surface padded={false} className='overflow-hidden p-1'>
+              <Surface
+                title='People'
+                description={`${selected.size} of ${PEOPLE.length} selected`}
+                padded={false}
+              >
                 <DataTable
                   columns={PEOPLE_COLUMNS}
                   rows={PEOPLE}
@@ -915,10 +1070,10 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
             <div className='grid gap-4 lg:grid-cols-2'>
               <Specimen
                 name='Loading'
-                note='Skeleton rows, never a false “empty”.'
+                note='Shimmering rows shaped like the data, never a false “empty”.'
                 component='<DataTable loading>'
               >
-                <Surface padded={false} className='flex-1 overflow-hidden p-1'>
+                <Surface padded={false} className='flex-1 overflow-hidden'>
                   <DataTable
                     columns={PEOPLE_COLUMNS.slice(0, 2)}
                     rows={[]}
@@ -935,7 +1090,7 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                 note='Your own message and call to action.'
                 component='<EmptyState>'
               >
-                <Surface padded={false} className='overflow-hidden p-1'>
+                <Surface padded={false} className='overflow-hidden'>
                   <DataTable
                     columns={PEOPLE_COLUMNS.slice(0, 2)}
                     rows={[]}
@@ -1039,10 +1194,15 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                 note='For non-person identities.'
                 component='<ToneAvatar>'
               >
-                <Panel className='flex items-center'>
+                <Panel className='flex flex-col justify-center gap-4'>
                   <div className='flex gap-2'>
-                    {(['neutral', 'violet', 'teal', 'amber', 'rose', 'brand'] as const).map((t) => (
+                    {(['neutral', 'violet', 'blue', 'amber', 'rose', 'brand'] as const).map((t) => (
                       <ToneAvatar key={t} name='Ada Lovelace' tone={t} />
+                    ))}
+                  </div>
+                  <div className='flex items-end gap-2'>
+                    {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((s) => (
+                      <ToneAvatar key={s} name='Ada Lovelace' tone='violet' size={s} />
                     ))}
                   </div>
                 </Panel>
@@ -1073,6 +1233,22 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                     <Person person={PEOPLE[4]} variant='stacked' showContact />
                   </div>
                 </Panel>
+              </Specimen>
+
+              <Specimen
+                name='Person banner'
+                note='The header of a page about one person: brand fill, one action.'
+                component='<PersonBanner>'
+                className='lg:col-span-2'
+              >
+                <PersonBanner
+                  person={PEOPLE[0]}
+                  actions={
+                    <Button variant='tertiary'>
+                      <Mail /> Contact details
+                    </Button>
+                  }
+                />
               </Specimen>
             </div>
           </Section>
@@ -1317,11 +1493,22 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
 
                 <Specimen
                   name='Bar chart'
-                  note='Inline SVG: chartColor(i) fills, DataLabel ticks, a legend for the key.'
-                  component='<DataLabel> <ChartLegend>'
+                  note='Inline SVG: chartColor(i) fills, DataLabel ticks, a legend for the key. Bars grow in; point at a week for its values.'
+                  component='<Surface title> <DataLabel> <ChartLegend>'
                 >
-                  <Panel>
+                  <Panel title='Signals per week' description='By type, last four weeks'>
                     <SignalsBarChart />
+                  </Panel>
+                </Specimen>
+
+                <Specimen
+                  name='Plan vs actual'
+                  note='Hatched is the plan, solid is what happened, red hatch is the overrun.'
+                  component='<Progress target>'
+                  className='lg:col-span-2'
+                >
+                  <Panel title='Credits: plan vs actual' description='This month, by workflow'>
+                    <PlanVsActual />
                   </Panel>
                 </Specimen>
               </div>

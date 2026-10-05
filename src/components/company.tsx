@@ -142,45 +142,76 @@ export function CompanyMeta({
   company,
   showWebsite = false,
   centered = false,
+  twoLine = false,
   className,
 }: {
   company: CompanyLike
   showWebsite?: boolean
   centered?: boolean
+  /**
+   * Two fixed lines instead of one wrapping line: what the company is
+   * (industry · headcount) over where it is (location · website). For a
+   * narrow column such as a card header, where a single line of four facts
+   * wraps mid-list and strands its separators. Each line truncates.
+   */
+  twoLine?: boolean
   className?: string
 }) {
   const employees = formatEmployees(company.employeeCount)
   const site = websiteHref(company.domain)
-  const bits: React.ReactNode[] = []
-  if (company.industry) bits.push(<span key='ind' className='truncate'>{company.industry}</span>)
+  const what: React.ReactNode[] = []
+  const where: React.ReactNode[] = []
+  if (company.industry) what.push(<span key='ind' className='truncate'>{company.industry}</span>)
   if (employees)
-    bits.push(
-      <span key='emp' className='inline-flex items-center gap-1 whitespace-nowrap'>
+    what.push(
+      <span key='emp' className='inline-flex shrink-0 items-center gap-1 whitespace-nowrap'>
         <Users className='size-3 shrink-0' />
         {employees}
       </span>
     )
   if (company.location)
-    bits.push(
-      <span key='loc' className='inline-flex items-center gap-1 truncate'>
+    where.push(
+      <span key='loc' className='inline-flex min-w-0 items-center gap-1'>
         <MapPin className='size-3 shrink-0' />
-        {company.location}
+        <span className='truncate'>{company.location}</span>
       </span>
     )
   if (showWebsite && site)
-    bits.push(
+    where.push(
       <a
         key='web'
         href={site}
         target='_blank'
         rel='noreferrer'
-        className='inline-flex items-center gap-1 whitespace-nowrap hover:text-accent-text'
+        className='inline-flex shrink-0 items-center gap-1 whitespace-nowrap hover:text-accent-text'
       >
         {normalizeDomain(company.domain)}
         <ExternalLink className='size-3 shrink-0' />
       </a>
     )
+  const bits = [...what, ...where]
   if (!bits.length) return null
+
+  if (twoLine) {
+    return (
+      <span className={cn('text-meta flex min-w-0 flex-col gap-1', className)}>
+        {[what, where].map(
+          (line, li) =>
+            line.length > 0 && (
+              <span key={li} className='flex min-w-0 items-center gap-x-2'>
+                {line.map((b, i) => (
+                  <React.Fragment key={i}>
+                    {i > 0 && <span aria-hidden className='text-text-muted'>·</span>}
+                    {b}
+                  </React.Fragment>
+                ))}
+              </span>
+            )
+        )}
+      </span>
+    )
+  }
+
   return (
     <span
       className={cn(
@@ -229,15 +260,14 @@ export function CompanyCard({
   href,
   className,
 }: CompanyCardProps) {
-  return (
-    <div
-      data-slot='company-card'
-      className={cn(
-        'flex flex-col gap-3 rounded-[var(--radius)] bg-[image:var(--gradient-card)] p-4',
-        'shadow-[var(--shadow-card)] transition-all hover:shadow-[var(--shadow-card-hover)]',
-        className
-      )}
-    >
+  // With a footer the card is built like a titled <Surface>, upside down: the
+  // body is a sheet standing on a `surface-well` frame, and the footer is the
+  // strip of well left showing beneath it. Without one it is a plain sheet.
+  const sheet =
+    'flex flex-col gap-3 rounded-xl bg-[image:var(--gradient-card)] p-4 shadow-[var(--shadow-card)]'
+
+  const body = (
+    <>
       <div className='flex items-start gap-3'>
         <CompanyLogo
           name={company.name}
@@ -253,7 +283,7 @@ export function CompanyCard({
           ) : (
             <span className='text-card-title truncate text-text-primary'>{company.name}</span>
           )}
-          <CompanyMeta company={company} showWebsite />
+          <CompanyMeta company={company} showWebsite twoLine />
         </div>
         {actions && <span className='flex shrink-0 items-center gap-2'>{actions}</span>}
       </div>
@@ -270,11 +300,49 @@ export function CompanyCard({
         </div>
       )}
 
-      {footer && (
-        <div className='mt-auto flex items-center justify-end gap-3 border-t border-border-subtle pt-3'>
-          {footer}
-        </div>
+    </>
+  )
+
+  if (!footer) {
+    return (
+      <div
+        data-slot='company-card'
+        className={cn(sheet, 'transition-all hover:shadow-[var(--shadow-card-hover)]', className)}
+      >
+        {body}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      data-slot='company-card'
+      className={cn(
+        'flex flex-col rounded-xl border border-border-subtle bg-surface-well',
+        className
       )}
+    >
+      {/* The sheet keeps its hairline ring (`--shadow-card`), which lands on
+          the frame's border at the sides and draws the line against the
+          footer strip, and is permanently raised by a short drop
+          (`--shadow-card-raised`) that falls across that strip. Nothing
+          changes on hover. */}
+      <div
+        className={cn(
+          sheet,
+          'relative flex-1 shadow-[var(--shadow-card),var(--shadow-card-raised)]'
+        )}
+      >
+        {body}
+      </div>
+      {/* The strip's gradient starts lighter than the frame behind it, so the
+          strip is pulled up 12px under the sheet (-mt-3, with the padding to
+          match): otherwise the frame's flat well would show as two darker
+          notches beside the sheet's rounded bottom corners. The sheet is
+          `relative` so it paints over the part tucked beneath it. */}
+      <div className='well-gradient -mt-3 flex items-center justify-end gap-3 rounded-b-xl px-4 pt-5.5 pb-2.5'>
+        {footer}
+      </div>
     </div>
   )
 }

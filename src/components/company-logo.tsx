@@ -5,6 +5,8 @@ import { logoCandidates } from '../lib/brand-image'
 import { initials } from '../lib/initials'
 
 export const LOGO_SIZES = {
+  // Sits inside a line of meta text (the company mark under a person's name).
+  '2xs': 'size-4 rounded-[4px] text-[7px]',
   xs: 'size-5 rounded-[5px] text-[9px]',
   sm: 'size-6 rounded-[6px] text-[10px]',
   md: 'size-8 rounded-md text-xs',
@@ -76,7 +78,13 @@ export function CompanyLogo({
       data-slot='company-logo'
       className={cn(
         'relative inline-flex shrink-0 items-center justify-center overflow-hidden',
-        'bg-[var(--color-avatar-fallback)] font-heading font-bold text-white',
+        'font-heading font-bold text-white',
+        // The fallback fill is dropped once a logo has painted. Left in place
+        // it sits under the logo as a second layer with the same rounded
+        // edge, and the two anti-aliased edges do not cancel: a hairline of
+        // the light fallback colour shows around the corners, most visibly as
+        // pale flecks on a dark logo in dark mode.
+        loaded ? 'bg-transparent' : 'bg-[var(--color-avatar-fallback)]',
         LOGO_SIZES[size],
         radius,
         className
@@ -84,7 +92,7 @@ export function CompanyLogo({
     >
       {/* Initials sit underneath so there is never an empty box mid-load, and
           they stay the accessible content until a real logo has painted. */}
-      <span aria-hidden={loaded} className='leading-none select-none'>
+      <span aria-hidden={loaded} className={cn('leading-none select-none', loaded && 'invisible')}>
         {initials(name)}
       </span>
       {src && (

@@ -102,13 +102,20 @@ export function Callout({
       data-tone={tone}
       role={role ?? (tone === 'destructive' ? 'alert' : 'note')}
       className={cn(
-        'flex gap-3 rounded-lg border',
+        // `isolate overflow-hidden` keeps the texture layer inside the panel.
+        'relative isolate flex gap-3 overflow-hidden rounded-lg border',
         compact ? 'items-center px-3 py-2' : 'items-start p-3',
         t.panel,
         className
       )}
       {...props}
     >
+      {/* The website cards' diagonal texture, in the tone's own colour: fine
+          lines that fade in toward the bottom-right corner. */}
+      <span
+        aria-hidden
+        className={cn('diagonal-fade pointer-events-none absolute inset-0 -z-10', t.icon)}
+      />
       {icon && (
         <span
           aria-hidden

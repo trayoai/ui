@@ -27,6 +27,11 @@ export interface Column<T> {
   /** When true (and onSortChange is provided) the header becomes a sort toggle.
    *  The sort key is the column `id`. */
   sortable?: boolean;
+  /** Shape of this column's placeholder while the table is `loading`, so the
+   *  skeleton resembles the rows about to arrive: `person` (avatar + two
+   *  lines, for a `<Person>` cell), `company` (logo + name, for an inline
+   *  `<Company>`), `badge` (a pill). Defaults to a plain text bar. */
+  skeleton?: 'text' | 'person' | 'company' | 'badge';
 }
 
 export type SortState = { key: string; dir: 'asc' | 'desc' };
@@ -209,20 +214,16 @@ export function DataTable<T>({
           onSortChange({ key: c.id, dir: active && sort?.dir === 'asc' ? 'desc' : 'asc' })
         }
         className={cn(
-          // `uppercase` is repeated here (the parent <th> already sets it)
-          // because the browser UA stylesheet resets `text-transform: none` on
-          // <button>, which would otherwise leave sortable headers title-cased
-          // while non-sortable ones stay uppercase.
           // `cursor-pointer` because the UA stylesheet gives <button> a default
           // arrow cursor; sortable headers are clickable, so signal it.
           // `max-w-full` + the truncating title span: a header title never
           // widens or overflows its column — when the column is narrower than
           // the title, the title ellipsizes (the chevron stays via shrink-0).
-          'group inline-flex max-w-full cursor-pointer items-center gap-1 uppercase outline-none transition-colors hover:text-accent-text focus-visible:text-accent-text',
+          'group inline-flex max-w-full cursor-pointer items-center gap-1 outline-none transition-colors hover:text-accent-text focus-visible:text-accent-text',
           c.align === 'right' && 'flex-row-reverse',
           // Active sort uses the readable accent (`accent-text`), NOT the brand
           // FILL (`accent-brand`), per the design-system rule for accent text/links.
-          active ? 'text-accent-text' : 'text-text-muted',
+          active ? 'text-accent-text' : 'text-text-secondary',
         )}
       >
         <span className="truncate">{c.header}</span>
@@ -230,9 +231,6 @@ export function DataTable<T>({
             reserved space then sits harmlessly at the end. The flex `gap-1` owns
             the spacing (the pill carries no margin of its own). */}
         {countNode}
-        {/* A single chevron-down, hidden until hover,
-            full + brand when this column is the active sort, rotated 180° for
-            ascending. */}
         <ChevronDown
           aria-hidden
           className={cn(
@@ -267,7 +265,7 @@ export function DataTable<T>({
       <TableHeader>
         <TableRow>
           {selection && (
-            <TableHead className="h-[38px] w-10 bg-surface-well">
+            <TableHead className="h-10 w-10 bg-transparent">
               <Checkbox
                 aria-label="Select all"
                 checked={headerCheckedState}
@@ -286,23 +284,14 @@ export function DataTable<T>({
           {columns.map((c, colIndex) => (
             <TableHead
               key={c.id}
-              // A small, bold, uppercase, tracked
-              // muted caption. Headers are controls (the sortable ones are
-              // buttons), so they use the Tailwind control scale — not a
-              // content typography role — per the design-system rules.
-              // text-caption (11px) + tracking-wider give an 11px/0.06em
-              // caption (text-xs at 12px read too chunky,
-              // text-2xs at 10px too small). Non-sortable headers inherit these
-              // directly; the sortable button inherits the type + sets its color.
-              // `bg-surface-well` gives the header a subtle distinct band — a
-              // touch darker/warmer than the rows' `surface-card` in both themes.
-              // `surface-row` is invisible in light (≈ surface-card), so `well`
-              // is the palette's nearest visibly-distinct step. Applied per-cell
-              // (not on <thead>) so it stays opaque over the shared TableRow's
-              // hover background.
+              // A quiet sentence-case label on the rows' own surface, set
+              // apart by the hairline under it, not by a band. Headers are
+              // controls (the sortable ones are buttons), so they use the
+              // Tailwind control scale — not a content typography role.
+              // Non-sortable headers inherit these directly; the sortable
+              // button inherits the type + sets its color.
               className={cn(
-                // 38px tall, 10px horizontal (px-2.5).
-                'h-[38px] bg-surface-well px-2.5 text-caption font-bold uppercase tracking-wider text-text-muted',
+                'h-10 bg-transparent px-2.5 text-xs font-medium text-text-secondary',
                 alignClass(c.align),
                 c.className,
               )}
@@ -321,11 +310,9 @@ export function DataTable<T>({
                     variant="count"
                     data-testid="data-table-count"
                     className={cn(
-                      // Rest fill is `surface-card` — a step LIGHTER than the
-                      // header's `surface-well` band — so the pill reads as a
-                      // subtle raised chip rather than blending into the header.
-                      // `rounded-md` squares it off from the variant's pill shape
-                      // to match the header cells / controls.
+                      // Neutral at rest: the card fill and secondary text
+                      // instead of the variant's accent, with the corners of
+                      // the header's controls.
                       'rounded-md border-transparent bg-surface-card text-text-secondary',
                       'group-hover:bg-accent-soft group-hover:text-accent-text',
                       'group-focus-visible:bg-accent-soft group-focus-visible:text-accent-text',
@@ -347,6 +334,7 @@ export function DataTable<T>({
                 key={`skeleton-${i}`}
                 columns={columns}
                 hasSelection={!!selection}
+                index={i}
               />
             ))
           : pageRows.map((row) => {
@@ -376,10 +364,13 @@ export function DataTable<T>({
                 // Applied to all rows (not just clickable) to override the base
                 // default uniformly; the pointer cursor stays gated on onRowClick.
                 'hover:bg-surface-well',
-                // The base TableRow ships `transition-colors` (~150ms), which makes
-                // the hover band fade in and feel laggy when sweeping the mouse down
-                // a dense table. Hover should be instant — kill the transition.
-                'transition-none',
+                // The hover band is asymmetric: it arrives fast (75ms) and
+                // lets go slowly (250ms). A symmetric fade (the base TableRow's
+                // ~150ms `transition-colors`) feels laggy when sweeping the
+                // mouse down a dense table, because every row is late; this
+                // way the row under the pointer answers at once and the rows
+                // behind it fade out as a soft trail.
+                'transition-colors duration-250 ease-out hover:duration-75',
                 onRowClick && 'cursor-pointer',
                 // Selected: match the base's `data-[state=selected]:` variant so
                 // tailwind-merge dedupes and our accent tint wins — a plain
@@ -398,7 +389,7 @@ export function DataTable<T>({
                 // onRowClick / navigation. A non-selectable row keeps the cell
                 // (column alignment) but renders no checkbox.
                 <TableCell
-                  className="h-11 w-10 py-0"
+                  className="h-15 w-10 py-0"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {(selection.isRowSelectable?.(key) ?? true) && (
@@ -415,7 +406,7 @@ export function DataTable<T>({
                 // `.text-body-sm` role = the compact table density
                 // (system / 400 / 13px). Entity-name cells override with
                 // `.text-name-sm` (Figtree / 600 / 13px) to stay the focal
-                // element; the header keeps its 11px caption.
+                // element; the header is a 12px control label.
                 //
                 // Text tier: the first/leading column is the focal entity, so it
                 // reads at `text-text-primary`; every other column is
@@ -426,13 +417,14 @@ export function DataTable<T>({
                 <TableCell
                   key={c.id}
                   className={cn(
-                    // Compact rows: pin the row height (h-11) and use horizontal-
-                    // only padding so rows are a fixed 44px regardless of cell
-                    // content (avatars/controls) or the body line-height —
-                    // rather than the base TableCell's `p-2`, which let rows
-                    // float to ~50px. (Height is a min for table cells, so the
-                    // vertical padding must be dropped, not just capped.)
-                    'h-11 px-2.5 py-0 text-body-sm',
+                    // Fixed-height rows: pin the row height (h-15) and use
+                    // horizontal-only padding so every row is 60px regardless
+                    // of cell content (avatars/controls) or the body
+                    // line-height — the base TableCell's `p-2` would let rows
+                    // vary with their content. (Height is a min for table
+                    // cells, so the vertical padding must be dropped, not just
+                    // capped.)
+                    'h-15 px-2.5 py-0 text-body-sm',
                     colIndex === 0 ? 'text-text-primary' : 'text-text-muted',
                     alignClass(c.align),
                     c.className,

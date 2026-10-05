@@ -53,7 +53,6 @@ function TableScrollRegion({
       <div
         ref={setScrollRef}
         data-slot='table-container'
-        // `overflow-x-auto` scrolls wide tables horizontally.
         className={cn('w-full overflow-x-auto', className)}
         // When the table overflows horizontally it becomes a scrollable region;
         // make it keyboard-focusable so arrow keys can scroll it (axe
@@ -91,13 +90,11 @@ function TableScrollRegion({
 // the hidden columns — trailing on the right, leading on the left. Tokens only
 // (no hex): fade uses the `surface-card` table background; the badge is the
 // shared neutral (tertiary) Button, lifted with `bg-surface-popover shadow-sm`
-// so it reads as a pill floating above the header band in BOTH themes. The
+// so it reads as a pill floating above the header row in BOTH themes. The
 // fill is the raised surface, not `surface-card`: light gets its lift from the
 // shadow (white vs card is a wash), but a black shadow is invisible on dark
-// surfaces, where elevation is a LIGHTER fill. Card on the dark `surface-well`
-// header band is 1.19:1 and the pill all but vanished; raised is 1.70:1. The
-// label is `text-primary` for the same reason — secondary greyed it into the
-// band.
+// surfaces, where elevation is a LIGHTER fill. The label is `text-primary`
+// for the same reason — secondary greys it into the header.
 function TableOverflowAffordance({
   side,
   count,
@@ -136,13 +133,11 @@ function TableOverflowAffordance({
         data-testid={isRight ? 'table-overflow-badge-right' : 'table-overflow-badge-left'}
         style={badgeStyle}
         className={cn(
-          // 12px bold label (text-xs font-bold) on a short pill (h-6, vs the sm
-          // default h-8) — a compact overflow affordance. `z-30` keeps it above
-          // the header cells. Centered via `top` (badgeStyle); fallback `top-2`
-          // until the header height is measured.
+          // `z-30` keeps it above the header cells. Centered via `top`
+          // (badgeStyle); fallback `top-2` until the header height is measured.
           'absolute top-2 z-30 h-6 gap-1 bg-surface-popover text-xs font-bold text-text-primary shadow-sm transition-colors',
-          // The variant's hover fill is `surface-well` — the header band's own
-          // colour, so a hovered pill sank into it. Hover stays a raised step.
+          // The variant's hover fill is `surface-well`, a step DOWN: a hovered
+          // pill would sink into the table. Hover stays a raised step.
           'hover:bg-surface-hover',
           badgeCls,
         )}

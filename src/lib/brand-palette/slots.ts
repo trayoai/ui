@@ -276,7 +276,7 @@ export function brandSlotsAgentGuide(): string {
   }
   lines.push(
     '',
-    "Status colours (success, warning, danger), typography, radius and the warm glow stay Trayo's in every brand."
+    "Status colours (success, warning, danger), typography and radius stay Trayo's in every brand. The warm corner glow is Trayo's own and a branded page drops it."
   )
   return lines.join('\n')
 }

@@ -4,7 +4,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../../lib/cn'
 
 const badgeVariants = cva(
-  'inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden',
+  'inline-flex items-center justify-center rounded-xs border px-1.5 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden',
   {
     variants: {
       variant: {
@@ -16,16 +16,17 @@ const badgeVariants = cva(
           'border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
         outline:
           'text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
-        // A compact result-count pill (e.g. next to a table's identity header):
-        // a soft accent fill with the readable accent text, fully rounded and
-        // tabular so digits don't jitter. `normal-case`/`tracking-normal` shrug
-        // off an uppercase/tracked header context.
+        // A compact result count (e.g. next to a table's identity header): a
+        // soft accent fill with the readable accent text, tabular so digits
+        // don't jitter. `normal-case`/`tracking-normal` keep it plain inside an
+        // uppercase or tracked parent.
         count:
-          'min-w-5 rounded-full border-transparent bg-accent-soft px-2 font-semibold tabular-nums normal-case tracking-normal text-accent-text',
-        // The neutral tag pill — attributes, segments, industries. Recedes,
+          'min-w-5 border-transparent bg-accent-soft px-1.5 font-semibold tabular-nums normal-case tracking-normal text-accent-text',
+        // The neutral tag — attributes, segments, industries: a hairline on
+        // the card fill. Recedes,
         // so several of them next to each other read as one group.
         soft:
-          'rounded-full border-border-subtle bg-surface-well font-normal text-text-secondary',
+          'border-border-subtle bg-surface-card font-normal text-text-secondary',
         // Status tints, built from the status token triples so they flip theme.
         success: 'border-[var(--success-line)] bg-[var(--success-soft)] text-success-text',
         warning: 'border-[var(--warning-line)] bg-[var(--warning-soft)] text-warning-text',

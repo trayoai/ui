@@ -20,7 +20,7 @@ function Card({
       data-slot='card'
       className={cn(
         SURFACE_CLASS[surface],
-        'text-card-foreground shadow-card flex flex-col gap-6 rounded-xl border py-6',
+        'text-card-foreground flex flex-col gap-6 rounded-xl border border-border-subtle py-6 shadow-xs',
         className
       )}
       {...props}

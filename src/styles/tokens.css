@@ -14,8 +14,10 @@
  * Tailwind.
  *
  * LAYOUT / SPACING / RADIUS (extracted into the @theme block below):
- *   - Radius: --radius is the card radius (12px); the ramp derives
- *     sm/md/lg/xl = 8/10/12/16. Pills use Tailwind's built-in `rounded-full`.
+ *   - Radius: --radius is the base radius (12px); the ramp derives
+ *     sm/md/lg/xl = 8/10/12/16. Cards and panels are `rounded-xl` (16px),
+ *     badges and chips `rounded-xs` (6px). Pills (buttons, fields, segmented
+ *     controls) use Tailwind's built-in `rounded-full`.
  *   - Semantic layout tokens — feed column width, sidebar width, card padding,
  *     inter-card gap — emit utilities (max-w-feed / w-sidebar / p-card /
  *     gap-feed-gap).
@@ -205,6 +207,14 @@
   --gradient-avatar-teal:   linear-gradient(135deg, #5EEAD4, #14B8A6);
   --gradient-avatar-amber:  linear-gradient(135deg, #FCD34D, #F59E0B);
   --gradient-avatar-rose:   linear-gradient(135deg, #FDA4AF, #F43F5E);
+  /* The hue behind each <ToneAvatar> tone. The avatar does not paint these
+     directly: it mixes one into the card surface for the fill and into the
+     primary text for the initials, so a single hue gives a pale tint with
+     dark letters in light and a deep tint with light letters in dark. */
+  --avatar-tone-violet: #7C3AED;
+  --avatar-tone-blue:   #2563EB;
+  --avatar-tone-amber:  #D97706;
+  --avatar-tone-rose:   #E11D48;
 
   /* Logo avatar fallback fill — solid warm orange; theme-invariant. */
   --color-avatar-fallback: #e8a371;
@@ -329,10 +339,44 @@
   /* Sidebar is a warm cream in light */
   --surface-sidebar: #fefdf9;
 
-  /* Card edge — 1px hairline ring; flips per theme. */
-  --shadow-card: 0 0 0 1px rgba(60, 40, 20, 0.08);
-  /* Card hover lift — ring + soft drop. */
-  --shadow-card-hover: 0 8px 20px rgba(60, 40, 20, 0.045), 0 1px 4px rgba(60, 40, 20, 0.025), 0 0 0 1px rgba(60, 40, 20, 0.08);
+  /* Card edge — a 1px hairline ring at border strength plus a 1px contact
+     shadow, so a panel reads as a sheet on the canvas; flips per theme.
+     The ring IS the card's border. It repeats the border token's sand value
+     here rather than reading it (a token that aliases another must be
+     restated by every scope that overrides the other); the
+     `[data-brand-surfaces]` blocks restate it from the brand's hairline. */
+  --shadow-card: 0 0 0 1px rgb(120 90 40 / 0.14), 0 1px 2px rgba(60, 40, 20, 0.05);
+  /* Card hover lift — the hairline ring plus the layered "float" drop the
+     trayo.ai research cards use on hover (their --shadow-float): five stacked
+     warm-sand shadows, each twice the reach of the last, so the card lifts
+     with a soft long falloff instead of one hard-edged blur.
+     `--shadow-card-float` is the drop alone, for a card that already draws
+     its edge with a real border: adding the ring there doubles the edge and
+     the border appears to thicken on hover. */
+  --shadow-card-float: 0 1px 1.2px rgb(132 106 42 / 0.075),
+    0 2.9px 3.6px -0.6px rgb(132 106 42 / 0.075),
+    0 6.6px 8.3px -1.2px rgb(132 106 42 / 0.075),
+    0 14.2px 17.8px -1.9px rgb(132 106 42 / 0.075),
+    0 28px 35px -2.5px rgb(132 106 42 / 0.075);
+  --shadow-card-hover: 0 0 0 1px rgb(120 90 40 / 0.24), var(--shadow-card-float);
+  /* A toast: it floats over the page, so it gets more lift than a raised
+     sheet, but less than the card hover float — no 28px layer, and each layer
+     a little lighter, because toasts stack and their shadows add up. No ring:
+     the toast has a real border. */
+  --shadow-toast: 0 1px 1.2px rgb(132 106 42 / 0.05),
+    0 2.9px 3.6px -0.6px rgb(132 106 42 / 0.05),
+    0 6.6px 8.3px -1.2px rgb(132 106 42 / 0.05),
+    0 14.2px 17.8px -1.9px rgb(132 106 42 / 0.05);
+  /* A sheet that is ALWAYS raised (the body of a card with a footer strip):
+     the first two layers of the float only, a touch lighter, so it stands
+     off its frame by a hairline of shade rather than a visible drop. */
+  --shadow-card-raised: 0 1px 1.2px rgb(132 106 42 / 0.06),
+    0 2.9px 3.6px -0.6px rgb(132 106 42 / 0.06);
+  /* The same drop mirrored upward, for a sheet with its strip ABOVE it (a
+     titled <Surface>: header strip, then the sheet), so the shadow lands on
+     the header rather than outside the frame. */
+  --shadow-card-raised-up: 0 -1px 1.2px rgb(132 106 42 / 0.06),
+    0 -2.9px 3.6px -0.6px rgb(132 106 42 / 0.06);
 
   /* Hero search-bar brand glow. Brand purple rgb(132 92 255) is the canonical
      brand; the glow is theme-invariant. */
@@ -357,7 +401,14 @@
   /* Hover lift for person / signal / account cards inside a drawer. */
   --shadow-card-lift: 0 2px 10px -4px rgba(16, 17, 26, 0.18);
   /* Active segment of a segmented control. */
-  --shadow-seg-active: 0 1px 2px rgba(16, 17, 26, 0.14);
+  /* The active segment / tab is a small raised sheet, like a card's: the
+     hairline ring in the border tone plus the first layers of the card float,
+     a little stronger than a card's because the thumb is small and sits on a
+     tinted track. */
+  --shadow-seg-active: 0 0 0 1px rgb(120 90 40 / 0.14),
+    0 1px 1.2px rgb(132 106 42 / 0.14),
+    0 2.9px 3.6px -0.6px rgb(132 106 42 / 0.14),
+    0 6.6px 8.3px -1.2px rgb(132 106 42 / 0.1);
   /* Segmented switch: trough, its edge, the thumb and the idle label are
      tokens so the primitive needs no per-theme rule. */
   --seg-track: var(--surface-well);
@@ -737,9 +788,23 @@
      faces. */
   --owner-mark: #79705D;
 
-  --shadow-card: inset 0 0 0 1px rgba(255, 255, 255, 0.11);
-  /* Card hover lift (dark). */
-  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.35), 0 1px 4px rgba(0, 0, 0, 0.18), inset 0 0 0 1px rgba(255, 255, 255, 0.10);
+  --shadow-card: inset 0 0 0 1px rgba(255, 255, 255, 0.11), 0 1px 2px rgba(0, 0, 0, 0.3);
+  /* Card hover lift (dark) — the same five-layer float as light, in black:
+     a sand-tinted shadow does not register on a dark canvas. */
+  --shadow-card-float: 0 1px 1.2px rgb(0 0 0 / 0.2),
+    0 2.9px 3.6px -0.6px rgb(0 0 0 / 0.2),
+    0 6.6px 8.3px -1.2px rgb(0 0 0 / 0.2),
+    0 14.2px 17.8px -1.9px rgb(0 0 0 / 0.2),
+    0 28px 35px -2.5px rgb(0 0 0 / 0.2);
+  --shadow-card-hover: inset 0 0 0 1px rgba(255, 255, 255, 0.10), var(--shadow-card-float);
+  --shadow-toast: 0 1px 1.2px rgb(0 0 0 / 0.16),
+    0 2.9px 3.6px -0.6px rgb(0 0 0 / 0.16),
+    0 6.6px 8.3px -1.2px rgb(0 0 0 / 0.16),
+    0 14.2px 17.8px -1.9px rgb(0 0 0 / 0.16);
+  --shadow-card-raised: 0 1px 1.2px rgb(0 0 0 / 0.16),
+    0 2.9px 3.6px -0.6px rgb(0 0 0 / 0.16);
+  --shadow-card-raised-up: 0 -1px 1.2px rgb(0 0 0 / 0.16),
+    0 -2.9px 3.6px -0.6px rgb(0 0 0 / 0.16);
 
   /* Hero search-bar brand glow — see :root note. */
   --shadow-search-glow: 0 1px 2px rgba(16, 17, 26, 0.04),
@@ -787,7 +852,9 @@
   --seg-track: var(--surface-row);
   --seg-track-line: var(--border-subtle);
   --seg-thumb: #444D65;
-  --shadow-seg-active: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  --shadow-seg-active: inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 1px 1.2px rgb(0 0 0 / 0.3),
+    0 2.9px 3.6px -0.6px rgb(0 0 0 / 0.3);
   --seg-text-idle: #C7CCDA;
 
   /* Layer 3 — shadcn aliases (dark) */
@@ -859,9 +926,10 @@
 
    What a brand does NOT change (Trayo DNA): page and card surfaces, grain,
    text outside shell regions, status
-   colours, charts, radius, pill buttons, typography, the warm glow layers
-   and --gradient-cta. Without `data-brand` every token below keeps the
-   Trayo value, byte for byte.
+   colours, charts, radius, pill buttons, typography and --gradient-cta.
+   (The warm shell glow is the exception: it is Trayo's peach, so
+   `--shell-glow-warm-alpha` is 0 under a brand.) Without `data-brand` every
+   token below keeps the Trayo value, byte for byte.
 
    Fallbacks: an agent that sets only --brand-primary still gets a working
    theme — controls derived by the browser, without the resolver's contrast
@@ -892,6 +960,9 @@
     0 22px 60px -26px rgb(var(--brand-primary-rgb, 132 92 255) / 0.55);
   --gradient-brand: var(--brand-gradient, linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary, var(--brand-primary)) 100%));
   --shell-glow-cool-rgb: var(--brand-primary-rgb, 123 93 243);
+  /* The warm top-right glow is Trayo's own peach, not a neutral: a branded
+     canvas drops it rather than tinting someone else's palette salmon. */
+  --shell-glow-warm-alpha: 0;
   --mesh-cool-rgb: var(--brand-primary-rgb, 132 92 255);
   --mesh-cool-2-rgb: var(--brand-secondary-rgb, var(--brand-primary-rgb, 205 129 255));
   --mesh-warm-rgb: var(--brand-mesh-warm-rgb, 255 161 130);
@@ -945,6 +1016,7 @@
     0 22px 60px -26px rgb(var(--brand-primary-dark-rgb, var(--brand-primary-rgb, 132 92 255)) / 0.55);
   --gradient-brand: var(--brand-gradient-dark, linear-gradient(135deg, var(--accent-brand) 0%, var(--accent-brand) 100%));
   --shell-glow-cool-rgb: var(--brand-primary-dark-rgb, var(--brand-primary-rgb, 132 92 255));
+  --shell-glow-warm-alpha: 0;
   /* The accent text tone: clears 4.5:1 on every dark surface, the card
      included (the fill only guarantees 3:1 on the shell). */
   --chart-1: var(--accent-text);
@@ -967,10 +1039,18 @@
    (contract background/surface/text/mutedText, resolved with the well, hover
    row, raised surface, text scale and borders derived). Every token that
    aliases one of these is restated — they resolve where they are declared.
-   Grain, shadows, radius, status colours and the warm glow stay Trayo's. */
+   Grain, drop shadows, radius and status colours stay Trayo's. */
 [data-brand-surfaces],
 [data-brand-surfaces] .light,
 .light[data-brand-surfaces] {
+  /* The card and active-segment rings are borders, not shadows: restated
+     here from the brand's hairlines, since :root spells out Trayo's sand. */
+  --shadow-card: 0 0 0 1px var(--border-subtle), 0 1px 2px rgba(60, 40, 20, 0.05);
+  --shadow-card-hover: 0 0 0 1px var(--border-strong), var(--shadow-card-float);
+  --shadow-seg-active: 0 0 0 1px var(--border-subtle),
+    0 1px 1.2px rgb(132 106 42 / 0.14),
+    0 2.9px 3.6px -0.6px rgb(132 106 42 / 0.14),
+    0 6.6px 8.3px -1.2px rgb(132 106 42 / 0.1);
   --color-app-shell: var(--brand-background);
   --color-app-card: var(--brand-surface);
   --color-app-well: var(--brand-well);
@@ -1026,6 +1106,13 @@
 .dark[data-brand-surfaces],
 .dark [data-brand-surfaces],
 [data-brand-surfaces] .dark {
+  /* Restated with the .dark values: the light block above also matches a
+     dark branded root and would otherwise win with its light rings. */
+  --shadow-card: inset 0 0 0 1px rgba(255, 255, 255, 0.11), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-card-hover: inset 0 0 0 1px rgba(255, 255, 255, 0.10), var(--shadow-card-float);
+  --shadow-seg-active: inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 1px 1.2px rgb(0 0 0 / 0.3),
+    0 2.9px 3.6px -0.6px rgb(0 0 0 / 0.3);
   --color-app-shell: var(--brand-background-dark);
   --color-app-card: var(--brand-surface-dark);
   --color-app-well: var(--brand-well-dark);
@@ -1532,11 +1619,13 @@
    `::before`/z-index plumbing. Apply to the full-height app shell element; its
    children (sidebar opaque, content cards opaque) sit naturally on top, and
    because the wrapper is viewport-sized the glow reads as a fixed canvas while
-   the inner content scrolls. Glow alphas are softer in dark, stronger in light. */
+   the inner content scrolls. Glow alphas are softer in dark, stronger in light.
+   The warm glow is Trayo-only: `[data-brand]` sets `--shell-glow-warm-alpha`
+   to 0, while the cool glow is repointed to the brand's primary. */
 .app-shell-bg {
   background-color: var(--surface-shell);
   background-image:
-    radial-gradient(120% 80% at 85% 0%, rgba(255, 201, 168, 0.30) 0%, rgba(255, 201, 168, 0) 42%),
+    radial-gradient(120% 80% at 85% 0%, rgb(255 201 168 / var(--shell-glow-warm-alpha, 0.30)) 0%, rgb(255 201 168 / 0) 42%),
     radial-gradient(90% 70% at 0% 100%, rgb(var(--shell-glow-cool-rgb) / var(--shell-glow-cool-alpha)) 0%, rgb(var(--shell-glow-cool-rgb) / 0) 46%),
     var(--shell-grain),
     var(--gradient-shell);
@@ -1544,7 +1633,7 @@
 }
 :is(.dark) .app-shell-bg {
   background-image:
-    radial-gradient(120% 80% at 85% 0%, rgba(255, 161, 130, 0.14) 0%, rgba(255, 161, 130, 0) 42%),
+    radial-gradient(120% 80% at 85% 0%, rgb(255 161 130 / var(--shell-glow-warm-alpha, 0.14)) 0%, rgb(255 161 130 / 0) 42%),
     radial-gradient(90% 70% at 0% 100%, rgb(var(--shell-glow-cool-rgb) / var(--shell-glow-cool-alpha)) 0%, rgb(var(--shell-glow-cool-rgb) / 0) 46%),
     var(--shell-grain),
     var(--gradient-shell);

@@ -166,7 +166,8 @@ const columns: Column<AccountRow>[] = [
   {
     id: 'account',
     header: 'Account',
-    accessor: (r) => <Company company={r.company} showWebsite />,
+    // size="md" in a table: the default 40px tile crowds the 60px row.
+    accessor: (r) => <Company company={r.company} size="md" showWebsite />,
     className: 'min-w-[260px]',
     sortable: true,
   },
@@ -253,12 +254,14 @@ same props.
 | `align` | `left` (default), `center`, `right` |
 | `width` / `className` | Sizing and responsive hiding, e.g. `w-40`, `hidden lg:table-cell`. Applied to the header **and** every body cell so they can't drift |
 | `sortable` | Turns the header into a sort toggle keyed on `id` |
+| `skeleton` | Placeholder shape while `loading`: `person`, `company`, `badge`, or the default text bar |
 
 ### Behaviour worth knowing
 
 - **`loading`** renders skeleton rows instead of `rows`, so a list never flashes
   a false "nothing found" while a query is in flight. The `empty` fallback only
-  shows when `!loading && rows.length === 0`.
+  shows when `!loading && rows.length === 0`. Set a column's `skeleton` so the
+  placeholder matches its cell (`person` for a `<Person>` column, and so on).
 - **`selection`** is fully controlled — you hold the selected-key set, so it can
   span pages. Omit it entirely and no checkbox column renders.
 - **`onToggleAllPage(selected, pageKeys)`** selects the *current page*, not the
@@ -267,8 +270,12 @@ same props.
   every key in `rows`. Rows `isRowSelectable` rejects are not in `pageKeys`.
 - **`pagination`** never slices when `total` is given — the rows you pass are
   the page. Without `total`, it slices and reports `rows.length` as the total.
-  The header `count` pill is independent; with paging the footer already says
+  The header `count` badge is independent; with paging the footer already says
   "of 382", so most tables drop `count`.
+- **Rows are 60px tall**, enough for a `<Person>` cell's two lines. The header
+  is a sentence-case label on the rows' own surface, set apart by a hairline.
+  For a tighter table use the `dense` table dialect (see
+  [Customer brand](#customer-brand)) rather than overriding cell heights.
 - **`layout="fixed"`** makes the per-column `width`/`className` hints
   authoritative. Pin the columns that matter and leave exactly one column
   width-less: it absorbs surplus space and is the first to shrink. Pair it with
@@ -300,10 +307,17 @@ gets the same face everywhere, forever. It never degrades to initials.
 <Person person={apiPerson} variant="stacked" />       // centred, for a tile
 <Person person={apiPerson} showContact contacted />   // email/phone/profile glyphs + a "we reached out" check
 <PersonCard person={apiPerson} summary="…" tags={['CISO']} footer={<Button size="sm">Reach out</Button>} />
+<PersonBanner person={apiPerson} actions={<Button variant="tertiary"><Mail /> Contact details</Button>} />  // brand-coloured header band, one per screen
 ```
 
 `PersonLike` is a loose superset of a `GET /v1/people` row, so an API response
 passes straight through. Everything but `name` is optional.
+
+`PersonBanner` is the header of a page or drawer about one person: a
+full-width band in the brand colour with the face, name, title and one action.
+Use it once per screen, at the top; a person in a list or grid is a `<Person>`
+or `<PersonCard>`. Put a `tertiary` or `quiet` Button in `actions` — the band
+restyles them for its fill.
 
 > **The photo field has two names.** The Trayo API returns `profileImageUrl`
 > from `GET /v1/people`, but a `POST /v1/find` contacts result carries
@@ -333,16 +347,23 @@ works too, but `domain` alone is the common and better case.
 ```tsx
 <PersonAvatar name="Dana Whitfield" personId="p-1" src={photo} size="lg" contacted />
 <CompanyLogo name="Ramp" domain="ramp.com" size="md" />
-<ToneAvatar name="Ada Lovelace" tone="violet" />   // non-person identities: teams, workspaces, bots
+<ToneAvatar name="Ada Lovelace" tone="violet" size="md" />   // non-person identities: teams, workspaces, bots
 ```
 
-Sizes: `xs sm md lg xl 2xl`.
+Sizes: `xs sm md lg xl 2xl`. `CompanyLogo` also takes `2xs` (16px), for a mark
+inside a line of meta text.
+
+`ToneAvatar` tones are `neutral` (the default, a grey), `violet`, `blue`,
+`amber`, `rose` — a pale tint of the tone with darker initials — and `brand`,
+the one solid mark. There is no green tone, because green on an avatar reads as
+status; `teal` is still accepted and renders as `blue`. Without `size` it is
+28px.
 
 ## Everything else
 
 | What | Components |
 |---|---|
-| Page scaffolding | `AppShell` `AppShellNavLink` `PageContainer` `PageHeader` `Surface` `Well` `StatGrid` |
+| Page scaffolding | `AppShell` `AppShellNavLink` `PageContainer` `PageHeader` `Surface` `IconTile` `Well` `StatGrid` |
 | Decorative | `BrandMesh` (drifting brand gradient) `GradientText` |
 | States | `EmptyState` `StatTile` `Callout` `Skeleton` `Progress` |
 | Type | `PageTitle` `SectionTitle` `CardTitle` `EntityName` `Body` `Meta` `Eyebrow` `SectionLabel` `Code` `DataLabel` |
@@ -362,6 +383,39 @@ take the soft accent when `active`; use `asChild` to wrap your router's link.
 A filter group is a `SegmentedControl`; a row of `StatTile`s goes in a
 `StatGrid`, which is two columns on a phone and lets an odd last tile span both
 so nothing dangles.
+
+A panel with a name is a `Surface` with a `title`: the header strip (title,
+optional `description`, `icon` and right-aligned `actions`) sits on the well
+and the content on its own sheet below. Use it for a table, a chart or a list;
+pass `padded={false}` when the content brings its own edges, as a `DataTable`
+does. `framed={false}` keeps the header inside the one sheet.
+
+```tsx
+<Surface title="Accounts" description="62 accounts" padded={false}
+         actions={<Button variant="secondary" size="sm">Export</Button>}>
+  <DataTable … />
+</Surface>
+```
+
+`Progress` with a `target` is plan against actual: a hatched bar for the plan
+over a solid bar for `value`, with anything past the plan hatched in the danger
+colour. Give a group of them the same `max` so their lengths compare.
+
+```tsx
+<Progress aria-label="Outreach" value={72} target={60} max={100} />
+```
+
+The textures the components use are plain classes, for the rare case you need
+one yourself. Each goes on an absolutely positioned, `aria-hidden` layer inside
+an `isolate` parent, behind the content:
+
+| Class | Use |
+|---|---|
+| `bg-dot-grid` | The empty part of a screen — an empty state, an idle panel. Never behind a table or body text. `dot-grid-right` pins it to the right edge |
+| `noise-grain` | Grain over a gradient strip or a solid fill |
+| `diagonal-fade` | Fine diagonal lines fading in toward the bottom-right, in the element's text colour |
+| `bg-hatch` (+ `hatch-soft`) | A hatched fill in the element's text colour: "not the settled number" |
+| `animate-bar-grow` | A chart bar growing from its baseline; stagger with `animation-delay` |
 
 ```tsx
 <AppShell
@@ -595,7 +649,9 @@ the kit supply the language. Two depths:
   and, when the brand has one, the top bar. Trayo contributes what makes it
   recognisably Trayo: the components, pill buttons, type roles, radius, grain,
   motion and status colours. Dark mode keeps the kit's dark ladder tinted with
-  the brand's hue.
+  the brand's hue. The warm peach glow in the page's top-right corner is
+  Trayo's own colour, so a branded page drops it; the cool glow takes the
+  brand's primary.
 - **Accent only** (`surfaces: 'trayo'`): the page, cards and text stay the
   kit's cream; only the accent, charts and chrome take the brand.
 
