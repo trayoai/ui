@@ -233,7 +233,7 @@ function ToastCard({ item }: { item: ToastItem }) {
       data-variant={item.variant ?? 'default'}
       data-state={item.open ? 'open' : 'closed'}
       className={cn(
-        'pointer-events-auto flex w-full items-start gap-3 rounded-[var(--radius)] border border-border-subtle bg-surface-card bg-[image:var(--gradient-card)] p-3 pr-2 shadow-[var(--shadow-card-hover)]',
+        'pointer-events-auto flex w-full items-start gap-3 rounded-[var(--radius)] border border-border-subtle bg-surface-card bg-[image:var(--gradient-card)] p-3 pr-2 shadow-[var(--shadow-toast)]',
         item.open ? 'animate-toast-in' : 'animate-toast-out'
       )}
     >

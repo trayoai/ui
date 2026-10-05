@@ -169,7 +169,7 @@ export function IconTile({ className, ...props }: React.ComponentProps<'span'>) 
     <span
       data-slot='icon-tile'
       className={cn(
-        'flex size-9 shrink-0 items-center justify-center rounded-md border border-border-subtle bg-surface-card text-text-secondary shadow-xs [&_svg]:size-4',
+        'flex size-9 shrink-0 items-center justify-center rounded-md border border-border-subtle bg-surface-card text-text-secondary [&_svg]:size-4',
         className
       )}
       {...props}
@@ -302,7 +302,9 @@ export function Well({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot='well'
       className={cn(
-        'rounded-lg border border-border-subtle bg-surface-well p-3',
+        // `well-gradient` over the flat well: the same light-to-well fade as
+        // the card footer and panel header strips (styles/animations.css).
+        'well-gradient rounded-lg border border-border-subtle bg-surface-well p-3',
         className
       )}
       {...props}
@@ -411,7 +413,7 @@ export function EmptyState({
       {icon && (
         // Dashed, like the state's own outline: the tile reads as a placeholder
         // for what is missing rather than as a button.
-        <IconTile className='size-10 border-dashed border-border-strong text-accent-text shadow-none [&_svg]:size-5'>
+        <IconTile className='size-10 border-dashed border-border-strong text-accent-text [&_svg]:size-5'>
           {icon}
         </IconTile>
       )}

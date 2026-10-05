@@ -127,6 +127,9 @@ export function Person({
       personId={person.id}
       size={avatarSize}
       contacted={contacted}
+      // Stacked only: the avatar leads the block, so it takes the same offset
+      // ring as the PersonCard avatar. The 4px margin is the ring's reach.
+      className={variant === 'stacked' ? 'avatar-ring-gap m-1' : undefined}
     />
   )
 
@@ -278,6 +281,10 @@ export function PersonCard({
           personId={person.id}
           size='xl'
           contacted={contacted}
+          // Offset ring, cards only. It paints 4px outside the avatar, so the
+          // margin gives that back: the ring's outer edge sits on the card's
+          // 16px inset and keeps the usual 12px from the name.
+          className='avatar-ring-gap m-1'
         />
         <div className='flex min-w-0 flex-1 flex-col gap-0.5'>
           {href ? (

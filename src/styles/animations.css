@@ -155,8 +155,9 @@
   }
 }
 
-/* The well strip beside a sheet (the footer of <PersonCard> / <CompanyCard>,
-   the header of a titled <Surface>): the counterpart of the sheet's `--gradient-card`, in the
+/* The well gradient — the strip beside a sheet (the footer of <PersonCard> /
+   <CompanyCard>, the header of a titled <Surface>) and the inset <Well>
+   panel: the counterpart of the sheet's `--gradient-card`, in the
    same 160deg direction. The well colour is the DARK end, bottom-right; the
    top-left is a lighter version of it, mixed halfway toward the card surface.
    Mixed at the element from the surface tokens, so it flips with the theme
@@ -183,6 +184,43 @@
     background-repeat: repeat;
     opacity: 0.7;
     mix-blend-mode: soft-light;
+  }
+}
+
+/* Avatar offset ring — for the one avatar that leads a block (PersonCard,
+   and the stacked <Person>).
+   Two stacked box-shadow spreads, so it paints outside the box and costs no
+   layout: the first, in the card's own surface colour, is the gap; the
+   second, larger one is the ring that shows beyond it. The ring is neutral
+   (the strong hairline tone) so it frames the face without competing with
+   the card's one accent-coloured action. Not for rows or tables: repeated
+   down a list it turns every face into a call to action. */
+@layer components {
+  .avatar-ring-gap {
+    --avatar-gap: 2px;
+    --avatar-ring: 2px;
+    border-radius: 9999px;
+    box-shadow:
+      0 0 0 var(--avatar-gap) var(--surface-card),
+      0 0 0 calc(var(--avatar-gap) + var(--avatar-ring)) var(--border-strong);
+  }
+}
+
+/* Diagonal texture: the trayo.ai website cards' pattern (its
+   `diagonal-pattern.svg` — 1px lines on an 8px tile), applied the way the
+   site applies it: masked on a 115deg slope so the first half of the panel
+   stays clean for the text and the lines fade in toward the bottom-right.
+   The lines are a faint tint of the element's text colour, so a `text-*`
+   class sets the tone. Use it on an absolutely positioned, aria-hidden layer
+   inside an `isolate overflow-hidden` parent. */
+@layer components {
+  .diagonal-fade {
+    background-image: repeating-linear-gradient(
+      135deg,
+      color-mix(in oklab, currentColor 22%, transparent) 0 1px,
+      transparent 1px 5.66px
+    );
+    mask-image: linear-gradient(115deg, transparent 45%, black);
   }
 }
 

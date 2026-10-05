@@ -351,6 +351,14 @@
     0 14.2px 17.8px -1.9px rgb(132 106 42 / 0.075),
     0 28px 35px -2.5px rgb(132 106 42 / 0.075);
   --shadow-card-hover: 0 0 0 1px rgb(120 90 40 / 0.24), var(--shadow-card-float);
+  /* A toast: it floats over the page, so it gets more lift than a raised
+     sheet, but less than the card hover float — no 28px layer, and each layer
+     a little lighter, because toasts stack and their shadows add up. No ring:
+     the toast has a real border. */
+  --shadow-toast: 0 1px 1.2px rgb(132 106 42 / 0.05),
+    0 2.9px 3.6px -0.6px rgb(132 106 42 / 0.05),
+    0 6.6px 8.3px -1.2px rgb(132 106 42 / 0.05),
+    0 14.2px 17.8px -1.9px rgb(132 106 42 / 0.05);
   /* A sheet that is ALWAYS raised (the body of a card with a footer strip):
      the first two layers of the float only, a touch lighter, so it stands
      off its frame by a hairline of shade rather than a visible drop. */
@@ -781,6 +789,10 @@
     0 14.2px 17.8px -1.9px rgb(0 0 0 / 0.2),
     0 28px 35px -2.5px rgb(0 0 0 / 0.2);
   --shadow-card-hover: inset 0 0 0 1px rgba(255, 255, 255, 0.10), var(--shadow-card-float);
+  --shadow-toast: 0 1px 1.2px rgb(0 0 0 / 0.16),
+    0 2.9px 3.6px -0.6px rgb(0 0 0 / 0.16),
+    0 6.6px 8.3px -1.2px rgb(0 0 0 / 0.16),
+    0 14.2px 17.8px -1.9px rgb(0 0 0 / 0.16);
   --shadow-card-raised: 0 1px 1.2px rgb(0 0 0 / 0.16),
     0 2.9px 3.6px -0.6px rgb(0 0 0 / 0.16);
   --shadow-card-raised-up: 0 -1px 1.2px rgb(0 0 0 / 0.16),
