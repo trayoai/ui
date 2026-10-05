@@ -207,6 +207,14 @@
   --gradient-avatar-teal:   linear-gradient(135deg, #5EEAD4, #14B8A6);
   --gradient-avatar-amber:  linear-gradient(135deg, #FCD34D, #F59E0B);
   --gradient-avatar-rose:   linear-gradient(135deg, #FDA4AF, #F43F5E);
+  /* The hue behind each <ToneAvatar> tone. The avatar does not paint these
+     directly: it mixes one into the card surface for the fill and into the
+     primary text for the initials, so a single hue gives a pale tint with
+     dark letters in light and a deep tint with light letters in dark. */
+  --avatar-tone-violet: #7C3AED;
+  --avatar-tone-blue:   #2563EB;
+  --avatar-tone-amber:  #D97706;
+  --avatar-tone-rose:   #E11D48;
 
   /* Logo avatar fallback fill — solid warm orange; theme-invariant. */
   --color-avatar-fallback: #e8a371;

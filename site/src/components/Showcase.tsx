@@ -1194,10 +1194,15 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                 note='For non-person identities.'
                 component='<ToneAvatar>'
               >
-                <Panel className='flex items-center'>
+                <Panel className='flex flex-col justify-center gap-4'>
                   <div className='flex gap-2'>
-                    {(['neutral', 'violet', 'teal', 'amber', 'rose', 'brand'] as const).map((t) => (
+                    {(['neutral', 'violet', 'blue', 'amber', 'rose', 'brand'] as const).map((t) => (
                       <ToneAvatar key={t} name='Ada Lovelace' tone={t} />
+                    ))}
+                  </div>
+                  <div className='flex items-end gap-2'>
+                    {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((s) => (
+                      <ToneAvatar key={s} name='Ada Lovelace' tone='violet' size={s} />
                     ))}
                   </div>
                 </Panel>

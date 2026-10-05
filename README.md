@@ -337,7 +337,7 @@ works too, but `domain` alone is the common and better case.
 ```tsx
 <PersonAvatar name="Dana Whitfield" personId="p-1" src={photo} size="lg" contacted />
 <CompanyLogo name="Ramp" domain="ramp.com" size="md" />
-<ToneAvatar name="Ada Lovelace" tone="violet" />   // non-person identities: teams, workspaces, bots
+<ToneAvatar name="Ada Lovelace" tone="violet" size="md" />   // non-person identities: teams, workspaces, bots
 ```
 
 Sizes: `2xs xs sm md lg xl 2xl`.
