@@ -295,12 +295,13 @@ export function PersonCard({
             <span className='text-card-title truncate text-text-primary'>{person.name}</span>
           )}
           {person.title && <span className='text-body-sm truncate text-text-secondary'>{person.title}</span>}
-          {/* Company and location share one line; the location is the part
-              that gives way (truncates) when the card is narrow. */}
+          {/* Company and location share one line. The location gives way
+              first (it shrinks far faster, down to its pin); once it has, a
+              company name too long for the card truncates as well. */}
           {(person.company || person.location) && (
             <span className='mt-1 flex min-w-0 items-center gap-2'>
               {person.company && (
-                <span className='inline-flex min-w-0 shrink-0 items-center gap-1.5'>
+                <span className='inline-flex min-w-0 items-center gap-1.5'>
                   <CompanyLogo name={person.company} domain={person.companyDomain} size='sm' />
                   <span className='text-body-sm truncate text-text-secondary'>{person.company}</span>
                 </span>
@@ -309,7 +310,7 @@ export function PersonCard({
                 <span aria-hidden className='text-text-muted'>·</span>
               )}
               {person.location && (
-                <span className='text-meta inline-flex min-w-0 items-center gap-1'>
+                <span className='text-meta inline-flex min-w-3 shrink-[999] items-center gap-1'>
                   <MapPin className='size-3 shrink-0' />
                   <span className='truncate'>{person.location}</span>
                 </span>

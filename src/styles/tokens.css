@@ -926,9 +926,10 @@
 
    What a brand does NOT change (Trayo DNA): page and card surfaces, grain,
    text outside shell regions, status
-   colours, charts, radius, pill buttons, typography, the warm glow layers
-   and --gradient-cta. Without `data-brand` every token below keeps the
-   Trayo value, byte for byte.
+   colours, charts, radius, pill buttons, typography and --gradient-cta.
+   (The warm shell glow is the exception: it is Trayo's peach, so
+   `--shell-glow-warm-alpha` is 0 under a brand.) Without `data-brand` every
+   token below keeps the Trayo value, byte for byte.
 
    Fallbacks: an agent that sets only --brand-primary still gets a working
    theme — controls derived by the browser, without the resolver's contrast

@@ -64,7 +64,8 @@ the wrong place or not at all. Nothing errors at build time.
 1. **Rendering a person? Use `<Person>` or `<PersonCard>`.** Never assemble an
    `<img>` + a name yourself. The component handles the photo, the
    cross-origin failures, and the illustrated fallback face. A person must
-   always end up with a face, never initials.
+   always end up with a face, never initials. The one person a page or drawer
+   is about gets `<PersonBanner>` at the top — one per screen, never in a list.
 
 2. **Rendering a company? Use `<Company>` or `<CompanyCard>`.** Pass the
    `domain`; the logo resolves itself. Never hand-write a logo `<img>` or an
@@ -100,7 +101,9 @@ the wrong place or not at all. Nothing errors at build time.
 10. **A tool is not a landing page.** `<GradientText>` is for one phrase in a
     hero; `<BrandMesh>` for one hero or empty state. Not on a page title, not
     behind a table or a stat strip. `<PageHeader>` with a plain title is the
-    default.
+    default. The same goes for the textures: `bg-dot-grid` fills the empty
+    part of a screen (an empty state, an idle panel), never the space behind
+    a table or body text.
 
 11. **Notes go in `<Callout>`.** "How this was built", a coverage caveat, a
     data limit, a target met: `<Callout tone="note|info|success|warning|destructive">`,
@@ -113,7 +116,11 @@ the wrong place or not at all. Nothing errors at build time.
 13. **Page scaffolding is provided.** View links in `<AppShell nav>` as
     `<AppShellNavLink>`s; filter groups are a `<SegmentedControl>` with counts;
     stat strips sit in a `<StatGrid>`. Contact rows are `<PersonContactLinks>`,
-    firmographics are `<CompanyMeta>`.
+    firmographics are `<CompanyMeta>`. A panel with a name — a table, a chart,
+    a list — is `<Surface title description actions>` (`padded={false}` around
+    a `DataTable`), never a hand-built card header. Give each DataTable column
+    a `skeleton` shape (`person` | `company` | `badge`) so loading rows match
+    the cells.
 
 14. **Long lists are paged.** Over ~50 rows, pass DataTable's `pagination`
     prop (client-side without `total`, server-side with it) or render
@@ -122,7 +129,8 @@ the wrong place or not at all. Nothing errors at build time.
 15. **Charts use the chart tokens.** `bg-chart-1`…`5` / `CHART_COLORS[i]`
     for series, `CHART_SEQUENTIAL` for intensity, `CHART_MUTED` for
     out-of-scope, `<DataLabel>` (`text-data-label`) for labels, `<ChartLegend>`
-    for the key.
+    for the key. Plan against actual is `<Progress value target max>`, not a
+    hand-drawn pair of bars.
     Never a hex, never `text-[10px]`.
 
 16. **Button variants are** `default | secondary | tertiary | quiet |
@@ -142,10 +150,11 @@ the wrong place or not at all. Nothing errors at build time.
     (`plain` | `editorial` | `tinted` | `compact`, or an object) and never
     mix its options within a screen. For the brand on a surface — a selected
     row, a stat strip, a side panel — use `bg-container
-    text-container-foreground`, never a hand-mixed tint. Never hand-set
+    text-container-foreground`, never a hand-mixed tint (`<PersonBanner>` is
+    the one solid brand band, and it is built in). Never hand-set
     `--brand-*` or `--accent-*`, and never adjust a colour for contrast — the
-    resolver does. Status colours, type, radius and the warm glow stay the
-    kit's in every brand.
+    resolver does. Status colours, type and radius stay the kit's in every
+    brand; the warm corner glow is Trayo's own and a branded page drops it.
 
 The files are yours once copied, so editing them is allowed. Prefer extending a
 variant over forking a component, and keep the token vocabulary intact.

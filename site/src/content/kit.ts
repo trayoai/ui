@@ -109,10 +109,10 @@ export const VALUE = [
 
 export const RULES = [
   // Entities
-  'Rendering a person? Use `<Person>` or `<PersonCard>`. Never hand-assemble an avatar and a name — a person always gets a face, never initials. Email, phone and LinkedIn rows are `<PersonContactLinks>`, not your own icon row.',
+  'Rendering a person? Use `<Person>` or `<PersonCard>`. Never hand-assemble an avatar and a name — a person always gets a face, never initials. Email, phone and LinkedIn rows are `<PersonContactLinks>`, not your own icon row. The one person a page or drawer is about gets `<PersonBanner>` at the top: one per screen, never in a list.',
   'Rendering a company? Use `<Company>` or `<CompanyCard>`. Pass `domain` and the logo resolves itself; never hand-write a logo `<img>`. Industry, headcount and location under a company are `<CompanyMeta>`.',
   // Page
-  'Wrap the app in `<AppShell>`. Without it the page reads as generic Tailwind. View switching goes in `<AppShell nav={…}>` as `<AppShellNavLink>`s; a filter group ("All 59 · Red 3 · Amber 7") is a `<SegmentedControl>` with `count`s; a row of `<StatTile>`s sits in a `<StatGrid>`. Do not hand-roll a top bar, a pill group or the stat grid classes.',
+  'Wrap the app in `<AppShell>`. Without it the page reads as generic Tailwind. View switching goes in `<AppShell nav={…}>` as `<AppShellNavLink>`s; a filter group ("All 59 · Red 3 · Amber 7") is a `<SegmentedControl>` with `count`s; a row of `<StatTile>`s sits in a `<StatGrid>`. Do not hand-roll a top bar, a pill group or the stat grid classes. A panel with a name (a table, a chart, a list) is `<Surface title description actions>`, with `padded={false}` around a `DataTable`, never a hand-built card header.',
   '`<GradientText>` is for one phrase in a hero and `<BrandMesh>` for one hero or empty state. Neither belongs on a data screen: not on the page title, not behind a table or a stat strip. A tool is not a landing page; `<PageHeader>` with a plain title is the default.',
   'Use the provided components before writing your own.',
   'Explanatory notes — "how this was built", coverage caveats, data limits, a target met — go in `<Callout>` (tones `note` `info` `success` `warning` `destructive`), not a hand-made bordered div or a `Surface` + `SectionLabel` + `Body` stack.',
