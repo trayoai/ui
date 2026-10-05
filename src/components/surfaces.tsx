@@ -249,7 +249,7 @@ export function Surface({
       {framed && (
         <span
           aria-hidden
-          className='noise-grain pointer-events-none absolute inset-0 -z-10 rounded-t-xl'
+          className='noise-grain pointer-events-none absolute inset-0 -z-10 rounded-t-xl opacity-50'
         />
       )}
       {icon != null && <IconTile>{icon}</IconTile>}

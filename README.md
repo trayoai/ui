@@ -303,6 +303,7 @@ gets the same face everywhere, forever. It never degrades to initials.
 <Person person={apiPerson} variant="stacked" />       // centred, for a tile
 <Person person={apiPerson} showContact contacted />   // email/phone/profile glyphs + a "we reached out" check
 <PersonCard person={apiPerson} summary="…" tags={['CISO']} footer={<Button size="sm">Reach out</Button>} />
+<PersonBanner person={apiPerson} actions={<Button variant="tertiary"><Mail /> Contact details</Button>} />  // brand-coloured header band, one per screen
 ```
 
 `PersonLike` is a loose superset of a `GET /v1/people` row, so an API response

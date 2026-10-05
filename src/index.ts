@@ -12,8 +12,8 @@
  */
 
 /* ---------------------------------------------------------------- entities */
-export { Person, PersonCard, PersonContactLinks, personPhotoUrl } from './components/person'
-export type { PersonLike, PersonProps, PersonCardProps } from './components/person'
+export { Person, PersonBanner, PersonCard, PersonContactLinks, personPhotoUrl } from './components/person'
+export type { PersonLike, PersonProps, PersonBannerProps, PersonCardProps } from './components/person'
 export { Company, CompanyCard, CompanyMeta } from './components/company'
 export type { CompanyLike, CompanyProps, CompanyCardProps } from './components/company'
 export { PersonAvatar, AVATAR_SIZES } from './components/person-avatar'

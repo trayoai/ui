@@ -5,6 +5,7 @@ import {
   Building2,
   Check,
   CheckCircle2,
+  Mail,
   Moon,
   Plus,
   Search,
@@ -38,6 +39,7 @@ import {
   PageTitle,
   Person,
   PersonAvatar,
+  PersonBanner,
   PersonCard,
   Progress,
   SectionTitle,
@@ -424,52 +426,34 @@ function DemoHeader({ compact }: { compact?: boolean }) {
 }
 
 /**
- * Light/dark toggle for the demo: a sun and a moon either side of the switch,
- * so both ends are named and the current one is lit. The icons are shortcuts
- * straight to their theme; the switch stays the single keyboard stop.
+ * Light/dark toggle for the demo: one round icon button showing the theme it
+ * switches TO — a moon in light, a sun in dark.
  */
-function ThemeSwitch({
+function ThemeToggle({
   dark,
   onChange,
 }: {
   dark: boolean
   onChange: (dark: boolean) => void
 }) {
-  const icon = (active: boolean) =>
-    cn(
-      'grid size-6 cursor-pointer place-items-center rounded-full transition-colors [&>svg]:size-4',
-      active ? 'text-accent-text' : 'text-text-muted hover:text-text-secondary'
-    )
   return (
-    <div className='flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface-card px-1.5 py-1'>
-      <button
-        type='button'
-        tabIndex={-1}
-        aria-label='Light theme'
-        className={icon(!dark)}
-        onClick={() => onChange(false)}
-      >
-        <Sun />
-      </button>
-      <Switch
-        checked={dark}
-        onCheckedChange={onChange}
-        aria-label='Dark theme'
-        // The library's off-state track is --input (the 14% hairline), which
-        // all but vanishes on a card; the strong border tone and a lifted
-        // thumb keep the control visible before it has ever been pressed.
-        className='data-[state=unchecked]:bg-border-strong dark:data-[state=unchecked]:bg-border-strong [&>span]:shadow-sm'
-      />
-      <button
-        type='button'
-        tabIndex={-1}
-        aria-label='Dark theme'
-        className={icon(dark)}
-        onClick={() => onChange(true)}
-      >
-        <Moon />
-      </button>
-    </div>
+    <Button
+      variant='tertiary'
+      size='icon-sm'
+      aria-label='Dark theme'
+      aria-pressed={dark}
+      title={dark ? 'Switch to light theme' : 'Switch to dark theme'}
+      // Hovering grows the button a touch while the icon turns a quarter and
+      // swells; pressing squeezes the button and spins it half a turn.
+      className={cn(
+        'bg-surface-card hover:scale-[1.08] active:scale-90 active:rotate-180 active:duration-200',
+        '[&_svg]:transition-transform [&_svg]:duration-350 [&_svg]:ease-out hover:[&_svg]:scale-115 hover:[&_svg]:rotate-90',
+        'motion-reduce:hover:scale-100 motion-reduce:active:scale-100 motion-reduce:active:rotate-0 motion-reduce:hover:[&_svg]:scale-100 motion-reduce:hover:[&_svg]:rotate-0'
+      )}
+      onClick={() => onChange(!dark)}
+    >
+      {dark ? <Sun /> : <Moon />}
+    </Button>
   )
 }
 
@@ -995,7 +979,7 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
               />
               Full
             </label>
-            <ThemeSwitch dark={dark} onChange={setDark} />
+            <ThemeToggle dark={dark} onChange={setDark} />
           </>
         }
       >
@@ -1244,6 +1228,22 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                     <Person person={PEOPLE[4]} variant='stacked' showContact />
                   </div>
                 </Panel>
+              </Specimen>
+
+              <Specimen
+                name='Person banner'
+                note='The header of a page about one person: brand fill, one action.'
+                component='<PersonBanner>'
+                className='lg:col-span-2'
+              >
+                <PersonBanner
+                  person={PEOPLE[0]}
+                  actions={
+                    <Button variant='tertiary'>
+                      <Mail /> Contact details
+                    </Button>
+                  }
+                />
               </Specimen>
             </div>
           </Section>

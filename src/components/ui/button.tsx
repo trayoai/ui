@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { Slot } from '@radix-ui/react-slot'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { Loader2 } from 'lucide-react'
 import { cn } from '../../lib/cn'
 
 /**
@@ -251,7 +250,10 @@ function Button({
   ...props
 }: ButtonProps) {
   const Comp = asChild ? Slot : 'button'
-  const spinner = <Loader2 className='animate-spin' aria-hidden />
+  // The comet spinner (`.spinner-comet`, styles/animations.css). It is an
+  // empty <svg> on purpose: the size variants above size any `svg` child, so
+  // it scales with the button like an icon, and the comet itself is CSS.
+  const spinner = <svg className='spinner-comet animate-spin' aria-hidden />
 
   return (
     <Comp

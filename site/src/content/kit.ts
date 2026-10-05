@@ -130,7 +130,7 @@ export const RULES = [
 ] as const
 
 export const INVENTORY = [
-  { group: 'Entities', items: 'Person, PersonCard, PersonContactLinks, Company, CompanyCard, CompanyMeta, PersonAvatar, CompanyLogo, ToneAvatar' },
+  { group: 'Entities', items: 'Person, PersonCard, PersonBanner, PersonContactLinks, Company, CompanyCard, CompanyMeta, PersonAvatar, CompanyLogo, ToneAvatar' },
   { group: 'Tables', items: 'DataTable (sortable, selectable, paged via `pagination`, skeleton loading), Pagination + usePagination, and the raw Table primitives' },
   { group: 'Page scaffolding', items: 'AppShell (with brand / nav / actions top bar), AppShellNavLink, PageContainer, PageHeader, Surface (title / description / icon / actions for a framed panel), IconTile, Well, StatGrid' },
   { group: 'Decorative', items: 'BrandMesh, GradientText' },

@@ -90,6 +90,32 @@
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
+/* Comet spinner — the loading mark in <Button loading>: a ring whose stroke
+   fades from nothing to solid, so it reads as a head with a trailing tail
+   rather than a fixed arc going round. Drawn entirely with backgrounds on one
+   element: a conic gradient for the tail, a dot for the rounded head, and a
+   radial mask that cuts the middle out into a ring. It takes the current text
+   colour, so it works on every button variant and brand. Pair it with
+   `animate-spin`. `--comet-w` is the stroke width. */
+@layer components {
+  .spinner-comet {
+    --comet-w: 2px;
+    border-radius: 9999px;
+    background:
+      radial-gradient(
+        circle calc(var(--comet-w) / 2) at 50% calc(var(--comet-w) / 2),
+        currentColor 96%,
+        transparent
+      ),
+      conic-gradient(from 0deg, transparent 12%, currentColor);
+    mask-image: radial-gradient(
+      farthest-side,
+      transparent calc(100% - var(--comet-w) - 0.5px),
+      #000 calc(100% - var(--comet-w))
+    );
+  }
+}
+
 /* Solid buttons (`default`, `destructive` in components/ui/button.tsx): the
    depth that makes the pill read as pressable rather than as a coloured label.
    - A sheen over the fill: lit from the top, a touch darker at the foot. It is
@@ -188,7 +214,7 @@
 }
 
 /* Avatar offset ring — for the one avatar that leads a block (PersonCard,
-   and the stacked <Person>).
+   the stacked <Person>, PersonBanner).
    Two stacked box-shadow spreads, so it paints outside the box and costs no
    layout: the first, in the card's own surface colour, is the gap; the
    second, larger one is the ring that shows beyond it. The ring is neutral
@@ -259,7 +285,10 @@
      --dot-size    reach of each dot: 7.5% = 3px across (default), 5% = 2px
      --dots-at     where the pattern is centred (default: center)
      --dots-reach  how far it extends: closest-side (default) | farthest-side
-   Use it on an absolutely positioned, aria-hidden layer behind the content. */
+   Use it on an absolutely positioned, aria-hidden layer behind the content.
+   Add `dot-grid-right` for the homepage cards' version instead of the ring:
+   full strength against the right edge, gone by the middle — for a band with
+   its content on the left (PersonBanner). */
 @layer components {
   .bg-dot-grid {
     --c: var(--dot, var(--border-strong));
@@ -277,6 +306,9 @@
       black 55%,
       transparent
     );
+  }
+  .dot-grid-right {
+    mask-image: linear-gradient(to left, black, transparent 55%);
   }
 }
 

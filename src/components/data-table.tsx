@@ -370,10 +370,13 @@ export function DataTable<T>({
                 // Applied to all rows (not just clickable) to override the base
                 // default uniformly; the pointer cursor stays gated on onRowClick.
                 'hover:bg-surface-well',
-                // The base TableRow ships `transition-colors` (~150ms), which makes
-                // the hover band fade in and feel laggy when sweeping the mouse down
-                // a dense table. Hover should be instant — kill the transition.
-                'transition-none',
+                // The hover band is asymmetric: it arrives fast (75ms) and
+                // lets go slowly (250ms). A symmetric fade (the base TableRow's
+                // ~150ms `transition-colors`) feels laggy when sweeping the
+                // mouse down a dense table, because every row is late; this
+                // way the row under the pointer answers at once and the rows
+                // behind it fade out as a soft trail.
+                'transition-colors duration-250 ease-out hover:duration-75',
                 onRowClick && 'cursor-pointer',
                 // Selected: match the base's `data-[state=selected]:` variant so
                 // tailwind-merge dedupes and our accent tint wins — a plain

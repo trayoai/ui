@@ -379,3 +379,84 @@ export function PersonCard({
     </div>
   )
 }
+
+/* ------------------------------------------------------------ PersonBanner */
+
+export interface PersonBannerProps {
+  person: PersonLike
+  /** Right-hand slot — one action. Use `<Button variant='tertiary'>`. */
+  actions?: React.ReactNode
+  contacted?: boolean
+  href?: string
+  className?: string
+}
+
+/**
+ * A person as the header of a page or drawer about them: a full-width band in
+ * the brand colour, with the face, the name at section size, the title, and
+ * one action on the right. One per screen, at the top; for a person in a list
+ * or grid use `<Person>` or `<PersonCard>`.
+ *
+ * The band is the brand fill (as a gradient into a deeper shade of itself)
+ * with its checked foreground, so it follows a
+ * customer palette. Inside it the text, hairline, well and ring tokens are
+ * repointed to that foreground, which is what lets a `tertiary` or `quiet`
+ * Button in `actions` read correctly on the fill without its own styling.
+ */
+export function PersonBanner({ person, actions, contacted, href, className }: PersonBannerProps) {
+  const subtitle = [person.title, person.company].filter(Boolean).join(' · ')
+  const nameClass = 'text-section truncate text-text-primary'
+  return (
+    <div
+      data-slot='person-banner'
+      className={cn(
+        // `relative isolate` holds the noise layer's -z-10 inside the band.
+        'relative isolate flex min-w-0 items-center gap-4 rounded-xl bg-accent-brand px-5 py-4 text-accent-brand-foreground',
+        // Same 160deg direction as the card and strip gradients: the brand
+        // fill at the top-left, where the name sits, deepening toward the
+        // bottom-right. It only ever darkens, so the foreground the resolver
+        // checked against the fill stays readable.
+        'bg-[image:linear-gradient(160deg,var(--accent-brand),color-mix(in_oklab,var(--accent-brand)_74%,black))]',
+        '[--text-primary:var(--accent-brand-foreground)]',
+        '[--text-secondary:var(--accent-brand-foreground)]',
+        '[--border-strong:color-mix(in_oklab,var(--accent-brand-foreground)_30%,transparent)]',
+        '[--surface-well:color-mix(in_oklab,var(--accent-brand-foreground)_12%,transparent)]',
+        '[--ring:var(--accent-brand-foreground)]',
+        className
+      )}
+    >
+      {/* The website cards' backdrop: the dot grid against the right edge,
+          in a tint of the band's foreground, under a layer of noise. */}
+      <span
+        aria-hidden
+        className='bg-dot-grid dot-grid-right pointer-events-none absolute inset-0 -z-10 rounded-xl [--dot-size:6%] [--dot:color-mix(in_oklab,var(--accent-brand-foreground)_40%,transparent)]'
+      />
+      <span
+        aria-hidden
+        // Half the class's 70%: on a saturated fill the full grain reads as dirt.
+        className='noise-grain pointer-events-none absolute inset-0 -z-10 rounded-xl opacity-35'
+      />
+      <PersonAvatar
+        name={person.name}
+        src={personPhotoUrl(person)}
+        personId={person.id}
+        size='xl'
+        contacted={contacted}
+        // The offset ring, retuned for the fill: the gap is the brand colour
+        // (not the card's), the ring a tint of the band's foreground.
+        className='avatar-ring-gap m-1 [--surface-card:var(--accent-brand)] [--border-strong:color-mix(in_oklab,var(--accent-brand-foreground)_55%,transparent)]'
+      />
+      <div className='flex min-w-0 flex-1 flex-col gap-0.5'>
+        {href ? (
+          <a href={href} className={cn(nameClass, 'hover:underline')}>
+            {person.name}
+          </a>
+        ) : (
+          <span className={nameClass}>{person.name}</span>
+        )}
+        {subtitle && <span className='text-body-sm truncate'>{subtitle}</span>}
+      </div>
+      {actions && <span className='flex shrink-0 items-center gap-2'>{actions}</span>}
+    </div>
+  )
+}
