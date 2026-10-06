@@ -341,6 +341,102 @@ describe('canvas strength', () => {
   })
 })
 
+describe("canvas 'neutral'", () => {
+  const linear = { primary: '#5e6ad2', background: '#f4f5f8', surface: '#ffffff', text: '#222326' }
+
+  it('keeps a neutral page and its cards as given', () => {
+    const p = resolveBrandPalette({ ...linear, canvas: 'neutral' })
+    expect(p.tokens['--brand-background']).toBe('#f4f5f8')
+    expect(p.tokens['--brand-surface']).toBe('#ffffff')
+    expect(p.adjustments.join(' ')).not.toMatch(/canvas takes the brand's hue/)
+  })
+
+  it("keeps the kit's dark slate, also when the ink has a hue", () => {
+    for (const text of ['#222326', '#1d1c4d']) {
+      const p = resolveBrandPalette({ ...linear, text, canvas: 'neutral' })
+      expect(p.tokens['--brand-background-dark']).toBe(TRAYO_SURFACES.dark.shell)
+      expect(p.tokens['--brand-surface-dark']).toBe(TRAYO_SURFACES.dark.card)
+    }
+  })
+
+  it('still keeps a chromatic page as given, with its hue in dark mode', () => {
+    const p = resolveBrandPalette({ primary: '#5e6ad2', background: '#fff4e0', canvas: 'neutral' })
+    expect(p.tokens['--brand-background']).toBe('#fff4e0')
+    expect(p.tokens['--brand-background-dark']).not.toBe(TRAYO_SURFACES.dark.shell)
+  })
+
+  it("is opt-in: the default is still the 'soft' tint", () => {
+    const byDefault = resolveBrandPalette(linear)
+    const soft = resolveBrandPalette({ ...linear, canvas: 'soft' })
+    expect(byDefault.tokens['--brand-background']).toBe(soft.tokens['--brand-background'])
+    expect(byDefault.tokens['--brand-background']).not.toBe('#f4f5f8')
+  })
+
+  it('is accepted by checkBrandPalette', () => {
+    expect(checkBrandPalette({ ...linear, canvas: 'neutral' })).toEqual([])
+  })
+})
+
+describe('dark surfaces (backgroundDark, surfaceDark)', () => {
+  const vercel = { primary: '#171717', background: '#ffffff', surface: '#ffffff', text: '#171717' }
+  const L = (hex: string) => toOklch(rgb(hex)).l
+
+  it('uses the given dark page and card as they are', () => {
+    const p = resolveBrandPalette({ ...vercel, backgroundDark: '#000000', surfaceDark: '#111111' })
+    expect(p.tokens['--brand-background-dark']).toBe('#000000')
+    expect(p.tokens['--brand-surface-dark']).toBe('#111111')
+  })
+
+  it('derives the card, well, row and raised steps from a dark page alone, in its hue', () => {
+    const p = resolveBrandPalette({ primary: '#5e6ad2', background: '#f4f5f8', backgroundDark: '#08090a' })
+    const page = L(p.tokens['--brand-background-dark']!)
+    const well = L(p.tokens['--brand-well-dark']!)
+    const card = L(p.tokens['--brand-surface-dark']!)
+    const row = L(p.tokens['--brand-row-dark']!)
+    const raised = L(p.tokens['--brand-raised-dark']!)
+    expect(p.tokens['--brand-background-dark']).toBe('#08090a')
+    expect(well).toBeGreaterThan(page)
+    expect(card).toBeGreaterThan(well)
+    expect(row).toBeGreaterThan(card)
+    expect(raised).toBeGreaterThan(row)
+    // A near-black page stays near-black: no brand hue is added to it.
+    expect(toOklch(rgb(p.tokens['--brand-surface-dark']!)).c).toBeLessThan(0.02)
+  })
+
+  it("keeps the kit's dark text readable on every given dark surface (7:1)", () => {
+    const p = resolveBrandPalette({ ...vercel, backgroundDark: '#1b1b29', surfaceDark: '#2a2a3d' })
+    for (const t of ['--brand-background-dark', '--brand-surface-dark', '--brand-well-dark', '--brand-raised-dark'] as const) {
+      expect(contrast(rgb(TRAYO_SURFACES.dark.text), rgb(p.tokens[t]!))).toBeGreaterThanOrEqual(7)
+    }
+  })
+
+  it('leaves the light theme and brands without the slots unchanged', () => {
+    const base = resolveBrandPalette(vercel)
+    const withDark = resolveBrandPalette({ ...vercel, backgroundDark: '#000000' })
+    expect(withDark.tokens['--brand-background']).toBe(base.tokens['--brand-background'])
+    expect(withDark.tokens['--brand-surface']).toBe(base.tokens['--brand-surface'])
+    expect(base.tokens['--brand-background-dark']).not.toBe('#000000')
+  })
+
+  it('rejects a dark slot that is not dark, or not hex', () => {
+    expect(checkBrandPalette({ ...vercel, backgroundDark: '#f4f5f8' })).toEqual([
+      expect.objectContaining({ slot: 'backgroundDark' })
+    ])
+    expect(checkBrandPalette({ ...vercel, surfaceDark: '#ffffff' })).toEqual([
+      expect.objectContaining({ slot: 'surfaceDark' })
+    ])
+    expect(checkBrandPalette({ ...vercel, backgroundDark: 'black' })).toEqual([
+      expect.objectContaining({ slot: 'backgroundDark' })
+    ])
+  })
+
+  it('ignores them, with a note, when the brand does not override the page', () => {
+    const p = resolveBrandPalette({ primary: '#171717', backgroundDark: '#000000' })
+    expect(p.tokens['--brand-background-dark']).toBeUndefined()
+    expect(p.adjustments.join(' ')).toMatch(/backgroundDark .* needs background/)
+  })
+})
+
 describe('shell slot', () => {
   const slack = resolveBrandPalette({ primary: '#611f69', shell: '#4a154b', secondary: '#36c5f0' })
   const t = slack.tokens
@@ -442,6 +538,45 @@ describe('supplied on-colours (onPrimary, onShell)', () => {
     expect(p.tokens['--brand-on-shell']).toBe('#ffffff')
     expect(p.adjustments.join(' ')).toMatch(/onPrimary #ffffff is under 4.5:1/)
     expect(p.adjustments.join(' ')).toMatch(/onShell #611f69 is under 4.5:1/)
+  })
+
+  it('deepens the fill a step when the supplied onPrimary narrowly misses, and keeps the text', () => {
+    // Vanta: white on #ac55ff is 3.8:1. The brand puts white on its purple,
+    // so the fill moves, not the text.
+    const p = resolveBrandPalette({ primary: '#ac55ff', onPrimary: '#ffffff' })
+    const fill = p.tokens['--brand-primary']
+    expect(p.tokens['--brand-on-primary']).toBe('#ffffff')
+    expect(fill).not.toBe('#ac55ff')
+    expect(contrast(rgb('#ffffff'), rgb(fill))).toBeGreaterThanOrEqual(TEXT_CONTRAST)
+    // A small step of the same colour: hue kept, lightness within 0.06.
+    const from = toOklch(rgb('#ac55ff'))
+    const to = toOklch(rgb(fill))
+    expect(Math.abs(to.h - from.h)).toBeLessThan(3)
+    expect(from.l - to.l).toBeGreaterThan(0)
+    expect(from.l - to.l).toBeLessThan(0.06)
+    expect(p.adjustments.join(' ')).toMatch(/primary #ac55ff is under 4.5:1 with onPrimary #ffffff/)
+  })
+
+  it('lightens the fill instead when the supplied onPrimary is the darker of the two', () => {
+    const p = resolveBrandPalette({ primary: '#7a5cff', onPrimary: '#141414' })
+    const fill = p.tokens['--brand-primary']
+    expect(contrast(rgb('#141414'), rgb('#7a5cff'))).toBeLessThan(TEXT_CONTRAST)
+    expect(p.tokens['--brand-on-primary']).toBe('#141414')
+    expect(toOklch(rgb(fill)).l).toBeGreaterThan(toOklch(rgb('#7a5cff')).l)
+    expect(contrast(rgb('#141414'), rgb(fill))).toBeGreaterThanOrEqual(TEXT_CONTRAST)
+  })
+
+  it('leaves the fill alone when the supplied onPrimary is far off (under 3:1)', () => {
+    // Snowflake: white on #29b5e8 is 2.4:1; forcing it would turn the cyan teal.
+    const p = resolveBrandPalette({ primary: '#29b5e8', onPrimary: '#ffffff' })
+    expect(p.tokens['--brand-primary']).toBe('#29b5e8')
+    expect(p.tokens['--brand-on-primary']).toBe(TRAYO_SURFACES.light.text)
+    expect(p.adjustments.join(' ')).toMatch(/onPrimary #ffffff is under 4.5:1/)
+  })
+
+  it('leaves the fill alone when no onPrimary is supplied', () => {
+    const p = resolveBrandPalette({ primary: '#ac55ff' })
+    expect(p.tokens['--brand-primary']).toBe('#ac55ff')
   })
 
   it('rejects a supplied colour that is not hex', () => {

@@ -87,6 +87,16 @@ describe('fromBrandThemeContract', () => {
     ).toBeNull()
   })
 
+  it('passes the dark page and card through with the surface override, and drops them without it', () => {
+    const contract = { ...slack, backgroundDark: '#000000', surfaceDark: '#111111' }
+    const brand = fromBrandThemeContract(contract).input
+    expect(brand.backgroundDark).toBe('#000000')
+    expect(brand.surfaceDark).toBe('#111111')
+    const trayo = fromBrandThemeContract(contract, { surfaces: 'trayo' }).input
+    expect(trayo.backgroundDark).toBeUndefined()
+    expect(trayo.surfaceDark).toBeUndefined()
+  })
+
   it('passes the page and text through by default: the company styling is the canvas', () => {
     const { input, notes } = fromBrandThemeContract(slack)
     expect(input).toMatchObject({

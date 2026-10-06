@@ -25,6 +25,8 @@ export type BrandSlotName =
   | 'surface'
   | 'text'
   | 'mutedText'
+  | 'backgroundDark'
+  | 'surfaceDark'
   | 'accents'
 
 export interface BrandSlot {
@@ -52,8 +54,9 @@ export const BRAND_SLOTS: Readonly<Record<BrandSlotName, BrandSlot>> = {
     required: false,
     role: 'Text and icons on a primary fill.',
     choose:
-      "Usually #ffffff, or the brand's ink on a light primary. It is kept only when it reads at 4.5:1 on " +
-      'primary; otherwise white or ink is chosen for you, so do not adjust it for contrast.'
+      "Usually #ffffff, or the brand's ink on a light primary: the colour the brand itself puts on " +
+      'primary. It is kept when it reads at 4.5:1 on primary; on a narrow miss primary takes a small step ' +
+      'until it does, and further off white or ink is chosen for you. Do not adjust it for contrast.'
   },
   secondary: {
     cssVar: '--brand-secondary',
@@ -120,6 +123,21 @@ export const BRAND_SLOTS: Readonly<Record<BrandSlotName, BrandSlot>> = {
     required: false,
     role: 'Supporting text; the muted (meta) tone is derived as a lighter step of it.',
     choose: "The brand's secondary text colour. Darkened if it does not read at 4.5:1 on every surface."
+  },
+  backgroundDark: {
+    cssVar: '--brand-background-dark',
+    required: false,
+    role:
+      "The page in dark mode, used as given. Without it dark mode is Trayo's dark ladder in the brand's hue.",
+    choose:
+      "Set it only when the brand's own dark theme is known and is not simply a dark tint of its colour " +
+      "(Vercel's #000000, Linear's #08090a). It must be dark, and needs background. Otherwise omit it."
+  },
+  surfaceDark: {
+    cssVar: '--brand-surface-dark',
+    required: false,
+    role: 'Cards and panels in dark mode, used as given. Defaults to a step above backgroundDark.',
+    choose: "The brand's dark card colour, a little lighter than backgroundDark. Omit it when unknown."
   },
   accents: {
     cssVar: '--brand-chart-2',
@@ -265,7 +283,8 @@ export function brandSlotsAgentGuide(): string {
     'Answer with JSON, hex colours only:',
     '{"primary": "#rrggbb", "onPrimary": "#rrggbb", "shell": "#rrggbb" | null, "onShell": "#rrggbb" | null,',
     ' "background": "#rrggbb", "surface": "#rrggbb", "text": "#rrggbb", "mutedText": "#rrggbb",',
-    ' "accents": ["#rrggbb", ...], "primaryDark": "#rrggbb" | null, "rationale": "<one sentence>"}',
+    ' "accents": ["#rrggbb", ...], "primaryDark": "#rrggbb" | null,',
+    ' "backgroundDark": "#rrggbb" | null, "surfaceDark": "#rrggbb" | null, "rationale": "<one sentence>"}',
     'Contrast, tints, hover states, borders and dark mode are derived for you; never adjust a colour for contrast.',
     ''
   ]
