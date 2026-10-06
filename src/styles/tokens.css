@@ -916,6 +916,9 @@
      (optional, together) The complete override: the page, cards and text take
      the brand's colours when <html> also carries data-brand-surfaces. Omit
      them and the page stays Trayo's cream.
+   @slot --brand-background-dark --brand-surface-dark (optional) The brand's
+     own dark page and card, used as given (Vercel's black). Derived from the
+     brand's hue otherwise.
    @slot --brand-chart-2..5 (optional) The brand's accents as chart series
      2–5; series 1 is primary.
    @slot --brand-shell (optional) The brand's own product chrome (Slack's

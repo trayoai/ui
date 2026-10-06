@@ -671,6 +671,8 @@ const palette = applyBrand(document, contract, { theme: 'light', dialect: 'edito
 console.log(palette.theme, palette.adjustments)
 ```
 
+**Canvas.** A page given as white or grey takes the brand's hue as a soft tint by default, and dark mode is built in that hue. Pass `canvas: 'vibrant'` for a stronger tint, or `canvas: 'neutral'` to keep the page and cards exactly as given and dark mode on the kit's own slate, so the brand colour shows only on controls and accents. A page that already has a colour is kept as given in every case.
+
 **Container tone.** Every palette carries the brand's container (Material's `primaryContainer`: tone 90 with tone-10 text; 30/90 in dark) and a tertiary one, as `bg-container text-container-foreground` and `bg-container-tertiary …`. Use them where the brand should sit on a surface — a selected row, a stat strip, a side panel — with readable text guaranteed. `canvas: 'vibrant'` tints a neutral page harder than the default `'soft'`, still 7:1 for text.
 
 **Dialects.** Component-level choices an app commits to once and the kit applies everywhere: `callout` (bar-left / bar-right / filled / outlined), `card` (flat / hairline / lifted / tinted), `table` (zebra / cards / dense / tinted-head), `button` (soft / outline), `tile` (tinted / big-number). Two apps in different dialects feel like different products at full size; one app never mixes them. Pass a preset (`plain`, `editorial`, `tinted`, `compact`) or an object to `applyBrand`, or set `dialectAttributes(dialect)` on `<html>` yourself. `dialectAgentGuide()` documents the axes for an agent. None of them touch the pill buttons, type roles, faces or grain.
@@ -684,7 +686,8 @@ that prompt):
 | Field | | Role |
 |---|---|---|
 | `primary` | required | The colour the company is known for. A black-and-white brand uses its black. Chart series 1. |
-| `onPrimary` | optional | Text on primary; kept only when it reads at 4.5:1. |
+| `onPrimary` | optional | Text on primary, as the brand itself pairs them. Kept when it reads at 4.5:1; on a narrow miss (3:1 or better) primary takes a small lightness step until it does; further off, white or ink replaces it. |
+| `backgroundDark` / `surfaceDark` | optional | The brand's own dark-mode page and cards, used as given (Vercel's black, Linear's near-black). Without them dark mode is derived from the brand's hue. They need `background`. |
 | `shell` / `onShell` | optional | The brand's own product chrome (Slack's aubergine) — paints the `AppShell` top bar. Omit when that chrome is white. |
 | `accents[]` | optional | Chart series 2–5, in order (missing ones filled from the kit's series, skipping hues already taken); the first is also the decorative secondary (gradient end, mesh). |
 | `background` `surface` `text` `mutedText` | optional | Page, cards, main and supporting text. Left out with `surfaces: 'trayo'`. |
@@ -712,7 +715,9 @@ for (const [k, v] of Object.entries(brandAttributes(palette))) document.document
 What the resolver guarantees, so you never adjust a colour for contrast:
 
 - text on a brand fill reads at 4.5:1, white or ink picked for you (a supplied
-  `onPrimary`/`onShell` is kept only when it reads);
+  `onPrimary`/`onShell` is kept only when it reads; an `onPrimary` that
+  narrowly misses is kept and the fill takes a small step instead, so Vanta's
+  white stays on its purple);
 - accent text and links are a darker step of the brand where the brand itself
   is too light (yellow, sky blue) — the fill keeps the brand colour;
 - dark mode lifts the fill until it stands out; a black-and-white brand fills

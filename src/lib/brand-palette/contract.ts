@@ -27,6 +27,10 @@ export interface BrandThemeContract {
   accents?: string[]
   /** Optional: the brand's own dark-mode fill. */
   primaryDark?: string | null
+  /** Optional: the brand's own dark-mode page, when it is not a tint of its colour. */
+  backgroundDark?: string | null
+  /** Optional: the brand's own dark-mode cards. */
+  surfaceDark?: string | null
 }
 
 /** The page-and-text fields; left out with `surfaces: 'trayo'`. */
@@ -106,6 +110,8 @@ export function fromBrandThemeContract(
     input.surface = contract.surface
     input.text = contract.text
     input.mutedText = contract.mutedText
+    if (contract.backgroundDark) input.backgroundDark = contract.backgroundDark
+    if (contract.surfaceDark) input.surfaceDark = contract.surfaceDark
   } else {
     for (const field of CONTRACT_SURFACE_FIELDS) {
       notes.push(

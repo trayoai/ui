@@ -68,10 +68,12 @@ const LIGHT_PAGE_L = 0.8
 /**
  * The canvas carries the brand: a neutral page (most contracts say #ffffff)
  * takes the primary's hue as a soft tint so two brands never share a
- * background, and dark surfaces tint the same way, more visibly.
+ * background, and dark surfaces tint the same way, more visibly. `neutral`
+ * opts out: the page is kept as given and dark mode keeps Trayo's slate.
  */
 // sRGB allows less than these for some hues this light; fromOklch clips.
 const CANVAS = {
+  neutral: null,
   soft: { chroma: 0.024, maxL: 0.965 }, // Material's neutral range
   vibrant: { chroma: 0.04, maxL: 0.945 } // Material's "vibrant" neutrals; still 7:1 for ink
 } as const
@@ -79,6 +81,10 @@ const CANVAS = {
 const CONTAINER_L = { light: 0.9, dark: 0.35 }
 const CONTAINER_MAX_CHROMA = { light: 0.08, dark: 0.1 }
 const DARK_SURFACE_CHROMA = 0.045
+/** OKLCH lightness above which a given dark page or card is not a dark theme. */
+const DARK_PAGE_MAX_L = { backgroundDark: 0.3, surfaceDark: 0.36 }
+/** A given dark page's own ladder: lightness steps above it (card) and above the card. */
+const GIVEN_DARK_STEP = { well: 0.034, card: 0.05, row: 0.05, raised: 0.09 }
 /** A surface with less chroma than this is neutral and eligible for the tint. */
 const NEUTRAL_SURFACE_CHROMA = 0.01
 /** Series 2–5 come from the accents, then from Trayo's own series. */
@@ -130,9 +136,21 @@ export interface BrandPaletteInput {
    * Optional text colours from a palette that already names them (the brand
    * theme contract). Used only when they clear 4.5:1 on their fill; the
    * derived colour replaces them otherwise, with a note in `adjustments`.
+   * One exception: an `onPrimary` that clears 3:1 is kept and the primary
+   * takes a small lightness step until the pair reads.
    */
   onPrimary?: string | null
   onShell?: string | null
+  /**
+   * The brand's own dark-mode page and card, for a brand whose dark theme is
+   * not a tint of its hue (Vercel's black, Linear's near-black). Used as
+   * given; the well, hover row and raised surface are steps above them.
+   * `surfaceDark` defaults to a step above `backgroundDark`. They belong to
+   * the surface override, so they need `background`; without either, dark
+   * mode is derived as before.
+   */
+  backgroundDark?: string | null
+  surfaceDark?: string | null
   /**
    * The complete override: the page, cards and text take the brand's colours
    * instead of Trayo's. `background` switches it on; the others default from it.
@@ -151,11 +169,13 @@ export interface BrandPaletteInput {
    */
   emphasis?: 'bold' | 'quiet'
   /**
-   * How strongly a neutral page takes the brand hue: `'soft'` (default) or
+   * How strongly a neutral page takes the brand hue: `'soft'` (default),
    * `'vibrant'`, the strongest tint that keeps text at 7:1 (Material's
-   * "vibrant" neutrals). A chromatic background is kept as given either way.
+   * "vibrant" neutrals), or `'neutral'`, not at all: the page and cards are
+   * kept as given and dark mode keeps Trayo's slate. A chromatic background
+   * is kept as given either way.
    */
-  canvas?: 'soft' | 'vibrant'
+  canvas?: 'neutral' | 'soft' | 'vibrant'
 }
 
 export interface BrandPaletteProblem {
@@ -232,7 +252,9 @@ const HEX_SLOTS = [
   'background',
   'surface',
   'text',
-  'mutedText'
+  'mutedText',
+  'backgroundDark',
+  'surfaceDark'
 ] as const
 
 /**
@@ -271,6 +293,11 @@ export function checkBrandPalette(input: BrandPaletteInput): BrandPaletteProblem
         slot,
         message: `${slot} ${hexOf(rgb)} is not a light colour. The override is for the light theme; a dark brand keeps Trayo's surfaces and sets class="dark".`
       })
+    } else if ((slot === 'backgroundDark' || slot === 'surfaceDark') && toOklch(rgb).l > DARK_PAGE_MAX_L[slot]) {
+      problems.push({
+        slot,
+        message: `${slot} ${hexOf(rgb)} is not a dark colour. It is the dark theme's ${slot === 'backgroundDark' ? 'page' : 'card'}; omit it to have dark mode derived.`
+      })
     }
   }
   if (input.accents != null && !Array.isArray(input.accents)) {
@@ -298,7 +325,7 @@ export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPale
     throw new Error(`Invalid brand palette: ${problems.map((p) => p.message).join(' ')}`)
   }
   const adjustments: string[] = []
-  const primary = parseHex(input.primary)!
+  const primary = fillForOnPrimary(parseHex(input.primary)!, input.onPrimary, adjustments)
   const primaryDarkSlot = input.primaryDark ? parseHex(input.primaryDark)! : null
   const accents = uniqueAccents(input.accents ?? [], primary)
   const secondary = input.secondary ? parseHex(input.secondary)! : (accents[0] ?? null)
@@ -328,6 +355,13 @@ export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPale
     : null
   const L: Surfaces = override?.light ?? trayoLight
   const D: Surfaces = override?.dark ?? trayoDark
+  if (!override) {
+    for (const slot of ['backgroundDark', 'surfaceDark'] as const) {
+      if (input[slot]) {
+        adjustments.push(`${slot} ${input[slot]} needs background (the surface override); it is not applied.`)
+      }
+    }
+  }
 
   // ── Light ──────────────────────────────────────────────────────────────
   const onPrimary = givenOrDerived(
@@ -595,17 +629,22 @@ function resolveSurfaces(
   trayoDark: Surfaces,
   adjustments: string[],
   bold: boolean,
-  canvas: { chroma: number; maxL: number }
+  canvas: { chroma: number; maxL: number } | null
 ): { light: Surfaces; dark: Surfaces; tokens: Record<BrandSurfaceToken, string> } {
   const given = parseHex(input.background!)!
   const givenL = toOklch(given)
-  // The hue the canvas carries: the page's own when it has one, else the
-  // primary's. A black-and-white brand has neither and keeps its white.
+  // The hue the canvas carries: the page's own when it has one, else (when
+  // a tint is asked for) the primary's. A black-and-white brand has neither
+  // and keeps its white.
   const canvasHue =
-    givenL.c >= NEUTRAL_SURFACE_CHROMA ? givenL.h : !isNeutral(primary) ? toOklch(primary).h : null
-  const tintCanvas = canvasHue !== null && givenL.c < NEUTRAL_SURFACE_CHROMA
+    givenL.c >= NEUTRAL_SURFACE_CHROMA
+      ? givenL.h
+      : canvas && !isNeutral(primary)
+        ? toOklch(primary).h
+        : null
+  const tintCanvas = canvas !== null && canvasHue !== null && givenL.c < NEUTRAL_SURFACE_CHROMA
   const shell = tintCanvas
-    ? quantize(fromOklch({ l: Math.min(givenL.l, canvas.maxL), c: canvas.chroma, h: canvasHue }))
+    ? quantize(fromOklch({ l: Math.min(givenL.l, canvas.maxL), c: canvas.chroma, h: canvasHue! }))
     : given
   const shellL = toOklch(shell)
   if (tintCanvas) {
@@ -624,7 +663,7 @@ function resolveSurfaces(
       : quantize(
           fromOklch({
             l: Math.max(givenCard ? toOklch(givenCard).l : 0, shellL.l + 0.012),
-            c: tintCanvas ? canvas.chroma / 2 : shellL.c,
+            c: tintCanvas ? canvas!.chroma / 2 : shellL.c,
             h: shellL.h
           })
         )
@@ -656,8 +695,13 @@ function resolveSurfaces(
 
   // Dark: Trayo's ladder, tinted with the brand's hue (the canvas hue, else
   // the ink's) at a chroma that keeps the kit's dark text readable everywhere.
+  // A neutral canvas keeps the kit's slate: no fallback to the ink's hue.
   const tint =
-    canvasHue !== null ? { h: canvasHue } : [toOklch(text)].find((c) => c.c >= NEUTRAL_SURFACE_CHROMA)
+    canvasHue !== null
+      ? { h: canvasHue }
+      : canvas
+        ? [toOklch(text)].find((c) => c.c >= NEUTRAL_SURFACE_CHROMA)
+        : undefined
   // Bold: Material's tone ladder in the brand hue, a deeper night than
   // Trayo's slate. Quiet: Trayo's own lightness steps, tinted.
   const darkOf = (trayo: RGB, ladderL: number) => {
@@ -665,14 +709,29 @@ function resolveSurfaces(
     const l = bold && tint ? ladderL : t.l
     return tint ? quantize(fromOklch({ l, c: DARK_SURFACE_CHROMA, h: tint.h })) : trayo
   }
+  // The brand's own dark page and card win over the derived ladder: they are
+  // used as given, and the steps between and above them keep their hue.
+  const givenDarkPage = input.backgroundDark ? parseHex(input.backgroundDark)! : null
+  const givenDarkCard = input.surfaceDark ? parseHex(input.surfaceDark)! : null
+  const lift = (from: RGB, by: number) => {
+    const c = toOklch(from)
+    return quantize(fromOklch({ ...c, l: c.l + by }))
+  }
+  const darkShell = givenDarkPage ?? darkOf(trayoDark.shell, DARK_LADDER_L.shell)
+  const darkCard =
+    givenDarkCard ??
+    (givenDarkPage ? lift(givenDarkPage, GIVEN_DARK_STEP.card) : darkOf(trayoDark.card, DARK_LADDER_L.card))
+  const ownDark = givenDarkPage !== null || givenDarkCard !== null
   const dark: Surfaces = {
-    shell: darkOf(trayoDark.shell, DARK_LADDER_L.shell),
-    well: darkOf(trayoDark.well, DARK_LADDER_L.well),
-    card: darkOf(trayoDark.card, DARK_LADDER_L.card),
-    raised: darkOf(trayoDark.raised, DARK_LADDER_L.raised),
+    shell: darkShell,
+    well: ownDark ? lift(darkShell, GIVEN_DARK_STEP.well) : darkOf(trayoDark.well, DARK_LADDER_L.well),
+    card: darkCard,
+    raised: ownDark ? lift(darkCard, GIVEN_DARK_STEP.raised) : darkOf(trayoDark.raised, DARK_LADDER_L.raised),
     text: trayoDark.text
   }
-  const darkRow = darkOf(parseHex('#2e3445')!, DARK_LADDER_L.row)
+  const darkRow = ownDark
+    ? lift(darkCard, GIVEN_DARK_STEP.row)
+    : darkOf(parseHex('#2e3445')!, DARK_LADDER_L.row)
 
   return {
     light: { shell, well, card, raised, text },
@@ -730,6 +789,30 @@ function resolveShell(
     '--brand-shell-active': hexOf(active),
     '--brand-shell-border': hexOf(quantize(composite(onShell, 0.16, shell)))
   }
+}
+
+/**
+ * The primary as the brand's own text colour can sit on it. A supplied
+ * `onPrimary` that narrowly misses 4.5:1 (it clears 3:1) is the brand's real
+ * pairing — Vanta puts white on its purple at 3.8:1 — so the fill moves a
+ * small lightness step toward it and the text stays. Further off than 3:1 the
+ * step would change the colour (white on sky blue), so the primary is kept
+ * and `givenOrDerived` replaces the text instead.
+ */
+function fillForOnPrimary(primary: RGB, onPrimary: string | null | undefined, adjustments: string[]): RGB {
+  const given = onPrimary ? parseHex(onPrimary) : null
+  if (!given) return primary
+  const ratio = contrast(given, primary)
+  if (ratio >= TEXT_CONTRAST || ratio < NON_TEXT_CONTRAST) return primary
+  const fill = shiftLightnessUntil(
+    primary,
+    luminance(given) > luminance(primary) ? 'darker' : 'lighter',
+    (c) => contrast(given, c) >= TEXT_CONTRAST
+  )
+  adjustments.push(
+    `primary ${hexOf(primary)} is under ${TEXT_CONTRAST}:1 with onPrimary ${hexOf(given)}; ${hexOf(fill)} is used so the brand's text colour is kept.`
+  )
+  return fill
 }
 
 /** A supplied text colour when it clears 4.5:1 on `fill`, else the derived one (noted). */
