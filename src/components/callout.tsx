@@ -103,7 +103,7 @@ export function Callout({
       role={role ?? (tone === 'destructive' ? 'alert' : 'note')}
       className={cn(
         // `isolate overflow-hidden` keeps the texture layer inside the panel.
-        'relative isolate flex gap-3 overflow-hidden rounded-lg border',
+        'relative isolate flex flex-wrap gap-x-3 gap-y-2 overflow-hidden rounded-lg border',
         compact ? 'items-center px-3 py-2' : 'items-start p-3',
         t.panel,
         className
@@ -116,38 +116,44 @@ export function Callout({
         aria-hidden
         className={cn('diagonal-fade pointer-events-none absolute inset-0 -z-10', t.icon)}
       />
-      {icon && (
-        <span
-          aria-hidden
+      {/* Icon and text wrap as one unit, and ask for 16rem before the action
+          may share their line: in a narrow column a `shrink-0` action beside
+          the text took a third of the panel and left the copy a few words
+          wide. Growing, this group is also what pushes the action right. */}
+      <div className={cn('flex min-w-0 flex-[1_1_16rem] gap-3', compact ? 'items-center' : 'items-start')}>
+        {icon && (
+          <span
+            aria-hidden
+            className={cn(
+              'flex shrink-0 items-center [&_svg]:size-4',
+              // The eyebrow's 18px line box: nudge the 16px glyph onto it.
+              !compact && 'mt-px',
+              t.icon
+            )}
+          >
+            {icon}
+          </span>
+        )}
+        <div
           className={cn(
-            'flex shrink-0 items-center [&_svg]:size-4',
-            // The eyebrow's 18px line box: nudge the 16px glyph onto it.
-            !compact && 'mt-px',
-            t.icon
+            'flex min-w-0 flex-1',
+            compact
+              ? 'flex-row flex-wrap items-baseline gap-x-2 gap-y-0'
+              : 'flex-col gap-1'
           )}
         >
-          {icon}
-        </span>
-      )}
-      <div
-        className={cn(
-          'flex min-w-0 flex-1',
-          compact
-            ? 'flex-row flex-wrap items-baseline gap-x-2 gap-y-0'
-            : 'flex-col gap-1'
-        )}
-      >
-        {title != null && (
-          <span className={cn('text-eyebrow shrink-0', t.title)}>{title}</span>
-        )}
-        {children != null && (
-          <div className='text-body min-w-0 text-text-secondary [&_a]:text-accent-text [&_a]:underline-offset-4 [&_a:hover]:underline'>
-            {children}
-          </div>
-        )}
+          {title != null && (
+            <span className={cn('text-eyebrow shrink-0', t.title)}>{title}</span>
+          )}
+          {children != null && (
+            <div className='text-body min-w-0 text-text-secondary [&_a]:text-accent-text [&_a]:underline-offset-4 [&_a:hover]:underline'>
+              {children}
+            </div>
+          )}
+        </div>
       </div>
       {action && (
-        <div className={cn('flex shrink-0 items-center', !compact && 'self-start')}>
+        <div className={cn('flex max-w-full shrink-0 items-center', !compact && 'self-start')}>
           {action}
         </div>
       )}

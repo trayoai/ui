@@ -1,0 +1,18 @@
+---
+// Stress cases for the kit's slots, read by e2e/layout.spec.ts. Not linked
+// from anywhere; it loads the library's stylesheet exactly as /demo does.
+import '../styles/demo.css'
+import { LayoutCheck } from '../components/LayoutCheck'
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trayo GTM UI — layout check</title>
+<meta name="robots" content="noindex" />
+</head>
+<body>
+  <LayoutCheck client:load />
+</body>
+</html>

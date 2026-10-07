@@ -92,7 +92,7 @@ import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import {
   AppShell, PageContainer, PageHeader, EmptyState, StatTile, Surface,
-  Person, PersonCard, Company, CompanyCard, CompanyLogo, PersonAvatar,
+  Person, PersonCard, PersonDialog, JobMove, EntityList, Company, CompanyCard, CompanyLogo, PersonAvatar,
   DataTable, Badge, Button, Input, Select, SelectContent, SelectItem,
   SelectTrigger, SelectValue, Tabs, TabsContent, TabsList, TabsTrigger,
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
@@ -148,6 +148,13 @@ function App() {
             />
             <CompanyCard company={rows[0].company} />
             <PersonCard person={rows[0].owner} />
+            <EntityList>
+              {rows.map((r) => <Person key={r.id} person={r.owner} />)}
+            </EntityList>
+            <JobMove from={{ company: rows[0].company, title: 'Director' }} to={{ company: { name: 'Brex', domain: 'brex.com' } }} />
+            <PersonDialog person={rows[0].owner} trigger={<Button variant='tertiary'>Profile</Button>} actions={<Button>Contact</Button>}>
+              <Meta>Body</Meta>
+            </PersonDialog>
             <CompanyLogo name='Ramp' domain='ramp.com' />
             <PersonAvatar name='Dana Whitfield' personId='p1' />
             <Tooltip>

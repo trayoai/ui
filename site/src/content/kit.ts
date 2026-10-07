@@ -109,12 +109,13 @@ export const VALUE = [
 
 export const RULES = [
   // Entities
-  'Rendering a person? Use `<Person>` or `<PersonCard>`. Never hand-assemble an avatar and a name — a person always gets a face, never initials. Email, phone and LinkedIn rows are `<PersonContactLinks>`, not your own icon row. The one person a page or drawer is about gets `<PersonBanner>` at the top: one per screen, never in a list. Its `actions` slot takes one default `<Button>` (the primary; the band inverts it to read on the fill), not a `tertiary` one.',
+  'Rendering a person? Use `<Person>` or `<PersonCard>`. Never hand-assemble an avatar and a name — a person always gets a face, never initials. Email, phone and LinkedIn rows are `<PersonContactLinks>`, not your own icon row. The one person a page or drawer is about gets `<PersonBanner>` at the top: one per screen, never in a list. Its `actions` slot takes one default `<Button>` (the primary; the band inverts it to read on the fill), not a `tertiary` one. In a dialog, use `<PersonDialog>`: it places the banner and keeps the close button clear of it.',
   'Rendering a company? Use `<Company>` or `<CompanyCard>`. Pass `domain` and the logo resolves itself; never hand-write a logo `<img>`. Industry, headcount and location under a company are `<CompanyMeta>`.',
   // Page
   'Wrap the app in `<AppShell>`. Without it the page reads as generic Tailwind. View switching goes in `<AppShell nav={…}>` as `<AppShellNavLink>`s; a filter group ("All 59 · Red 3 · Amber 7") is a `<SegmentedControl>` with `count`s; a row of `<StatTile>`s sits in a `<StatGrid>`. Do not hand-roll a top bar, a pill group or the stat grid classes. A panel with a name (a table, a chart, a list) is `<Surface title description actions>`, with `padded={false}` around a `DataTable`, never a hand-built card header.',
   '`<GradientText>` is for one phrase in a hero and `<BrandMesh>` for one hero or empty state. Neither belongs on a data screen: not on the page title, not behind a table or a stat strip. A tool is not a landing page; `<PageHeader>` with a plain title is the default.',
   'Use the provided components before writing your own.',
+  'The kit does the layout; slots take content-sized children. A `<Button>` sizes to its label: do not give one `w-full` or `flex-1` in a row with siblings, because a button cannot shrink and pushes out of its container. A card `footer` is the one place a full-width button is safe. A job change is `<JobMove from to>`. A list of people or companies goes in `<EntityList>`, which owns the row spacing and dividers, never a hand-spaced stack. A label for a person or company ("Left", "Owner") goes on its own line above the entity in `text-meta`, never inline beside the logo or avatar. A row of chips or buttons that may not fit gets `flex flex-wrap gap-2`. Size a dialog with its `size` prop, never a `max-w-*` class.',
   'Explanatory notes — "how this was built", coverage caveats, data limits, a target met — go in `<Callout>` (tones `note` `info` `success` `warning` `destructive`), not a hand-made bordered div or a `Surface` + `SectionLabel` + `Body` stack.',
   'Stubbed or demo actions (Push to Salesforce, Send email, Post to Slack with no integration wired) confirm with `toast({ variant: \'preview\', title, description })` from a single `<Toaster />` mounted inside `<AppShell>`. It says "Preview - nothing was sent". Never a bespoke toast component, never a silent success.',
   'Any list that can exceed ~50 rows is paged: pass DataTable\'s `pagination` prop (client-side without `total`, server-side with it), or render `<Pagination>` under a card grid. Never render a long list in full.',
@@ -130,7 +131,7 @@ export const RULES = [
 ] as const
 
 export const INVENTORY = [
-  { group: 'Entities', items: 'Person, PersonCard, PersonBanner, PersonContactLinks, Company, CompanyCard, CompanyMeta, PersonAvatar, CompanyLogo, ToneAvatar' },
+  { group: 'Entities', items: 'Person, PersonCard, PersonBanner, PersonContactLinks, Company, CompanyCard, CompanyMeta, EntityList (a spaced, divided list of Person or Company rows), JobMove (left one company, joined another), PersonAvatar, CompanyLogo, ToneAvatar' },
   { group: 'Tables', items: 'DataTable (sortable, selectable, paged via `pagination`, skeleton loading), Pagination + usePagination, and the raw Table primitives' },
   { group: 'Page scaffolding', items: 'AppShell (with brand / nav / actions top bar), AppShellNavLink, PageContainer, PageHeader, Surface (title / description / icon / actions for a framed panel), IconTile, Well, StatGrid' },
   { group: 'Decorative', items: 'BrandMesh, GradientText' },
@@ -138,7 +139,7 @@ export const INVENTORY = [
   { group: 'Type', items: 'PageTitle, SectionTitle, CardTitle, EntityName, Body, Meta, Eyebrow, SectionLabel, DataLabel' },
   { group: 'Controls', items: 'Button, Input, Textarea, Select, Checkbox, Switch, Label, Tabs, SegmentedControl' },
   { group: 'Display', items: 'Badge, TagChip, Card, Separator, Tooltip, ScrollArea' },
-  { group: 'Overlays', items: 'Dialog, Popover, DropdownMenu' },
+  { group: 'Overlays', items: 'Dialog, PersonDialog (a dialog about one person: banner, body, footer actions), Popover, DropdownMenu' },
   { group: 'Feedback', items: 'Toaster, toast() — variants default, success, warning, destructive, preview' },
   { group: 'Charts', items: 'ChartLegend, DataLabel, CHART_COLORS, CHART_SEQUENTIAL, CHART_MUTED, chartColor(i), chartSequential(t)' },
 ] as const

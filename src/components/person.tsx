@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Mail, MapPin, Phone, UserRound } from 'lucide-react'
 import { cn } from '../lib/cn'
 import { Badge } from './ui/badge'
+import { CardFooterSlot } from './card-footer-slot'
 import { CompanyLogo } from './company-logo'
 import { PersonAvatar, type AvatarSize } from './person-avatar'
 
@@ -373,9 +374,9 @@ export function PersonCard({
           match): otherwise the frame's flat well would show as two darker
           notches beside the sheet's rounded bottom corners. The sheet is
           `relative` so it paints over the part tucked beneath it. */}
-      <div className='well-gradient -mt-3 flex items-center justify-between gap-3 rounded-b-xl px-4 pt-5.5 pb-2.5'>
-        {showContact ? <PersonContactLinks person={person} /> : <span />}
-        {footer}
+      <div className='well-gradient -mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-b-xl px-4 pt-5.5 pb-2.5'>
+        {showContact && <PersonContactLinks person={person} />}
+        {footer != null && <CardFooterSlot>{footer}</CardFooterSlot>}
       </div>
     </div>
   )

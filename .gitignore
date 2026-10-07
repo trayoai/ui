@@ -10,3 +10,5 @@ site/node_modules
 site/public/trayo-ui.tar.gz
 site/public/faces
 site/.astro
+test-results
+playwright-report

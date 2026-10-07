@@ -33,6 +33,10 @@ jobs:
         run: pnpm typecheck
       - name: Unit tests (brand palette)
         run: pnpm test
+      - name: Install the browser for the layout checks
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Layout checks (slots hold hostile children)
+        run: pnpm test:layout
       - name: Build the site (packs the tarball, publishes the faces)
         run: pnpm build
       - name: Check the vendor tarball
