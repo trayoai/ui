@@ -67,7 +67,9 @@ the wrong place or not at all. Nothing errors at build time.
    always end up with a face, never initials. The one person a page or drawer
    is about gets `<PersonBanner>` at the top — one per screen, never in a list.
    Its `actions` slot takes one default `<Button>` (the primary; the band
-   inverts it to read on the fill), not a `tertiary` one.
+   inverts it to read on the fill), not a `tertiary` one. In a dialog, use
+   `<PersonDialog>`: it places the banner and keeps the close button clear of
+   it.
 
 2. **Rendering a company? Use `<Company>` or `<CompanyCard>`.** Pass the
    `domain`; the logo resolves itself. Never hand-write a logo `<img>` or an
@@ -157,6 +159,17 @@ the wrong place or not at all. Nothing errors at build time.
     `--brand-*` or `--accent-*`, and never adjust a colour for contrast — the
     resolver does. Status colours, type and radius stay the kit's in every
     brand; the warm corner glow is Trayo's own and a branded page drops it.
+
+18. **The kit does the layout; slots take content-sized children.** A
+    `<Button>` sizes to its label. Don't give one `w-full` or `flex-1` in a
+    row with siblings: a button cannot shrink, so it pushes out of its
+    container. A card `footer` is the one place a full-width button is safe.
+    A job change is `<JobMove from to>`. A list of people or companies goes
+    in `<EntityList>`, never a hand-spaced stack. A label for a person or company
+    ("Left", "Owner", "Reports to") goes on its own line above the entity in
+    `text-meta`, never inline beside the logo or avatar. A row of chips or
+    buttons that may not fit gets `flex flex-wrap gap-2`. Size a dialog with
+    its `size` prop, never a `max-w-*` class.
 
 The files are yours once copied, so editing them is allowed. Prefer extending a
 variant over forking a component, and keep the token vocabulary intact.

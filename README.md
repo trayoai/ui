@@ -313,6 +313,21 @@ gets the same face everywhere, forever. It never degrades to initials.
 `PersonLike` is a loose superset of a `GET /v1/people` row, so an API response
 passes straight through. Everything but `name` is optional.
 
+A list of people (or companies) goes in `<EntityList>`, which owns the spacing:
+10px above and below each row and a hairline between them (`divided={false}`
+drops the hairline). The rows have no vertical padding of their own, so a
+hand-spaced stack lets the avatars touch.
+
+```tsx
+<EntityList>
+  {people.map((p) => <Person key={p.id} person={p} showContact />)}
+</EntityList>
+```
+
+The `footer` slot is safe to fill: a button there sizes to its label and sits at
+the right, `className="w-full"` makes it fill the space beside the contact
+links, and a label too long for that space drops onto its own line.
+
 `PersonBanner` is the header of a page or drawer about one person: a
 full-width band in the brand colour with the face, name, title and one action.
 Use it once per screen, at the top; a person in a list or grid is a `<Person>`
@@ -320,6 +335,29 @@ or `<PersonCard>`. Put a default (primary) `<Button>` in `actions` — the band
 inverts it, filled with the band's foreground and labelled in the brand
 colour, so it reads on any brand. A `tertiary` or `quiet` Button also works
 when the action should recede.
+
+In a dialog, use `<PersonDialog>`: it places the banner, keeps the close button
+clear of it, scrolls the body and wraps the footer actions. It is 672px wide by
+default (`size="2xl"`), so a title and company fit beside the action.
+
+```tsx
+<PersonDialog
+  person={apiPerson}
+  open={open}
+  onOpenChange={setOpen}
+  actions={<Button>Add to sequence</Button>}
+  footer={<Button size="sm" variant="secondary">Draft intro email</Button>}
+>
+  …the body…
+</PersonDialog>
+```
+
+A `<PersonBanner>` placed in a `<DialogContent>` by hand also gets the room it
+needs for the close button, but `<PersonDialog>` is the supported shape.
+
+Size any dialog with `size` (`small` | `medium` | `large`, or `sm` … `6xl`), not
+a `max-w-*` class: the width is set per breakpoint, and a bare `max-w-2xl`
+only replaces the phone value.
 
 > **The photo field has two names.** The Trayo API returns `profileImageUrl`
 > from `GET /v1/people`, but a `POST /v1/find` contacts result carries
@@ -343,6 +381,22 @@ initials tile for companies with no mark.
 
 `CompanyLike` is a loose superset of a `/v1` account. A published `logoUrl`
 works too, but `domain` alone is the common and better case.
+
+### `<JobMove>`
+
+A job change: where someone left and where they landed.
+
+```tsx
+<JobMove
+  from={{ company: { name: 'Stripe', domain: 'stripe.com' }, title: 'Director, RevOps' }}
+  to={{ company: { name: 'Ramp', domain: 'ramp.com' }, title: 'VP RevOps' }}
+/>
+```
+
+With 512px or more to itself it is two equal tiles with an arrow between them;
+in a narrower column (a phone-sized dialog, a side panel) it is two slim rows.
+It follows its own width, not the viewport. `fromLabel` / `toLabel` rename the
+two sides (defaults `Left` / `Joined`).
 
 ### The avatars on their own
 
@@ -370,8 +424,8 @@ status; `teal` is still accepted and renders as `blue`. Without `size` it is
 | States | `EmptyState` `StatTile` `Callout` `Skeleton` `Progress` |
 | Type | `PageTitle` `SectionTitle` `CardTitle` `EntityName` `Body` `Meta` `Eyebrow` `SectionLabel` `Code` `DataLabel` |
 | Controls | `Button` `Input` `Textarea` `Select` `Checkbox` `Switch` `Label` `Tabs` `SegmentedControl` `Pagination` (+ `usePagination`) |
-| Display | `Badge` `TagChip` `Card` `Separator` `Tooltip` `ScrollArea` |
-| Overlays | `Dialog` `Popover` `DropdownMenu` |
+| Display | `Badge` `TagChip` `Card` `EntityList` `Separator` `Tooltip` `ScrollArea` |
+| Overlays | `Dialog` `PersonDialog` `Popover` `DropdownMenu` |
 | Feedback | `Toaster` `toast()` `useToast()` |
 | Charts | `ChartLegend` `DataLabel` `CHART_COLORS` `CHART_SEQUENTIAL` `CHART_MUTED` `chartColor` `chartSequential` |
 | Customer brand | `resolveBrandPalette` `checkBrandPalette` `fromBrandThemeContract` `brandSlotsAgentGuide` `brandPaletteCss` `brandAttributes` `BRAND_SLOTS` (see [Customer brand](#customer-brand)) |

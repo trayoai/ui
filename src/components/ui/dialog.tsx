@@ -93,7 +93,19 @@ function DialogContent({
           // CAVEAT for callers: this is a RESPONSIVE pair, and tailwind-merge
           // keys on the modifier — a bare `p-0` override replaces `p-4` but
           // NOT `md:p-6`, so a full-bleed dialog must pass `p-0 md:p-0`.
-          'bg-surface-dialog data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-border-subtle p-4 shadow-lg duration-200 md:p-6',
+          //
+          // One `minmax(0,1fr)` column, stated: an implicit `auto` column
+          // grows to its widest child's min-content width, and a truncating
+          // row (`white-space: nowrap`) reports its full text as that width,
+          // which stretched every other child out past the dialog.
+          //
+          // A dialog headed by a `<PersonBanner>` gets 48px of top padding:
+          // the close button is pinned 16px from the top-right corner, which
+          // is otherwise the banner's own corner. Matched on any direct
+          // child, not `:first-child`, because a screen-reader-only
+          // `DialogTitle` usually comes before the banner.
+          'bg-surface-dialog data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full grid-cols-[minmax(0,1fr)] max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-border-subtle p-4 shadow-lg duration-200 md:p-6',
+          'has-[>[data-slot=person-banner]]:pt-12',
           dialogSizeClasses[size],
           className
         )}

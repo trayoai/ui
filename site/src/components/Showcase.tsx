@@ -3,8 +3,10 @@ import {
   AlertTriangle,
   ArrowRight,
   Building2,
+  CalendarClock,
   Check,
   CheckCircle2,
+  ExternalLink,
   Mail,
   Moon,
   Plus,
@@ -31,9 +33,11 @@ import {
   DataTable,
   chartColor,
   EmptyState,
+  EntityList,
   Eyebrow,
   Hero,
   Input,
+  JobMove,
   Meta,
   PageContainer,
   PageTitle,
@@ -41,7 +45,9 @@ import {
   PersonAvatar,
   PersonBanner,
   PersonCard,
+  PersonDialog,
   Progress,
+  SectionLabel,
   SectionTitle,
   SegmentedControl,
   Select,
@@ -49,6 +55,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Separator,
   StatGrid,
   StatTile,
   Surface,
@@ -258,6 +265,28 @@ type AccountRow = {
   stage: 'Prospect' | 'Engaged' | 'Meeting booked'
   lastActivity: string
 }
+
+// The person the dialog specimen is about, and the move it reports.
+const MOVER: PersonLike = {
+  id: 'p-move',
+  name: 'Elena Marchetti',
+  title: 'Chief Product Officer',
+  company: 'Ramp',
+  companyDomain: 'ramp.com',
+}
+
+const MOVE = {
+  from: { company: { name: 'Stripe', domain: 'stripe.com' }, title: 'VP of Product, Billing' },
+  to: { company: { name: 'Ramp', domain: 'ramp.com' }, title: 'Chief Product Officer' },
+}
+
+const MOVE_FACTS = [
+  { icon: CalendarClock, label: 'Started', value: 'Sep 2026' },
+  { icon: Search, label: 'Detected by Trayo', value: '26 Sep' },
+  { icon: Building2, label: 'Seniority (derived)', value: 'C-suite' },
+]
+
+const MOVE_ACTIONS = ['Push to Salesforce', 'Draft intro email', 'Post to #new-logos']
 
 const ACCOUNTS: AccountRow[] = [
   { id: 'a-1', company: COMPANIES[0], owner: PEOPLE[0], score: 92, signals: 7, stage: 'Meeting booked', lastActivity: '2h ago' },
@@ -549,6 +578,77 @@ function Specimen({
 /** The card a set of loose specimens sits on, filling its stage. */
 function Panel({ className, ...props }: React.ComponentProps<typeof Surface>) {
   return <Surface className={cn('flex-1', className)} {...props} />
+}
+
+/** The person dialog specimen: a job change, opened from a button. */
+function PersonDialogDemo() {
+  return (
+    <PersonDialog
+      person={MOVER}
+      trigger={<Button variant='secondary'>Open Elena’s move</Button>}
+      actions={
+        <Button
+          onClick={() =>
+            toast({
+              variant: 'preview',
+              title: 'Added to sequence',
+              description: 'Elena Marchetti would join “New in seat”.',
+            })
+          }
+        >
+          Add to sequence
+        </Button>
+      }
+      footer={
+        <>
+          {MOVE_ACTIONS.map((label) => (
+            <Button
+              key={label}
+              size='sm'
+              variant='secondary'
+              onClick={() => toast({ variant: 'preview', title: label })}
+            >
+              {label}
+            </Button>
+          ))}
+          <Button size='sm' variant='quiet' asChild>
+            <a href='https://www.linkedin.com/' target='_blank' rel='noreferrer'>
+              <ExternalLink /> LinkedIn profile
+            </a>
+          </Button>
+          <Meta className='basis-full pt-1'>
+            Salesforce, email and Slack are not connected here — those three buttons preview only.
+          </Meta>
+        </>
+      }
+    >
+      <div>
+        <SectionLabel>The move</SectionLabel>
+        <JobMove from={MOVE.from} to={MOVE.to} />
+      </div>
+      <div>
+        <SectionLabel>LinkedIn headline</SectionLabel>
+        <Body>Product @ Stripe</Body>
+      </div>
+      <Separator />
+      <dl className='grid grid-cols-3 gap-4'>
+        {MOVE_FACTS.map((f) => (
+          <div key={f.label} className='flex min-w-0 flex-col gap-0.5'>
+            <dt className='text-meta flex items-center gap-1.5'>
+              <f.icon className='size-3.5 shrink-0' />
+              <span className='truncate'>{f.label}</span>
+            </dt>
+            <dd className='text-body text-text-primary'>{f.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <div className='flex flex-wrap gap-1.5'>
+        <Badge variant='soft'>Chief Product / Design Officer</Badge>
+        <Badge variant='soft'>Persona · Economic buyer</Badge>
+      </div>
+      <Separator />
+    </PersonDialog>
+  )
 }
 
 /* ---------------------------------------------------------------- charts */
@@ -931,6 +1031,13 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
     if (brand === 'trayo') return
     setDark(resolveBrandPalette(fromBrandThemeContract(DEMO_BRANDS[brand]).input).theme === 'dark')
   }, [brand])
+  // Dark goes on <html>, as it does in an app: dialogs, selects and popovers
+  // are portaled to <body>, so a class on a wrapper inside the page never
+  // reaches them and they stay light on a dark page.
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', dark)
+    return () => document.documentElement.classList.remove('dark')
+  }, [dark])
   const [selected, setSelected] = useState<Set<string>>(new Set(['p-2']))
   const [sort, setSort] = useState<SortState>({ key: 'score', dir: 'desc' })
   const [band, setBand] = useState<Band>('all')
@@ -939,7 +1046,7 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
   const accountPaging = usePagination(sortedAccounts.length, { pageSize: 10 })
 
   return (
-    <div className={dark ? 'dark' : undefined}>
+    <div>
       {/* The demo runs inside the kit's own top bar: brand on the left, the
           view links on the right, the theme switch as the bar's action. */}
       <AppShell
@@ -1161,17 +1268,15 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
             <Specimen
               name='Person row'
               note='For lists and tables, with contact actions.'
-              component='<Person>'
+              component='<EntityList> <Person>'
               className='mb-8'
             >
-              <Panel className='py-1.5'>
-                <div className='divide-y divide-border-subtle'>
+              <Panel>
+                <EntityList>
                   {PEOPLE.slice(0, 3).map((p) => (
-                    <div key={p.id} className='py-2.5'>
-                      <Person person={p} showContact contacted={p.id === 'p-2'} />
-                    </div>
+                    <Person key={p.id} person={p} showContact contacted={p.id === 'p-2'} />
                   ))}
-                </div>
+                </EntityList>
               </Panel>
             </Specimen>
 
@@ -1250,6 +1355,32 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                   }
                 />
               </Specimen>
+
+              <Specimen
+                name='Job move'
+                note='Where someone left and where they landed.'
+                component='<JobMove>'
+                className='lg:col-span-2'
+              >
+                <Panel>
+                  <JobMove from={MOVE.from} to={MOVE.to} />
+                </Panel>
+              </Specimen>
+
+              {/* Not in the embedded demo: that frame is as tall as the whole
+                  page, so a dialog centred in it opens far off-screen. */}
+              {!compact && (
+                <Specimen
+                  name='Person dialog'
+                  note='The banner, a body and the actions, with the close button clear of the band.'
+                  component='<PersonDialog>'
+                  className='lg:col-span-2'
+                >
+                  <Panel>
+                    <PersonDialogDemo />
+                  </Panel>
+                </Specimen>
+              )}
             </div>
           </Section>
 

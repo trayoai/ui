@@ -235,7 +235,7 @@ export function Surface({
     <div
       data-slot='surface-header'
       className={cn(
-        'flex min-h-12 items-center gap-3 px-4 py-2',
+        'flex min-h-12 flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2',
         // Framed: the header strip carries the same light-to-well gradient as
         // a card's footer strip (`well-gradient`). It runs 12px under the
         // sheet (-mb-3, with padding and min-height to match) so the gradient,
@@ -252,12 +252,23 @@ export function Surface({
           className='noise-grain pointer-events-none absolute inset-0 -z-10 rounded-t-xl opacity-50'
         />
       )}
-      {icon != null && <IconTile>{icon}</IconTile>}
-      <div className='flex min-w-0 flex-1 flex-col'>
-        {title != null && <span className='truncate text-card-title text-text-primary'>{title}</span>}
-        {description != null && <span className='truncate text-meta'>{description}</span>}
+      {/* Icon and title wrap as one unit, and ask for 12rem before the
+          actions may share their line. With `shrink-0` actions and nothing
+          reserved, a search field and a select squeezed the title to nothing
+          and ran out past the panel on a phone. Growing, this group is also
+          what pushes the actions to the right. */}
+      <div className='flex min-w-0 flex-[1_1_12rem] items-center gap-3'>
+        {icon != null && <IconTile>{icon}</IconTile>}
+        <div className='flex min-w-0 flex-1 flex-col'>
+          {title != null && <span className='truncate text-card-title text-text-primary'>{title}</span>}
+          {description != null && <span className='truncate text-meta'>{description}</span>}
+        </div>
       </div>
-      {actions != null && <div className='flex shrink-0 items-center gap-2'>{actions}</div>}
+      {/* On their own line the actions may not be wider than the header, so
+          several of them wrap instead of overflowing. */}
+      {actions != null && (
+        <div className='flex max-w-full min-w-0 flex-wrap items-center gap-2'>{actions}</div>
+      )}
     </div>
   )
 
