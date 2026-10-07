@@ -66,6 +66,8 @@ the wrong place or not at all. Nothing errors at build time.
    cross-origin failures, and the illustrated fallback face. A person must
    always end up with a face, never initials. The one person a page or drawer
    is about gets `<PersonBanner>` at the top — one per screen, never in a list.
+   Its `actions` slot takes one default `<Button>` (the primary; the band
+   inverts it to read on the fill), not a `tertiary` one.
 
 2. **Rendering a company? Use `<Company>` or `<CompanyCard>`.** Pass the
    `domain`; the logo resolves itself. Never hand-write a logo `<img>` or an

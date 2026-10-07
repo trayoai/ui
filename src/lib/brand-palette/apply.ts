@@ -56,7 +56,7 @@ export function applyBrand(
         ...fromBrandThemeContract(contract, contractOptions).input,
         ...pick(contract as BrandPaletteInput, ['secondary', 'emphasis', 'canvas'])
       }
-    : { ...contract }
+    : { ...contract, ...(contractOptions.surfaces ? { surfaces: contractOptions.surfaces } : {}) }
   if (canvas) input.canvas = canvas
   const problems = checkBrandPalette(input)
   if (problems.length) {

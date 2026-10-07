@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { contrast, fromOklch, parseHex, toHex, toOklch } from '../src/lib/brand-palette/color'
 import {
+  BRAND_CHART_TOKENS,
   BRAND_CONTAINER_TOKENS,
   BRAND_MESH_TOKENS,
   BRAND_SHELL_TOKENS,
@@ -51,14 +52,33 @@ const BRANDS: Record<string, BrandPaletteInput> = {
   'quantization (tooltip)': { primary: '#e956a0' }
 }
 
-describe.each(Object.entries(BRANDS))('resolveBrandPalette — %s', (_name, input) => {
-  const { tokens } = resolveBrandPalette(input)
-  const light = TRAYO_SURFACES.light
-  const dark = TRAYO_SURFACES.dark
+// Each brand is resolved twice: on its own page (the default, a white page
+// tinted by the primary) and on Trayo's cream (surfaces: 'trayo').
+const CASES = Object.entries(BRANDS).flatMap(([name, input]) =>
+  (['brand', 'trayo'] as const).map((surfaces) => [name, surfaces, input] as const)
+)
+
+describe.each(CASES)('resolveBrandPalette — %s (%s surfaces)', (_name, surfaces, input) => {
+  const { tokens } = resolveBrandPalette({ ...input, surfaces })
+  const own = surfaces === 'brand'
+  const emitted = (suffix: '' | '-dark') => ({
+    shell: tokens[`--brand-background${suffix}`]!,
+    well: tokens[`--brand-well${suffix}`]!,
+    card: tokens[`--brand-surface${suffix}`]!,
+    raised: tokens[`--brand-raised${suffix}`]!
+  })
+  const light = own ? emitted('') : TRAYO_SURFACES.light
+  const dark = own ? emitted('-dark') : TRAYO_SURFACES.dark
 
   it('emits every token (plus the derived bar and brand mesh, bold being the default)', () => {
     expect(Object.keys(tokens).sort()).toEqual(
-      [...BRAND_TOKENS, ...BRAND_CONTAINER_TOKENS, ...BRAND_SHELL_TOKENS, ...BRAND_MESH_TOKENS].sort()
+      [
+        ...BRAND_TOKENS,
+        ...BRAND_CONTAINER_TOKENS,
+        ...BRAND_SHELL_TOKENS,
+        ...BRAND_MESH_TOKENS,
+        ...(own ? [...BRAND_SURFACE_TOKENS, ...BRAND_CHART_TOKENS] : [])
+      ].sort()
     )
   })
 
@@ -114,7 +134,7 @@ describe('resolveBrandPalette — brand-specific outcomes', () => {
 
   it('a light primary (PayPal sky blue) gets dark text and a darker text/ring tone', () => {
     const p = resolveBrandPalette(BRANDS['paypal (sky blue as primary)'])
-    expect(p.tokens['--brand-on-primary']).toBe(TRAYO_SURFACES.light.text)
+    expect(p.tokens['--brand-on-primary']).toBe(p.tokens['--brand-text'])
     expect(p.tokens['--brand-accent-text']).not.toBe('#3fb6ff')
     expect(p.adjustments.join(' ')).toMatch(/links and accent text use/)
   })
@@ -248,7 +268,7 @@ describe('emphasis (bold by default)', () => {
   it("quiet: no derived bar, Trayo's mesh layers", () => {
     const p = resolveBrandPalette({ primary: '#002991', emphasis: 'quiet' })
     expect(p.slots.shell).toBeNull()
-    expect(brandAttributes(p)).toEqual({ 'data-brand': '' })
+    expect(brandAttributes(p)).toEqual({ 'data-brand': '', 'data-brand-surfaces': '' })
     for (const t of BRAND_MESH_TOKENS) expect(p.tokens[t]).toBeUndefined()
   })
 
@@ -431,7 +451,7 @@ describe('dark surfaces (backgroundDark, surfaceDark)', () => {
   })
 
   it('ignores them, with a note, when the brand does not override the page', () => {
-    const p = resolveBrandPalette({ primary: '#171717', backgroundDark: '#000000' })
+    const p = resolveBrandPalette({ primary: '#171717', backgroundDark: '#000000', surfaces: 'trayo' })
     expect(p.tokens['--brand-background-dark']).toBeUndefined()
     expect(p.adjustments.join(' ')).toMatch(/backgroundDark .* needs background/)
   })
@@ -483,7 +503,7 @@ describe('shell slot', () => {
 
   it('a mid-tone shell gets dark text', () => {
     const p = resolveBrandPalette({ primary: '#002991', shell: '#3fb6ff' })
-    expect(p.tokens['--brand-on-shell']).toBe(TRAYO_SURFACES.light.text)
+    expect(p.tokens['--brand-on-shell']).toBe(p.tokens['--brand-text'])
   })
 
   it('rejects a white or near-white shell', () => {
@@ -494,23 +514,32 @@ describe('shell slot', () => {
   })
 
   it('brandAttributes adds data-brand-shell only with a shell', () => {
-    expect(brandAttributes(slack)).toEqual({ 'data-brand': '', 'data-brand-shell': '' })
+    expect(brandAttributes(slack)).toEqual({
+      'data-brand': '',
+      'data-brand-shell': '',
+      'data-brand-surfaces': ''
+    })
     expect(brandAttributes(resolveBrandPalette({ ...BRANDS.paypal, emphasis: 'quiet' }))).toEqual({
-      'data-brand': ''
+      'data-brand': '',
+      'data-brand-surfaces': ''
     })
   })
 
   it('brandPaletteCss and brandPaletteStyle include the shell tokens when present', () => {
     expect(brandPaletteCss(slack)).toContain('  --brand-shell: #4a154b;')
-    expect(Object.keys(brandPaletteStyle(slack))).toEqual([
+    // On Trayo's cream, so the surface and chart tokens stay out of the list.
+    const onCream = (input: BrandPaletteInput) =>
+      Object.keys(brandPaletteStyle(resolveBrandPalette({ ...input, surfaces: 'trayo' })))
+    expect(onCream({ primary: '#611f69', shell: '#4a154b', secondary: '#36c5f0' })).toEqual([
       ...BRAND_TOKENS,
       ...BRAND_CONTAINER_TOKENS,
       ...BRAND_SHELL_TOKENS,
       ...BRAND_MESH_TOKENS
     ])
-    expect(
-      Object.keys(brandPaletteStyle(resolveBrandPalette({ ...BRANDS.paypal, emphasis: 'quiet' })))
-    ).toEqual([...BRAND_TOKENS, ...BRAND_CONTAINER_TOKENS])
+    expect(onCream({ ...BRANDS.paypal, emphasis: 'quiet' })).toEqual([
+      ...BRAND_TOKENS,
+      ...BRAND_CONTAINER_TOKENS
+    ])
   })
 })
 
@@ -534,7 +563,7 @@ describe('supplied on-colours (onPrimary, onShell)', () => {
       shell: '#4a154b',
       onShell: '#611f69'
     })
-    expect(p.tokens['--brand-on-primary']).toBe(TRAYO_SURFACES.light.text)
+    expect(p.tokens['--brand-on-primary']).toBe(p.tokens['--brand-text'])
     expect(p.tokens['--brand-on-shell']).toBe('#ffffff')
     expect(p.adjustments.join(' ')).toMatch(/onPrimary #ffffff is under 4.5:1/)
     expect(p.adjustments.join(' ')).toMatch(/onShell #611f69 is under 4.5:1/)
@@ -570,7 +599,7 @@ describe('supplied on-colours (onPrimary, onShell)', () => {
     // Snowflake: white on #29b5e8 is 2.4:1; forcing it would turn the cyan teal.
     const p = resolveBrandPalette({ primary: '#29b5e8', onPrimary: '#ffffff' })
     expect(p.tokens['--brand-primary']).toBe('#29b5e8')
-    expect(p.tokens['--brand-on-primary']).toBe(TRAYO_SURFACES.light.text)
+    expect(p.tokens['--brand-on-primary']).toBe(p.tokens['--brand-text'])
     expect(p.adjustments.join(' ')).toMatch(/onPrimary #ffffff is under 4.5:1/)
   })
 
@@ -636,9 +665,11 @@ describe('complete override — surfaces', () => {
     '--brand-raised'
   ].map((k) => t[k as keyof typeof t]!)
 
-  it('emits the surface tokens only with a background, and the attribute with them', () => {
+  it("emits the surface tokens unless the page stays Trayo's, and the attribute with them", () => {
     for (const token of BRAND_SURFACE_TOKENS) expect(t[token]).toBeDefined()
-    expect(resolveBrandPalette(BRANDS.paypal).tokens['--brand-background']).toBeUndefined()
+    const cream = resolveBrandPalette({ ...BRANDS.paypal, surfaces: 'trayo' })
+    expect(cream.tokens['--brand-background']).toBeUndefined()
+    expect(brandAttributes(cream)).not.toHaveProperty('data-brand-surfaces')
     expect(brandAttributes(p)).toEqual({
       'data-brand': '',
       'data-brand-shell': '',
@@ -679,6 +710,36 @@ describe('complete override — surfaces', () => {
     expect(q.slots.background).toBe('#eef3ff')
     expect(toOklch(rgb(q.slots.surface!)).l).toBeGreaterThan(toOklch(rgb('#eef3ff')).l)
     expect(contrast(rgb(q.tokens['--brand-text']!), rgb('#eef3ff'))).toBeGreaterThanOrEqual(7)
+  })
+
+  it("a brand that names no text gets a near-black in the canvas's hue, and its borders follow", () => {
+    const q = resolveBrandPalette({ primary: '#002991' }).tokens
+    const ink = toOklch(rgb(q['--brand-text']!))
+    const page = toOklch(rgb(q['--brand-background']!))
+    expect(q['--brand-text']).not.toBe(TRAYO_SURFACES.light.text)
+    expect(Math.abs(ink.l - toOklch(rgb(TRAYO_SURFACES.light.text)).l)).toBeLessThan(0.02)
+    expect(ink.c).toBeGreaterThan(0.008)
+    expect(ink.c).toBeLessThan(0.03)
+    expect(Math.abs(ink.h - page.h)).toBeLessThan(8)
+    expect(q['--brand-border-subtle']).toBe(`rgb(${rgb(q['--brand-text']!).map((c) => Math.round(c * 255)).join(' ')} / 0.14)`)
+    // A given text is kept; a canvas with no hue gets a plain grey.
+    expect(resolveBrandPalette({ primary: '#002991', text: '#1d1c1d' }).tokens['--brand-text']).toBe('#1d1c1d')
+    for (const grey of [{ primary: '#000000' }, { primary: '#002991', canvas: 'neutral' as const }]) {
+      expect(toOklch(rgb(resolveBrandPalette(grey).tokens['--brand-text']!)).c).toBeLessThan(0.002)
+    }
+  })
+
+  it("drop shadows take the canvas's hue at the depth of Trayo's sand", () => {
+    const sand = toOklch(rgb('#846a2a'))
+    const channels = (v: string) => v.split(' ').map((n) => Number(n) / 255) as unknown as ReturnType<typeof rgb>
+    const q = resolveBrandPalette({ primary: '#002991' }).tokens
+    const shadow = toOklch(channels(q['--brand-shadow-rgb']!))
+    expect(q['--brand-shadow-rgb']).toMatch(/^\d+ \d+ \d+$/)
+    expect(Math.abs(shadow.l - sand.l)).toBeLessThan(0.02)
+    expect(Math.abs(shadow.h - toOklch(rgb(q['--brand-background']!)).h)).toBeLessThan(8)
+    expect(shadow.c).toBeGreaterThan(0.05)
+    const grey = resolveBrandPalette({ primary: '#002991', canvas: 'neutral' }).tokens
+    expect(toOklch(channels(grey['--brand-shadow-rgb']!)).c).toBeLessThan(0.002)
   })
 
   it('quiet: dark mode keeps Trayo lightness steps and takes the brand hue at low chroma', () => {
@@ -781,12 +842,14 @@ describe('accents → chart series', () => {
     expect(q.tokens['--brand-chart-dark-3']).not.toBe('#0a2540')
   })
 
-  it('the first accent is the secondary unless one is given; no accents → no chart tokens', () => {
+  it("the first accent is the secondary unless one is given; no accents on Trayo's page → no chart tokens", () => {
     expect(p.slots.secondary).toBe('#36c5f0')
     expect(
       resolveBrandPalette({ primary: '#611f69', secondary: '#e01e5a', accents: ['#36c5f0'] }).slots.secondary
     ).toBe('#e01e5a')
-    expect(resolveBrandPalette(BRANDS.paypal).tokens['--brand-chart-2']).toBeUndefined()
+    expect(
+      resolveBrandPalette({ ...BRANDS.paypal, surfaces: 'trayo' }).tokens['--brand-chart-2']
+    ).toBeUndefined()
   })
 
   it('fills missing series from Trayo palette without repeating a chosen hue', () => {

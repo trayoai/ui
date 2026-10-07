@@ -63,6 +63,8 @@ const SEQ_DARK = [
 const SEQ_REFERENCE_CHROMA = 0.2
 /** OKLCH lightness above which a shell reads as page, not brand chrome. */
 const LIGHT_SHELL_L = 0.93
+/** The page a brand gets when it names none: white, for the canvas tint to colour. */
+const ASSUMED_PAGE = '#ffffff'
 /** OKLCH lightness under which a page background is not a light theme. */
 const LIGHT_PAGE_L = 0.8
 /**
@@ -87,6 +89,13 @@ const DARK_PAGE_MAX_L = { backgroundDark: 0.3, surfaceDark: 0.36 }
 const GIVEN_DARK_STEP = { well: 0.034, card: 0.05, row: 0.05, raised: 0.09 }
 /** A surface with less chroma than this is neutral and eligible for the tint. */
 const NEUTRAL_SURFACE_CHROMA = 0.01
+/** Chroma of the ink a brand gets when it names no `text`: near-black in the canvas's hue. */
+const DERIVED_INK_CHROMA = 0.015
+/**
+ * Trayo's shadow ink (tokens.css, rgb(132 106 42)) as OKLCH lightness and
+ * chroma. A brand's drop shadows keep both and take the canvas's hue.
+ */
+const SHADOW_INK = { l: 0.537, c: 0.088 }
 /** Series 2–5 come from the accents, then from Trayo's own series. */
 const CHART_SERIES = 4
 /**
@@ -161,6 +170,14 @@ export interface BrandPaletteInput {
   mutedText?: string | null
   /** Chart series 2–5 (and the secondary, when none is set), in order. */
   accents?: readonly string[] | null
+  /**
+   * `'brand'` (default): the page, cards and text are the brand's. A brand
+   * that gives no `background` is treated as a white page, which then takes
+   * the primary's hue like any neutral page (see `canvas`), so a palette of
+   * one colour still colours the whole canvas. `'trayo'`: the page, cards and
+   * text stay Trayo's cream when no `background` is given.
+   */
+  surfaces?: 'brand' | 'trayo'
   /**
    * `'bold'` (default): a brand with no coloured shell gets a bar in a deep
    * step of its primary, and the mesh band takes the brand's colours — the
@@ -342,9 +359,15 @@ export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPale
   // ── Surfaces: Trayo's, or the brand's when it overrides them ──────────
   const trayoLight = mapValues(TRAYO_SURFACES.light, (v) => parseHex(v)!)
   const trayoDark = mapValues(TRAYO_SURFACES.dark, (v) => parseHex(v)!)
-  const override = input.background
+  // A brand with no page of its own gets a white one, which the canvas tint
+  // then colours; `surfaces: 'trayo'` keeps the kit's cream instead.
+  const assumedPage = !input.background && input.surfaces !== 'trayo'
+  if (assumedPage) {
+    adjustments.push("no background given; a white page is assumed (surfaces: 'trayo' keeps Trayo's cream).")
+  }
+  const override = input.background || assumedPage
     ? resolveSurfaces(
-        input,
+        assumedPage ? { ...input, background: ASSUMED_PAGE } : input,
         primary,
         trayoLight,
         trayoDark,
@@ -673,7 +696,14 @@ function resolveSurfaces(
   const row = quantize(composite(shell, 0.3, card))
   const surfaces = [shell, well, card, raised]
 
-  const textInput = input.text ? parseHex(input.text)! : trayoLight.text
+  // A brand that names no ink gets Trayo's near-black in the canvas's hue,
+  // so the text scale and the borders derived from it sit with the tinted
+  // page. A canvas with no hue gets a plain grey.
+  const inHue = (l: number, c: number) =>
+    quantize(fromOklch({ l, c: canvasHue === null ? 0 : c, h: canvasHue ?? 0 }))
+  const textInput = input.text
+    ? parseHex(input.text)!
+    : inHue(toOklch(trayoLight.text).l, DERIVED_INK_CHROMA)
   const text = shiftLightnessUntil(textInput, 'darker', (c) => surfaces.every((bg) => contrast(c, bg) >= 7))
   if (!same(text, textInput)) {
     adjustments.push(`text ${hexOf(textInput)} is under 7:1 on the brand surfaces; ${hexOf(text)} is used.`)
@@ -747,6 +777,7 @@ function resolveSurfaces(
       '--brand-text-muted': hexOf(textMuted),
       '--brand-border-subtle': rgba(text, 0.14),
       '--brand-border-strong': rgba(text, 0.24),
+      '--brand-shadow-rgb': toRgbChannels(inHue(SHADOW_INK.l, SHADOW_INK.c)),
       '--brand-background-dark': hexOf(dark.shell),
       '--brand-surface-dark': hexOf(dark.card),
       '--brand-well-dark': hexOf(dark.well),

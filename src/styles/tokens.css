@@ -1042,18 +1042,34 @@
    (contract background/surface/text/mutedText, resolved with the well, hover
    row, raised surface, text scale and borders derived). Every token that
    aliases one of these is restated — they resolve where they are declared.
-   Grain, drop shadows, radius and status colours stay Trayo's. */
+   Grain, radius and status colours stay Trayo's. */
 [data-brand-surfaces],
 [data-brand-surfaces] .light,
 .light[data-brand-surfaces] {
   /* The card and active-segment rings are borders, not shadows: restated
      here from the brand's hairlines, since :root spells out Trayo's sand. */
-  --shadow-card: 0 0 0 1px var(--border-subtle), 0 1px 2px rgba(60, 40, 20, 0.05);
+  --shadow-card: 0 0 0 1px var(--border-subtle), 0 1px 2px rgb(var(--brand-shadow-rgb, 132 106 42) / 0.05);
   --shadow-card-hover: 0 0 0 1px var(--border-strong), var(--shadow-card-float);
   --shadow-seg-active: 0 0 0 1px var(--border-subtle),
-    0 1px 1.2px rgb(132 106 42 / 0.14),
-    0 2.9px 3.6px -0.6px rgb(132 106 42 / 0.14),
-    0 6.6px 8.3px -1.2px rgb(132 106 42 / 0.1);
+    0 1px 1.2px rgb(var(--brand-shadow-rgb, 132 106 42) / 0.14),
+    0 2.9px 3.6px -0.6px rgb(var(--brand-shadow-rgb, 132 106 42) / 0.14),
+    0 6.6px 8.3px -1.2px rgb(var(--brand-shadow-rgb, 132 106 42) / 0.1);
+  /* The drop shadows are hue-matched to the page (see --shadow-float-bar):
+     Trayo's sand reads as a stain on a page in another hue, so they are
+     restated in the brand's shadow ink, the page's hue at the sand's depth. */
+  --shadow-card-float: 0 1px 1.2px rgb(var(--brand-shadow-rgb, 132 106 42) / 0.075),
+    0 2.9px 3.6px -0.6px rgb(var(--brand-shadow-rgb, 132 106 42) / 0.075),
+    0 6.6px 8.3px -1.2px rgb(var(--brand-shadow-rgb, 132 106 42) / 0.075),
+    0 14.2px 17.8px -1.9px rgb(var(--brand-shadow-rgb, 132 106 42) / 0.075),
+    0 28px 35px -2.5px rgb(var(--brand-shadow-rgb, 132 106 42) / 0.075);
+  --shadow-toast: 0 1px 1.2px rgb(var(--brand-shadow-rgb, 132 106 42) / 0.05),
+    0 2.9px 3.6px -0.6px rgb(var(--brand-shadow-rgb, 132 106 42) / 0.05),
+    0 6.6px 8.3px -1.2px rgb(var(--brand-shadow-rgb, 132 106 42) / 0.05),
+    0 14.2px 17.8px -1.9px rgb(var(--brand-shadow-rgb, 132 106 42) / 0.05);
+  --shadow-card-raised: 0 1px 1.2px rgb(var(--brand-shadow-rgb, 132 106 42) / 0.06),
+    0 2.9px 3.6px -0.6px rgb(var(--brand-shadow-rgb, 132 106 42) / 0.06);
+  --shadow-card-raised-up: 0 -1px 1.2px rgb(var(--brand-shadow-rgb, 132 106 42) / 0.06),
+    0 -2.9px 3.6px -0.6px rgb(var(--brand-shadow-rgb, 132 106 42) / 0.06);
   --color-app-shell: var(--brand-background);
   --color-app-card: var(--brand-surface);
   --color-app-well: var(--brand-well);
@@ -1116,6 +1132,19 @@
   --shadow-seg-active: inset 0 0 0 1px rgba(255, 255, 255, 0.12),
     0 1px 1.2px rgb(0 0 0 / 0.3),
     0 2.9px 3.6px -0.6px rgb(0 0 0 / 0.3);
+  --shadow-card-float: 0 1px 1.2px rgb(0 0 0 / 0.2),
+    0 2.9px 3.6px -0.6px rgb(0 0 0 / 0.2),
+    0 6.6px 8.3px -1.2px rgb(0 0 0 / 0.2),
+    0 14.2px 17.8px -1.9px rgb(0 0 0 / 0.2),
+    0 28px 35px -2.5px rgb(0 0 0 / 0.2);
+  --shadow-toast: 0 1px 1.2px rgb(0 0 0 / 0.16),
+    0 2.9px 3.6px -0.6px rgb(0 0 0 / 0.16),
+    0 6.6px 8.3px -1.2px rgb(0 0 0 / 0.16),
+    0 14.2px 17.8px -1.9px rgb(0 0 0 / 0.16);
+  --shadow-card-raised: 0 1px 1.2px rgb(0 0 0 / 0.16),
+    0 2.9px 3.6px -0.6px rgb(0 0 0 / 0.16);
+  --shadow-card-raised-up: 0 -1px 1.2px rgb(0 0 0 / 0.16),
+    0 -2.9px 3.6px -0.6px rgb(0 0 0 / 0.16);
   --color-app-shell: var(--brand-background-dark);
   --color-app-card: var(--brand-surface-dark);
   --color-app-well: var(--brand-well-dark);

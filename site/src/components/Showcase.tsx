@@ -1244,7 +1244,7 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                 <PersonBanner
                   person={PEOPLE[0]}
                   actions={
-                    <Button variant='tertiary'>
+                    <Button>
                       <Mail /> Contact details
                     </Button>
                   }

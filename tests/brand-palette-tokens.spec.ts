@@ -239,6 +239,20 @@ describe('complete override — [data-brand-surfaces]', () => {
     }
   })
 
+  it("light drop shadows use the brand's shadow ink; none keeps Trayo's sand", () => {
+    for (const token of [
+      '--shadow-card',
+      '--shadow-card-float',
+      '--shadow-card-raised',
+      '--shadow-card-raised-up',
+      '--shadow-toast',
+      '--shadow-seg-active'
+    ]) {
+      expect(surfacesLight.get(token), token).toContain('rgb(var(--brand-shadow-rgb, 132 106 42) / ')
+      expect(surfacesLight.get(token), token).not.toMatch(/rgba?\(\d/)
+    }
+  })
+
   it('dark tints only the ladder and restates text and borders with .dark values', () => {
     expect(surfacesDark.get('--color-app-shell')).toBe('var(--brand-background-dark)')
     expect(surfacesDark.get('--text-primary')).toBe(dark.get('--text-primary'))
