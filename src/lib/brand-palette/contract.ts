@@ -113,6 +113,7 @@ export function fromBrandThemeContract(
     if (contract.backgroundDark) input.backgroundDark = contract.backgroundDark
     if (contract.surfaceDark) input.surfaceDark = contract.surfaceDark
   } else {
+    input.surfaces = 'trayo'
     for (const field of CONTRACT_SURFACE_FIELDS) {
       notes.push(
         `${field} ${contract[field]} is not applied: Trayo UI keeps its own ${field} (surfaces: 'trayo').`

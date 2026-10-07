@@ -114,7 +114,9 @@ export const BRAND_SLOTS: Readonly<Record<BrandSlotName, BrandSlot>> = {
   text: {
     cssVar: '--brand-text',
     required: false,
-    role: 'Main readable text on the brand surfaces. Borders are derived from it.',
+    role:
+      'Main readable text on the brand surfaces. Borders are derived from it. When omitted it is a ' +
+      "near-black in the page's hue.",
     choose:
       "The brand's ink (#1d1c1d for Slack). It is darkened if it does not read at 4.5:1 on every surface."
   },
@@ -248,6 +250,7 @@ export const BRAND_SURFACE_TOKENS = [
   '--brand-text-muted',
   '--brand-border-subtle',
   '--brand-border-strong',
+  '--brand-shadow-rgb',
   '--brand-background-dark',
   '--brand-surface-dark',
   '--brand-well-dark',

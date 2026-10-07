@@ -50,5 +50,6 @@ export {
   type DialectAxis,
   type DialectOption
 } from './dialect'
+export { brandFromWorkspace, type WorkspaceBrand, type WorkspaceBrandMapping } from './workspace'
 export { applyBrand, BRAND_ROOT_ATTRIBUTES, type ApplyBrandOptions, type BrandDocument } from './apply'
 export { contrast, parseHex } from './color'

@@ -385,7 +385,7 @@ export function PersonCard({
 
 export interface PersonBannerProps {
   person: PersonLike
-  /** Right-hand slot — one action. Use `<Button variant='tertiary'>`. */
+  /** Right-hand slot — one action. `<Button>` is solid on the band; `tertiary` recedes. */
   actions?: React.ReactNode
   contacted?: boolean
   href?: string
@@ -414,10 +414,14 @@ export function PersonBanner({ person, actions, contacted, href, className }: Pe
         // `relative isolate` holds the noise layer's -z-10 inside the band.
         'relative isolate flex min-w-0 items-center gap-4 rounded-xl bg-accent-brand px-5 py-4 text-accent-brand-foreground',
         // Same 160deg direction as the card and strip gradients: the brand
-        // fill at the top-left, where the name sits, deepening toward the
-        // bottom-right. Darkening keeps a light foreground readable; a brand
-        // whose foreground is dark loses some contrast toward that corner.
-        'bg-[image:linear-gradient(160deg,var(--accent-brand),color-mix(in_oklab,var(--accent-brand)_74%,black))]',
+        // fill at the top-left, where the name sits, shifting away from the
+        // foreground toward the bottom-right — toward black under a light
+        // foreground, toward white under a dark one — so the text and the
+        // action read at least as well in that corner as beside the name.
+        'bg-[image:linear-gradient(160deg,var(--accent-brand),color-mix(in_oklab,var(--accent-brand)_74%,oklch(from_var(--accent-brand-foreground)_clamp(0,calc((0.6_-_l)*1000),1)_0_0)))]',
+        // The band's own pair, kept under other names so the action slot can
+        // swap them (see below).
+        '[--band-fill:var(--accent-brand)] [--band-ink:var(--accent-brand-foreground)]',
         '[--text-primary:var(--accent-brand-foreground)]',
         '[--text-secondary:var(--accent-brand-foreground)]',
         '[--border-strong:color-mix(in_oklab,var(--accent-brand-foreground)_30%,transparent)]',
@@ -457,7 +461,13 @@ export function PersonBanner({ person, actions, contacted, href, className }: Pe
         )}
         {subtitle && <span className='text-body-sm truncate'>{subtitle}</span>}
       </div>
-      {actions && <span className='flex shrink-0 items-center gap-2'>{actions}</span>}
+      {/* A `default` Button here is the band inverted: filled with the band's
+          foreground, labelled in the brand colour. It reads on any brand. */}
+      {actions && (
+        <span className='flex shrink-0 items-center gap-2 [--accent-brand:var(--band-ink)] [--accent-brand-foreground:var(--band-fill)]'>
+          {actions}
+        </span>
+      )}
     </div>
   )
 }

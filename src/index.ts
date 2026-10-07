@@ -178,6 +178,7 @@ export {
   fromBrandThemeContract,
   resolveBrandPalette,
   applyBrand,
+  brandFromWorkspace,
   DIALECT_AXES,
   DIALECT_PRESETS,
   checkDialect,
@@ -193,6 +194,8 @@ export type {
   ContractOptions,
   ResolvedBrandPalette,
   ApplyBrandOptions,
+  WorkspaceBrand,
+  WorkspaceBrandMapping,
   Dialect,
   DialectAxis,
 } from './lib/brand-palette'

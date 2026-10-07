@@ -114,7 +114,7 @@ describe('resolveBrandPalette — brand-specific outcomes', () => {
 
   it('a light primary (PayPal sky blue) gets dark text and a darker text/ring tone', () => {
     const p = resolveBrandPalette(BRANDS['paypal (sky blue as primary)'])
-    expect(p.tokens['--brand-on-primary']).toBe(TRAYO_SURFACES.light.text)
+    expect(p.tokens['--brand-on-primary']).toBe(p.tokens['--brand-text'])
     expect(p.tokens['--brand-accent-text']).not.toBe('#3fb6ff')
     expect(p.adjustments.join(' ')).toMatch(/links and accent text use/)
   })
@@ -483,7 +483,7 @@ describe('shell slot', () => {
 
   it('a mid-tone shell gets dark text', () => {
     const p = resolveBrandPalette({ primary: '#002991', shell: '#3fb6ff' })
-    expect(p.tokens['--brand-on-shell']).toBe(TRAYO_SURFACES.light.text)
+    expect(p.tokens['--brand-on-shell']).toBe(p.tokens['--brand-text'])
   })
 
   it('rejects a white or near-white shell', () => {
@@ -534,7 +534,7 @@ describe('supplied on-colours (onPrimary, onShell)', () => {
       shell: '#4a154b',
       onShell: '#611f69'
     })
-    expect(p.tokens['--brand-on-primary']).toBe(TRAYO_SURFACES.light.text)
+    expect(p.tokens['--brand-on-primary']).toBe(p.tokens['--brand-text'])
     expect(p.tokens['--brand-on-shell']).toBe('#ffffff')
     expect(p.adjustments.join(' ')).toMatch(/onPrimary #ffffff is under 4.5:1/)
     expect(p.adjustments.join(' ')).toMatch(/onShell #611f69 is under 4.5:1/)
@@ -570,7 +570,7 @@ describe('supplied on-colours (onPrimary, onShell)', () => {
     // Snowflake: white on #29b5e8 is 2.4:1; forcing it would turn the cyan teal.
     const p = resolveBrandPalette({ primary: '#29b5e8', onPrimary: '#ffffff' })
     expect(p.tokens['--brand-primary']).toBe('#29b5e8')
-    expect(p.tokens['--brand-on-primary']).toBe(TRAYO_SURFACES.light.text)
+    expect(p.tokens['--brand-on-primary']).toBe(p.tokens['--brand-text'])
     expect(p.adjustments.join(' ')).toMatch(/onPrimary #ffffff is under 4.5:1/)
   })
 
@@ -679,6 +679,36 @@ describe('complete override — surfaces', () => {
     expect(q.slots.background).toBe('#eef3ff')
     expect(toOklch(rgb(q.slots.surface!)).l).toBeGreaterThan(toOklch(rgb('#eef3ff')).l)
     expect(contrast(rgb(q.tokens['--brand-text']!), rgb('#eef3ff'))).toBeGreaterThanOrEqual(7)
+  })
+
+  it("a brand that names no text gets a near-black in the canvas's hue, and its borders follow", () => {
+    const q = resolveBrandPalette({ primary: '#002991' }).tokens
+    const ink = toOklch(rgb(q['--brand-text']!))
+    const page = toOklch(rgb(q['--brand-background']!))
+    expect(q['--brand-text']).not.toBe(TRAYO_SURFACES.light.text)
+    expect(Math.abs(ink.l - toOklch(rgb(TRAYO_SURFACES.light.text)).l)).toBeLessThan(0.02)
+    expect(ink.c).toBeGreaterThan(0.008)
+    expect(ink.c).toBeLessThan(0.03)
+    expect(Math.abs(ink.h - page.h)).toBeLessThan(8)
+    expect(q['--brand-border-subtle']).toBe(`rgb(${rgb(q['--brand-text']!).map((c) => Math.round(c * 255)).join(' ')} / 0.14)`)
+    // A given text is kept; a canvas with no hue gets a plain grey.
+    expect(resolveBrandPalette({ primary: '#002991', text: '#1d1c1d' }).tokens['--brand-text']).toBe('#1d1c1d')
+    for (const grey of [{ primary: '#000000' }, { primary: '#002991', canvas: 'neutral' as const }]) {
+      expect(toOklch(rgb(resolveBrandPalette(grey).tokens['--brand-text']!)).c).toBeLessThan(0.002)
+    }
+  })
+
+  it("drop shadows take the canvas's hue at the depth of Trayo's sand", () => {
+    const sand = toOklch(rgb('#846a2a'))
+    const channels = (v: string) => v.split(' ').map((n) => Number(n) / 255) as unknown as ReturnType<typeof rgb>
+    const q = resolveBrandPalette({ primary: '#002991' }).tokens
+    const shadow = toOklch(channels(q['--brand-shadow-rgb']!))
+    expect(q['--brand-shadow-rgb']).toMatch(/^\d+ \d+ \d+$/)
+    expect(Math.abs(shadow.l - sand.l)).toBeLessThan(0.02)
+    expect(Math.abs(shadow.h - toOklch(rgb(q['--brand-background']!)).h)).toBeLessThan(8)
+    expect(shadow.c).toBeGreaterThan(0.05)
+    const grey = resolveBrandPalette({ primary: '#002991', canvas: 'neutral' }).tokens
+    expect(toOklch(channels(grey['--brand-shadow-rgb']!)).c).toBeLessThan(0.002)
   })
 
   it('quiet: dark mode keeps Trayo lightness steps and takes the brand hue at low chroma', () => {
