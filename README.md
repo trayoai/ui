@@ -307,7 +307,7 @@ gets the same face everywhere, forever. It never degrades to initials.
 <Person person={apiPerson} variant="stacked" />       // centred, for a tile
 <Person person={apiPerson} showContact contacted />   // email/phone/profile glyphs + a "we reached out" check
 <PersonCard person={apiPerson} summary="…" tags={['CISO']} footer={<Button size="sm">Reach out</Button>} />
-<PersonBanner person={apiPerson} actions={<Button variant="tertiary"><Mail /> Contact details</Button>} />  // brand-coloured header band, one per screen
+<PersonBanner person={apiPerson} actions={<Button><Mail /> Contact details</Button>} />  // brand-coloured header band, one per screen
 ```
 
 `PersonLike` is a loose superset of a `GET /v1/people` row, so an API response
@@ -316,8 +316,10 @@ passes straight through. Everything but `name` is optional.
 `PersonBanner` is the header of a page or drawer about one person: a
 full-width band in the brand colour with the face, name, title and one action.
 Use it once per screen, at the top; a person in a list or grid is a `<Person>`
-or `<PersonCard>`. Put a `tertiary` or `quiet` Button in `actions` — the band
-restyles them for its fill.
+or `<PersonCard>`. Put a default (primary) `<Button>` in `actions` — the band
+inverts it, filled with the band's foreground and labelled in the brand
+colour, so it reads on any brand. A `tertiary` or `quiet` Button also works
+when the action should recede.
 
 > **The photo field has two names.** The Trayo API returns `profileImageUrl`
 > from `GET /v1/people`, but a `POST /v1/find` contacts result carries

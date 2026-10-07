@@ -385,7 +385,7 @@ export function PersonCard({
 
 export interface PersonBannerProps {
   person: PersonLike
-  /** Right-hand slot — one action. `<Button>` is solid on the band; `tertiary` recedes. */
+  /** Right-hand slot — one action, a default `<Button>`: solid on the band. `tertiary` recedes. */
   actions?: React.ReactNode
   contacted?: boolean
   href?: string
