@@ -319,6 +319,27 @@ test('sections in a PageContainer keep clear of each other', async ({ page }) =>
   }
 })
 
+test('contact links sit beside the actions, not in the middle of the row', async ({ page }) => {
+  await open(page)
+  const rows = page.locator('[data-layout-case="clickable-rows"] [data-slot=entity-row]:has([data-slot=badge])')
+  await expect(rows).toHaveCount(2)
+  for (const row of await rows.all()) {
+    const link = (await row.getByRole('link', { name: 'View profile' }).boundingBox())!
+    const badge = (await row.locator('[data-slot=badge]').boundingBox())!
+    expect(badge.x - (link.x + link.width)).toBe(8)
+  }
+})
+
+test('a row with onClick shows a pointer, a plain row does not', async ({ page }) => {
+  await open(page)
+  const cursors = (name: string) =>
+    page
+      .locator(`[data-layout-case="${name}"] [data-slot=entity-row]`)
+      .evaluateAll((els) => els.map((el) => getComputedStyle(el).cursor))
+  expect(await cursors('clickable-rows')).toEqual(['pointer', 'pointer', 'pointer'])
+  expect(await cursors('entity-list')).toEqual(['auto', 'auto', 'auto'])
+})
+
 test('rows side by side sit on the same line', async ({ page }) => {
   await open(page)
   const avatars = page.locator('[data-layout-case="rows-side-by-side"] [data-slot=person-avatar]')

@@ -280,6 +280,18 @@ export function LayoutCheck() {
               ))}
             </EntityList>
           </Case>
+          <Case name='clickable-rows' width={720}>
+            <EntityList>
+              <Person person={DANA} showContact onClick={() => {}} actions={<Badge variant='secondary'>IT</Badge>} />
+              <Person
+                person={{ ...DANA, id: 'p-4', name: 'Tracy Strong', title: 'CIO' }}
+                showContact
+                onClick={() => {}}
+                actions={<Badge variant='secondary'>Engineering leadership</Badge>}
+              />
+              <Company company={RAMP} onClick={() => {}} />
+            </EntityList>
+          </Case>
           <Case name='page-sections' width={720}>
             <PageContainer>
               <PageHeader title='Buying group' />
