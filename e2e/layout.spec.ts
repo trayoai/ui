@@ -309,6 +309,16 @@ test('rows in an EntityList keep clear of each other', async ({ page }) => {
   }
 })
 
+test('sections in a PageContainer keep clear of each other', async ({ page }) => {
+  await open(page)
+  const sections = page.locator('[data-layout-case="page-sections"] [data-slot=page-container] > *')
+  await expect(sections).toHaveCount(4)
+  const boxes = await sections.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().toJSON()))
+  for (let i = 1; i < boxes.length; i++) {
+    expect(boxes[i].top - boxes[i - 1].bottom).toBe(24)
+  }
+})
+
 test('rows side by side sit on the same line', async ({ page }) => {
   await open(page)
   const avatars = page.locator('[data-layout-case="rows-side-by-side"] [data-slot=person-avatar]')

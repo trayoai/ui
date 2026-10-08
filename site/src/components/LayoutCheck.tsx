@@ -19,10 +19,13 @@ import {
   JobMove,
   Meta,
   PageContainer,
+  PageHeader,
   Person,
   PersonBanner,
   PersonCard,
   PersonDialog,
+  StatGrid,
+  StatTile,
   Surface,
   Tooltip,
   TooltipContent,
@@ -276,6 +279,21 @@ export function LayoutCheck() {
                 />
               ))}
             </EntityList>
+          </Case>
+          <Case name='page-sections' width={720}>
+            <PageContainer>
+              <PageHeader title='Buying group' />
+              <StatGrid>
+                <StatTile label='Contacts' value='93' />
+                <StatTile label='Employers' value='24' />
+              </StatGrid>
+              <Surface title='Contacts' description='14 matching'>
+                <Person person={DANA} />
+              </Surface>
+              <Callout tone='note' title='Exact title matching is literal'>
+                Rows that matched the string but not the seat are marked.
+              </Callout>
+            </PageContainer>
           </Case>
           <Case name='job-move-wide' width={560}>
             <JobMove from={LONG_MOVE.from} to={LONG_MOVE.to} />

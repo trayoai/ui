@@ -130,7 +130,8 @@ the wrong place or not at all. Nothing errors at build time.
     a list — is `<Surface title description actions>` (`padded={false}` around
     a `DataTable`), never a hand-built card header. Give each DataTable column
     a `skeleton` shape (`person` | `company` | `badge`) so loading rows match
-    the cells.
+    the cells. `<PageContainer>` spaces the sections of a page: put them
+    directly inside it, with no wrapper `<div>` and no margins between them.
 
 14. **Long lists are paged.** Over ~50 rows, pass DataTable's `pagination`
     prop (client-side without `total`, server-side with it) or render
