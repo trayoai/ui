@@ -469,6 +469,10 @@ A filter group is a `SegmentedControl`; a row of `StatTile`s goes in a
 `StatGrid`, which is two columns on a phone and lets an odd last tile span both
 so nothing dangles.
 
+`PageContainer` spaces its sections. Put the `PageHeader`, `StatGrid`,
+`Surface`s and `Callout`s directly inside it, with no wrapper `<div>` and no
+margins between them: only direct children get the gap.
+
 A panel with a name is a `Surface` with a `title`: the header strip (title,
 optional `description`, `icon` and right-aligned `actions`) sits on the well
 and the content on its own sheet below. Use it for a table, a chart or a list;
@@ -514,7 +518,7 @@ an `isolate` parent, behind the content:
   actions={<Button size="sm">Run now</Button>}
 >
   <PageContainer>
-    <StatGrid className="mb-6">
+    <StatGrid>
       <StatTile label="Accounts" value="317" hint="283 with events" />
       <StatTile label="At risk" value="3" hint="$2.6M ARR" delta="+1" />
       <StatTile label="Signals this week" value="47" delta="-4%" />

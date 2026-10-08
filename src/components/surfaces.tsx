@@ -145,7 +145,10 @@ export function AppShellNavLink({
   )
 }
 
-/** The centred content column inside an `AppShell`. */
+/**
+ * The centred content column inside an `AppShell`. It spaces the sections put
+ * directly inside it; a child's own margin class still wins.
+ */
 export function PageContainer({
   className,
   width = 'default',
@@ -154,7 +157,7 @@ export function PageContainer({
   return (
     <div
       data-slot='page-container'
-      className={cn('mx-auto w-full px-4 py-8 md:px-6', CONTAINER_MAX[width], className)}
+      className={cn('mx-auto w-full space-y-6 px-4 py-8 md:px-6', CONTAINER_MAX[width], className)}
       {...props}
     />
   )
