@@ -1014,8 +1014,6 @@ describe('contrast is the same for every brand', () => {
   })
 
   it('derived secondary text is dark enough to stand apart from meta text', () => {
-    // Meta text is held at 4.5:1, so the gap has to come from the other
-    // side: a derived secondary tone clears 7:1 on the page ladder.
     for (const input of panel.filter((p) => !p.background)) {
       const m = measure(input)
       const label = JSON.stringify(input)

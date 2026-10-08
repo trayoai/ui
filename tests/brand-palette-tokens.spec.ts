@@ -360,9 +360,6 @@ describe('dialect rules keep interaction states', () => {
 })
 
 describe('text on the brand container', () => {
-  // `.bg-container` repoints secondary and meta text at a mix of the
-  // container's own foreground, so they read on the panel without the page's
-  // greys having to be dark enough for it.
   const pairs = [
     ['.bg-container', '--container', '--brand-container', '--brand-on-container'],
     ['.bg-container-tertiary', '--container-tertiary', '--brand-container-tertiary', '--brand-on-container-tertiary']

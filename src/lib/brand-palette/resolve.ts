@@ -729,10 +729,7 @@ function resolveSurfaces(
   if (!same(text, textInput)) {
     adjustments.push(`text ${hexOf(textInput)} is under 7:1 on the brand surfaces; ${hexOf(text)} is used.`)
   }
-  // A brand's own mutedText only has to read. A derived one is darkened
-  // further, to DERIVED_SECONDARY_CONTRAST on the page ladder: meta text sits
-  // at the text minimum, so secondary text has to be this dark for the two
-  // to stay apart.
+  // A brand's own mutedText only has to read; a derived one is held higher.
   const secondaryInput = input.mutedText ? parseHex(input.mutedText)! : quantize(composite(text, 0.7, shell))
   const secondaryFloor = input.mutedText ? TEXT_CONTRAST : DERIVED_SECONDARY_CONTRAST
   const textSecondary = shiftLightnessUntil(
