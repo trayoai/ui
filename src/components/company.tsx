@@ -100,7 +100,7 @@ export function Company({
   if (variant === 'inline') {
     return (
       <span
-        className={cn('inline-flex min-w-0 items-center gap-1.5 align-middle', className)}
+        className={cn('inline-flex min-w-0 items-center gap-1.5 align-middle', onClick && 'cursor-pointer', className)}
         onClick={onClick}
       >
         {logo}
@@ -115,7 +115,10 @@ export function Company({
 
   if (variant === 'stacked') {
     return (
-      <div className={cn('flex min-w-0 flex-col items-center gap-2.5 text-center', className)} onClick={onClick}>
+      <div
+        className={cn('flex min-w-0 flex-col items-center gap-2.5 text-center', onClick && 'cursor-pointer', className)}
+        onClick={onClick}
+      >
         {logo}
         <div className='flex min-w-0 flex-col items-center gap-1'>
           {name}
@@ -128,7 +131,7 @@ export function Company({
   return (
     <div
       data-slot='entity-row'
-      className={cn('flex min-w-0 items-center gap-3', className)}
+      className={cn('flex min-w-0 items-center gap-3', onClick && 'cursor-pointer', className)}
       onClick={onClick}
     >
       {logo}

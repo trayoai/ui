@@ -137,7 +137,7 @@ export function Person({
   if (variant === 'inline') {
     return (
       <span
-        className={cn('inline-flex min-w-0 items-center gap-1.5 align-middle', className)}
+        className={cn('inline-flex min-w-0 items-center gap-1.5 align-middle', onClick && 'cursor-pointer', className)}
         onClick={onClick}
       >
         {avatar}
@@ -150,7 +150,10 @@ export function Person({
 
   if (variant === 'stacked') {
     return (
-      <div className={cn('flex min-w-0 flex-col items-center gap-3 text-center', className)} onClick={onClick}>
+      <div
+        className={cn('flex min-w-0 flex-col items-center gap-3 text-center', onClick && 'cursor-pointer', className)}
+        onClick={onClick}
+      >
         {avatar}
         <div className='flex min-w-0 flex-col items-center gap-0.5'>
           {name}
@@ -175,7 +178,7 @@ export function Person({
   return (
     <div
       data-slot='entity-row'
-      className={cn('flex min-w-0 items-center gap-3', className)}
+      className={cn('flex min-w-0 items-center gap-3', onClick && 'cursor-pointer', className)}
       onClick={onClick}
     >
       {avatar}
@@ -190,8 +193,14 @@ export function Person({
           </span>
         )}
       </div>
-      {showContact && <PersonContactLinks person={person} className='ml-auto' />}
-      {actions && <span className='ml-auto flex shrink-0 items-center gap-2'>{actions}</span>}
+      {(showContact || actions) && (
+        // One trailing group: two `ml-auto` siblings would split the free
+        // space and leave the contact links in the middle of the row.
+        <span className='ml-auto flex shrink-0 items-center gap-2'>
+          {showContact && <PersonContactLinks person={person} />}
+          {actions}
+        </span>
+      )}
     </div>
   )
 }
