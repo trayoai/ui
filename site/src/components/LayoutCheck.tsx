@@ -4,13 +4,17 @@ import {
   Badge,
   Button,
   Callout,
+  Company,
   CompanyCard,
+  DataTable,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   EntityList,
+  Fact,
+  FactList,
   Input,
   JobMove,
   Meta,
@@ -20,6 +24,11 @@ import {
   PersonCard,
   PersonDialog,
   Surface,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+  type Column,
   type CompanyLike,
   type PersonLike,
 } from '../../../src'
@@ -47,6 +56,27 @@ const JUSTIN: PersonLike = {
   title: 'Head of Digital Workplace & AI',
   company: 'Delta Dental Ins.',
 }
+
+// The cells the README documents for a table: a `md` person, an inline company.
+const TABLE_COLUMNS: Column<PersonLike>[] = [
+  { id: 'person', header: 'Person', accessor: (p) => <Person person={p} size='md' />, skeleton: 'person' },
+  {
+    id: 'company',
+    header: 'Company',
+    accessor: (p) => <Company company={{ name: p.company!, domain: p.companyDomain }} variant='inline' />,
+    skeleton: 'company',
+  },
+]
+
+// A short title: a table sizes its columns to their text and scrolls sideways
+// when that is wider than the box, and this case is about image sizes.
+const TABLE_ROW: PersonLike = { id: 'p-4', name: 'Dana Whitfield', title: 'CIO', company: 'Ramp', companyDomain: 'ramp.com' }
+
+// A paragraph, where a card has room for a couple of sentences.
+const LONG_SUMMARY =
+  'As Group Head of Digital Workplace, she leads enterprise-wide collaboration strategy, governance, ' +
+  'licensing and operations, and is directly responsible for platform selection, vendor consolidation ' +
+  'and the rollout of AI assistants across forty thousand seats in eleven countries this fiscal year.'
 
 const RAMP: CompanyLike = { name: 'Ramp', domain: 'ramp.com', industry: 'Fintech' }
 
@@ -99,15 +129,107 @@ export function LayoutCheck() {
     <AppShell>
       <PageContainer>
         <div data-layout-ready={ready ? '' : undefined}>
-          <Case name='person-card-full-width-footer' width={320}>
+          <Case name='person-card-long-text' width={320}>
+            <PersonCard
+              person={DANA}
+              summary={LONG_SUMMARY}
+              tags={['VP of Infrastructure', 'Grounded', 'Microsoft Azure', 'Windows 365', 'Security']}
+            />
+          </Case>
+          <Case name='person-card-formatted-text' width={320}>
+            <PersonCard
+              person={DANA}
+              summary={
+                <>
+                  As Group Head of Digital Workplace, she leads enterprise-wide collaboration strategy, governance,
+                  licensing and operations, and is directly responsible for platform selection, vendor
+                  consolidation and the rollout of <strong>AI assistants across forty thousand seats</strong>.
+                </>
+              }
+            />
+          </Case>
+          <Case name='person-card-short-text' width={320}>
+            <PersonCard person={JUSTIN} summary='Owns the collaboration budget.' tags={['CIO']} />
+          </Case>
+          <Case name='company-card-long-text' width={320}>
+            <CompanyCard
+              company={RAMP}
+              summary={LONG_SUMMARY}
+              tags={['Series D', 'Fintech', 'Hiring', 'New CFO', 'Expanding']}
+            />
+          </Case>
+          {/* The width of the band inside a default PersonDialog, and a phone. */}
+          <Case name='person-banner-dialog-width' width={620}>
+            <PersonBanner
+              person={{ ...DANA, company: 'Prudential Financial', companyDomain: 'prudential.com' }}
+              actions={<Button>Draft in Outlook</Button>}
+            />
+          </Case>
+          <Case name='person-banner-narrow' width={340}>
+            <PersonBanner
+              person={{ ...DANA, company: 'Prudential Financial', companyDomain: 'prudential.com' }}
+              actions={<Button>Draft in Outlook</Button>}
+            />
+          </Case>
+          <Case name='fact-list' width={420}>
+            <FactList title='Why now'>
+              <Fact label='FDA Approval'>
+                Moderna announced that the FDA approved supplemental licence applications for the
+                2026-2027 formulas.
+              </Fact>
+              <Fact label='Clinical Trial Results'>
+                Moderna and Merck announced positive Phase 3 results.
+              </Fact>
+              <Fact label='New Vaccine Approval'>The FDA approved a new seasonal vaccine.</Fact>
+            </FactList>
+          </Case>
+          {/* Rows side by side: one must not sit lower than the other. */}
+          <Case name='rows-side-by-side' width={520}>
+            <div className='grid grid-cols-2 gap-4'>
+              <Person person={DANA} />
+              <Person person={JUSTIN} />
+            </div>
+          </Case>
+          {/* The same table loading and loaded: the placeholders are the cells' size. */}
+          <Case name='table-loading' width={520}>
+            <DataTable columns={TABLE_COLUMNS} rows={[]} getRowKey={(p) => p.id!} loading skeletonRows={1} />
+          </Case>
+          <Case name='table-loaded' width={520}>
+            <DataTable columns={TABLE_COLUMNS} rows={[TABLE_ROW]} getRowKey={(p) => p.id!} />
+          </Case>
+          <Case name='person-row' width={384}>
+            <Person person={DANA} />
+          </Case>
+          <Case name='person-card-bare-footer-button' width={320}>
+            <PersonCard person={DANA} footer={<Button className='w-full'>Draft intro</Button>} />
+          </Case>
+          <Case name='person-card-explicit-footer-button' width={320}>
             <PersonCard
               person={DANA}
               footer={
-                <Button size='sm' variant='secondary' className='w-full'>
-                  Draft intro
-                </Button>
+                <>
+                  <Button size='sm' variant='secondary'>
+                    Skip
+                  </Button>
+                  <Button variant='default'>Draft intro</Button>
+                </>
               }
             />
+          </Case>
+          <Case name='person-card-wrapped-footer-button' width={320}>
+            <TooltipProvider>
+              <PersonCard
+                person={DANA}
+                footer={
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button>Draft intro</Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Opens a draft</TooltipContent>
+                  </Tooltip>
+                }
+              />
+            </TooltipProvider>
           </Case>
           <Case name='person-card-long-footer-label' width={320}>
             <PersonCard
@@ -118,15 +240,8 @@ export function LayoutCheck() {
           <Case name='person-card-no-contact' width={320}>
             <PersonCard person={JUSTIN} footer={<Button size='sm'>Draft intro</Button>} />
           </Case>
-          <Case name='company-card-full-width-footer' width={320}>
-            <CompanyCard
-              company={RAMP}
-              footer={
-                <Button size='sm' variant='secondary' className='w-full'>
-                  Research
-                </Button>
-              }
-            />
+          <Case name='company-card-bare-footer-button' width={320}>
+            <CompanyCard company={RAMP} footer={<Button className='w-full'>Research</Button>} />
           </Case>
           <Case name='surface-header-wide-actions' width={384}>
             <Surface

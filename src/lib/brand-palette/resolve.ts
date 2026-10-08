@@ -37,6 +37,13 @@ export const TRAYO_SURFACES = {
 export const TEXT_CONTRAST = 4.5
 export const NON_TEXT_CONTRAST = 3
 
+/**
+ * What a derived secondary text tone clears on the page, well and card. Meta
+ * text is held at TEXT_CONTRAST, so at the old ~5.9:1 the two greys were
+ * 1.3:1 apart and Body and Meta read as one tone; at 7:1 they are 1.5:1.
+ */
+const DERIVED_SECONDARY_CONTRAST = 7
+
 /** OKLCH chroma under which a colour reads as a grey (black-and-white brands). */
 const NEUTRAL_CHROMA = 0.04
 /** OKLCH lightness of the near-white dark-mode fill for a black-and-white brand. */
@@ -72,12 +79,16 @@ const LIGHT_PAGE_L = 0.8
  * takes the primary's hue as a soft tint so two brands never share a
  * background, and dark surfaces tint the same way, more visibly. `neutral`
  * opts out: the page is kept as given and dark mode keeps Trayo's slate.
+ *
+ * `soft` is an off-white, under the chroma of Trayo's own cream: the page,
+ * cards and wells all take the tint, and a cool hue at more than this reads
+ * as a blue screen where a warm one passes for paper.
  */
 // sRGB allows less than these for some hues this light; fromOklch clips.
 const CANVAS = {
   neutral: null,
-  soft: { chroma: 0.024, maxL: 0.965 }, // Material's neutral range
-  vibrant: { chroma: 0.04, maxL: 0.945 } // Material's "vibrant" neutrals; still 7:1 for ink
+  soft: { chroma: 0.008, maxL: 0.985 },
+  vibrant: { chroma: 0.024, maxL: 0.965 } // Material's neutral range
 } as const
 /** Container tone: primary at this lightness/chroma (Material tone 90 ≈ L 0.9). */
 const CONTAINER_L = { light: 0.9, dark: 0.35 }
@@ -89,8 +100,12 @@ const DARK_PAGE_MAX_L = { backgroundDark: 0.3, surfaceDark: 0.36 }
 const GIVEN_DARK_STEP = { well: 0.034, card: 0.05, row: 0.05, raised: 0.09 }
 /** A surface with less chroma than this is neutral and eligible for the tint. */
 const NEUTRAL_SURFACE_CHROMA = 0.01
-/** Chroma of the ink a brand gets when it names no `text`: near-black in the canvas's hue. */
-const DERIVED_INK_CHROMA = 0.015
+/**
+ * Chroma of the ink a brand gets when it names no `text`: near-black with a
+ * trace of the canvas's hue, about Trayo's own. More than this and the text,
+ * the greys mixed from it and the borders all read as tones of the brand.
+ */
+const DERIVED_INK_CHROMA = 0.008
 /**
  * Trayo's shadow ink (tokens.css, rgb(132 106 42)) as OKLCH lightness and
  * chroma. A brand's drop shadows keep both and take the canvas's hue.
@@ -186,9 +201,9 @@ export interface BrandPaletteInput {
    */
   emphasis?: 'bold' | 'quiet'
   /**
-   * How strongly a neutral page takes the brand hue: `'soft'` (default),
-   * `'vibrant'`, the strongest tint that keeps text at 7:1 (Material's
-   * "vibrant" neutrals), or `'neutral'`, not at all: the page and cards are
+   * How strongly a neutral page takes the brand hue: `'soft'` (default), an
+   * off-white with a hint of the hue and near-white cards; `'vibrant'`, a
+   * visibly coloured page; or `'neutral'`, not at all: the page and cards are
    * kept as given and dark mode keeps Trayo's slate. A chromatic background
    * is kept as given either way.
    */
@@ -365,6 +380,10 @@ export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPale
   if (assumedPage) {
     adjustments.push("no background given; a white page is assumed (surfaces: 'trayo' keeps Trayo's cream).")
   }
+  // The light container is a surface text sits on like any other, so the
+  // text tones below are checked on it too: without that a light primary
+  // (cyan, green) reads on the page and fades on its own tinted panels.
+  const cL = containerOf(primary, 'light')
   const override = input.background || assumedPage
     ? resolveSurfaces(
         assumedPage ? { ...input, background: ASSUMED_PAGE } : input,
@@ -373,7 +392,8 @@ export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPale
         trayoDark,
         adjustments,
         input.emphasis !== 'quiet',
-        CANVAS[input.canvas ?? 'soft']
+        CANVAS[input.canvas ?? 'soft'],
+        cL.fill
       )
     : null
   const L: Surfaces = override?.light ?? trayoLight
@@ -396,13 +416,16 @@ export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPale
   )
   // Quantized: text is checked against the tooltip as it is written (hex).
   const tooltip = quantize(composite(primary, 0.1, L.card))
-  const lightTextBackgrounds = [L.shell, L.well, L.card, L.raised, tooltip]
+  // Everything accent text is set on: the page ladder, the soft accent fill
+  // over the card (the tooltip's tone) and the well, and the container.
+  const softOnWell = quantize(composite(primary, 0.1, L.well))
+  const lightTextBackgrounds = [L.shell, L.well, L.card, L.raised, tooltip, softOnWell, cL.fill]
   const accentText = shiftLightnessUntil(primary, 'darker', (c) =>
     lightTextBackgrounds.every((bg) => contrast(c, bg) >= TEXT_CONTRAST)
   )
   if (!same(accentText, primary)) {
     adjustments.push(
-      `primary ${hexOf(primary)} is under ${TEXT_CONTRAST}:1 as text on the light page; links and accent text use ${hexOf(accentText)}.`
+      `primary ${hexOf(primary)} is under ${TEXT_CONTRAST}:1 as text on the light page or the brand container; links and accent text use ${hexOf(accentText)}.`
     )
   }
   const ringVisible = [L.shell, L.well, L.card].every((bg) => contrast(primary, bg) >= NON_TEXT_CONTRAST)
@@ -437,7 +460,8 @@ export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPale
     darkFill = liftedFill
   }
   const onPrimaryDark = onColor(darkFill, trayoLight.text)
-  const darkTextBackgrounds = [D.shell, D.well, D.card, D.raised]
+  const cD = containerOf(primary, 'dark')
+  const darkTextBackgrounds = [D.shell, D.well, D.card, D.raised, cD.fill]
   const accentTextDark = shiftLightnessUntil(darkFill, 'lighter', (c) =>
     darkTextBackgrounds.every((bg) => contrast(c, bg) >= TEXT_CONTRAST)
   )
@@ -536,21 +560,6 @@ export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPale
   }
 
   // ── Containers: brand colour on surfaces, Material tone 90 / on 10 (dark 30 / 90) ──
-  const containerOf = (hue: RGB, mode: 'light' | 'dark') => {
-    const h = toOklch(hue)
-    const fill = quantize(
-      fromOklch({ l: CONTAINER_L[mode], c: Math.min(h.c, CONTAINER_MAX_CHROMA[mode]), h: h.h })
-    )
-    const start = quantize(fromOklch({ l: mode === 'light' ? 0.3 : 0.9, c: Math.min(h.c, 0.12), h: h.h }))
-    const on = shiftLightnessUntil(
-      start,
-      mode === 'light' ? 'darker' : 'lighter',
-      (c) => contrast(c, fill) >= 7
-    )
-    return { fill, on }
-  }
-  const cL = containerOf(primary, 'light')
-  const cD = containerOf(primary, 'dark')
   const tL = tertiary ? containerOf(tertiary, 'light') : cL
   const tD = tertiary ? containerOf(tertiary, 'dark') : cD
   Object.assign(tokens, {
@@ -614,6 +623,17 @@ export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPale
   }
 }
 
+/** The brand on a surface: Material tone 90 with tone-10 text (dark 30 / 90). */
+function containerOf(hue: RGB, mode: 'light' | 'dark'): { fill: RGB; on: RGB } {
+  const h = toOklch(hue)
+  const fill = quantize(
+    fromOklch({ l: CONTAINER_L[mode], c: Math.min(h.c, CONTAINER_MAX_CHROMA[mode]), h: h.h })
+  )
+  const start = quantize(fromOklch({ l: mode === 'light' ? 0.3 : 0.9, c: Math.min(h.c, 0.12), h: h.h }))
+  const on = shiftLightnessUntil(start, mode === 'light' ? 'darker' : 'lighter', (c) => contrast(c, fill) >= 7)
+  return { fill, on }
+}
+
 /** A bar for a brand that gave none: a deep step of the primary (its black, for a black-and-white brand). */
 function derivedShell(primary: RGB): RGB {
   const p = toOklch(primary)
@@ -652,7 +672,8 @@ function resolveSurfaces(
   trayoDark: Surfaces,
   adjustments: string[],
   bold: boolean,
-  canvas: { chroma: number; maxL: number } | null
+  canvas: { chroma: number; maxL: number } | null,
+  container: RGB
 ): { light: Surfaces; dark: Surfaces; tokens: Record<BrandSurfaceToken, string> } {
   const given = parseHex(input.background!)!
   const givenL = toOklch(given)
@@ -708,19 +729,29 @@ function resolveSurfaces(
   if (!same(text, textInput)) {
     adjustments.push(`text ${hexOf(textInput)} is under 7:1 on the brand surfaces; ${hexOf(text)} is used.`)
   }
+  // A brand's own mutedText only has to read; a derived one is held higher.
   const secondaryInput = input.mutedText ? parseHex(input.mutedText)! : quantize(composite(text, 0.7, shell))
-  const textSecondary = shiftLightnessUntil(secondaryInput, 'darker', (c) =>
-    surfaces.every((bg) => contrast(c, bg) >= TEXT_CONTRAST)
+  const secondaryFloor = input.mutedText ? TEXT_CONTRAST : DERIVED_SECONDARY_CONTRAST
+  const textSecondary = shiftLightnessUntil(
+    secondaryInput,
+    'darker',
+    (c) =>
+      surfaces.every((bg) => contrast(c, bg) >= secondaryFloor) && contrast(c, container) >= TEXT_CONTRAST
   )
-  if (!same(textSecondary, secondaryInput)) {
+  if (input.mutedText && !same(textSecondary, secondaryInput)) {
     adjustments.push(
       `mutedText ${hexOf(secondaryInput)} is under ${TEXT_CONTRAST}:1 on the brand surfaces; ${hexOf(textSecondary)} is used.`
     )
   }
-  // Muted (meta) text: a lighter step of secondary that still clears the
-  // non-text minimum everywhere, as Trayo's own muted tone does on cream.
-  const textMuted = shiftLightnessUntil(shiftL(textSecondary, 0.12), 'darker', (c) =>
-    surfaces.every((bg) => contrast(c, bg) >= NON_TEXT_CONTRAST)
+  // Muted (meta) text: a lighter step of secondary. It is still text, so it
+  // clears the text minimum on the page ladder (timestamps and counts are
+  // read, not glanced at) and the non-text one on the brand container.
+  const textMuted = shiftLightnessUntil(
+    shiftL(textSecondary, 0.12),
+    'darker',
+    (c) =>
+      surfaces.every((bg) => contrast(c, bg) >= TEXT_CONTRAST) &&
+      contrast(c, container) >= NON_TEXT_CONTRAST
   )
 
   // Dark: Trayo's ladder, tinted with the brand's hue (the canvas hue, else

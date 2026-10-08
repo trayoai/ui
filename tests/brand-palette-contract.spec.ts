@@ -109,7 +109,8 @@ describe('fromBrandThemeContract', () => {
     const p = resolveBrandPalette(input)
     // A white page takes the brand's hue as a soft tint; cards a fainter one.
     expect(p.slots.background).not.toBe('#ffffff')
-    expect(toOklch(rgb(p.slots.background!)).c).toBeGreaterThanOrEqual(0.02)
+    expect(toOklch(rgb(p.slots.background!)).c).toBeGreaterThanOrEqual(0.004)
+    expect(toOklch(rgb(p.slots.background!)).c).toBeLessThanOrEqual(0.012)
     expect(p.tokens['--brand-surface']).not.toBe('#f8f8f8')
   })
 

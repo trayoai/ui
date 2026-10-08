@@ -1,5 +1,7 @@
 import type * as React from 'react';
 import { cn } from '../lib/cn';
+import { LOGO_SIZES } from './company-logo';
+import { AVATAR_SIZES } from './person-avatar';
 import { Skeleton } from './ui/skeleton';
 import { TableCell, TableRow } from './ui/table';
 import type { Column } from './data-table';
@@ -22,10 +24,15 @@ const BAR_WIDTHS = [
   'max-w-[80px]',
 ];
 
+/** The cells a table is documented to hold: a `md` person and an inline
+ *  (`sm`) company. Read from the size scales so the placeholders follow them. */
+const PERSON_SHAPE = AVATAR_SIZES.md;
+const COMPANY_SHAPE = LOGO_SIZES.sm;
+
 /** Delay between one row's shimmer and the next. */
 const ROW_STAGGER_MS = 80;
 
-/** A single shimmer placeholder row matching DataTable's body geometry (60px
+/** A single shimmer placeholder row matching DataTable's body geometry (68px
  *  tall, 10px horizontal padding) so swapping in real data causes no reflow.
  *  Reuses each column's `className`/`align` and the shared Skeleton in the
  *  `surface-well` tone; a column's `skeleton` hint picks a placeholder
@@ -44,7 +51,7 @@ export function DataTableSkeletonRow<T>({
       }
     >
       {hasSelection && (
-        <TableCell className='h-15 w-10 py-0'>
+        <TableCell className='h-17 w-10 py-0'>
           <Skeleton className='size-4 rounded bg-surface-well' />
         </TableCell>
       )}
@@ -57,10 +64,10 @@ export function DataTableSkeletonRow<T>({
               ? 'justify-center'
               : undefined;
         return (
-          <TableCell key={c.id} className={cn('h-15 px-2.5 py-0', c.className)}>
+          <TableCell key={c.id} className={cn('h-17 px-2.5 py-0', c.className)}>
             {c.skeleton === 'person' ? (
               <div className={cn('flex items-center gap-2.5', justify)}>
-                <Skeleton className='size-8 shrink-0 rounded-full bg-surface-well' />
+                <Skeleton className={cn(PERSON_SHAPE, 'shrink-0 rounded-full bg-surface-well')} />
                 <div className='flex min-w-0 flex-1 flex-col gap-1.5'>
                   <Skeleton className={cn('h-3 w-full bg-surface-well', width)} />
                   <Skeleton className='h-2.5 w-full max-w-[72px] bg-surface-well' />
@@ -68,7 +75,7 @@ export function DataTableSkeletonRow<T>({
               </div>
             ) : c.skeleton === 'company' ? (
               <div className={cn('flex items-center gap-1.5', justify)}>
-                <Skeleton className='size-6 shrink-0 rounded-[6px] bg-surface-well' />
+                <Skeleton className={cn(COMPANY_SHAPE, 'shrink-0 bg-surface-well')} />
                 <Skeleton className={cn('h-3.5 w-full bg-surface-well', width)} />
               </div>
             ) : c.skeleton === 'badge' ? (
