@@ -187,7 +187,6 @@ test('a fact list sets its labels apart: darker than the text under them, with r
   // The label is the page's primary ink, the same as a person's name.
   const ink = await page.locator('[data-layout-case="person-row"] .text-name').evaluate((el) => getComputedStyle(el).color)
   expect(label.color).toBe(ink)
-  // A fact's label sits closer to its own text than to the fact above.
   const facts = box.locator('[data-slot=fact]')
   const first = (await facts.nth(0).boundingBox())!
   const second = (await facts.nth(1).boundingBox())!

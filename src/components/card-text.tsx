@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { Badge } from './ui/badge'
 
-/** Tags a card shows before it counts the rest. */
 const MAX_CARD_TAGS = 3
 
 /**
