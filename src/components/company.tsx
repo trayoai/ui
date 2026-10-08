@@ -2,8 +2,9 @@ import * as React from 'react'
 import { ExternalLink, MapPin, Users } from 'lucide-react'
 import { cn } from '../lib/cn'
 import { normalizeDomain } from '../lib/brand-image'
-import { Badge } from './ui/badge'
 import { CardFooterSlot } from './card-footer-slot'
+import { ENTITY_ROW_GAP } from './entity-list'
+import { CardSummary, CardTags } from './card-text'
 import { CompanyLogo, type LogoSize } from './company-logo'
 
 /**
@@ -126,7 +127,11 @@ export function Company({
   }
 
   return (
-    <div className={cn('flex min-w-0 items-center gap-3', className)} onClick={onClick}>
+    <div
+      data-slot='entity-row'
+      className={cn('flex min-w-0 items-center gap-3', ENTITY_ROW_GAP, className)}
+      onClick={onClick}
+    >
       {logo}
       <div className='flex min-w-0 flex-col'>
         {name}
@@ -239,7 +244,8 @@ export interface CompanyCardProps {
   summary?: React.ReactNode
   /** Short labels: segment, tech in use, a signal that fired. */
   tags?: string[]
-  /** Footer slot, usually the primary CTA. */
+  /** Footer slot: the card's one action. A `<Button>` here is `sm` and
+   *  `secondary` unless it says otherwise, and never stretches. */
   footer?: React.ReactNode
   /** Top-right slot — a menu, a score, a secondary action. */
   actions?: React.ReactNode
@@ -289,17 +295,9 @@ export function CompanyCard({
         {actions && <span className='flex shrink-0 items-center gap-2'>{actions}</span>}
       </div>
 
-      {summary && <p className='text-body line-clamp-4 text-text-secondary'>{summary}</p>}
+      {summary && <CardSummary>{summary}</CardSummary>}
 
-      {!!tags?.length && (
-        <div className='flex flex-wrap gap-1.5'>
-          {tags.map((t) => (
-            <Badge key={t} variant='soft'>
-              {t}
-            </Badge>
-          ))}
-        </div>
-      )}
+      {!!tags?.length && <CardTags tags={tags} />}
 
     </>
   )

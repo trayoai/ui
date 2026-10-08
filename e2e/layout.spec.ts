@@ -70,6 +70,33 @@ test('nothing sticks out of any case', async ({ page }) => {
 })
 
 test.describe('card footers', () => {
+  for (const [name, slot] of [
+    ['person-card-bare-footer-button', 'person-card'],
+    ['company-card-bare-footer-button', 'company-card'],
+  ]) {
+    test(`${name}: a w-full button stays compact, at the right`, async ({ page }) => {
+      await open(page)
+      const box = page.locator(`[data-layout-case="${name}"]`)
+      const card = (await box.locator(`[data-slot=${slot}]`).boundingBox())!
+      const button = (await box.locator('[data-slot=button]').boundingBox())!
+      expect(button.width).toBeLessThan(card.width / 2)
+      expect(button.height).toBe(32)
+      expect(card.x + card.width - (button.x + button.width)).toBeLessThan(24)
+    })
+  }
+
+  test('a footer button is secondary unless it names a variant', async ({ page }) => {
+    await open(page)
+    const fill = (name: string, label: string) =>
+      page
+        .locator(`[data-layout-case="${name}"]`)
+        .getByRole('button', { name: label })
+        .evaluate((el) => getComputedStyle(el).backgroundImage + getComputedStyle(el).backgroundColor)
+    const secondary = await fill('person-card-explicit-footer-button', 'Skip')
+    expect(await fill('person-card-bare-footer-button', 'Draft intro')).toBe(secondary)
+    expect(await fill('person-card-explicit-footer-button', 'Draft intro')).not.toBe(secondary)
+  })
+
   test('the footer button is right-aligned when the person has no contact links', async ({ page }) => {
     await open(page)
     const box = page.locator('[data-layout-case="person-card-no-contact"]')
@@ -85,6 +112,91 @@ test.describe('card footers', () => {
     const button = (await box.locator('[data-slot=button]').boundingBox())!
     expect(button.y).toBeGreaterThanOrEqual(link.y + link.height - 1)
   })
+})
+
+test.describe('faces and logos lead, text stays short', () => {
+  test('a person row has a 48px face and a 20px company mark', async ({ page }) => {
+    await open(page)
+    const box = page.locator('[data-layout-case="person-row"]')
+    expect((await box.locator('[data-slot=person-avatar]').boundingBox())!.width).toBe(48)
+    expect((await box.locator('[data-slot=company-logo]').boundingBox())!.width).toBe(20)
+  })
+
+  for (const [name, image] of [
+    ['person-card-long-text', 'person-avatar'],
+    ['company-card-long-text', 'company-logo'],
+  ]) {
+    test(`${name}: a 64px image, a three-line summary, three tags and a count`, async ({ page }) => {
+      await open(page)
+      const box = page.locator(`[data-layout-case="${name}"]`)
+      expect((await box.locator(`[data-slot=${image}]`).first().boundingBox())!.width).toBe(64)
+      const summary = box.locator('p')
+      const lines = await summary.evaluate(
+        (el) => el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight)
+      )
+      expect(Math.round(lines)).toBe(3)
+      // The full text is still there for a pointer and a screen reader.
+      expect((await summary.getAttribute('title'))!.length).toBeGreaterThan(200)
+      const tags = await box.locator('[data-slot=badge]').allTextContents()
+      expect(tags).toHaveLength(4)
+      expect(tags[3]).toBe('+2')
+    })
+  }
+})
+
+test.describe('person banner', () => {
+  for (const name of ['person-banner-dialog-width', 'person-banner-narrow']) {
+    test(`${name}: the title and the company are both readable in full`, async ({ page }) => {
+      await open(page)
+      const box = page.locator(`[data-layout-case="${name}"]`)
+      for (const slot of ['person-banner-title', 'person-banner-company']) {
+        const cut = await box
+          .locator(`[data-slot=${slot}]`)
+          .evaluate((el) => el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1)
+        expect(cut, slot).toBe(false)
+      }
+    })
+  }
+
+  test('narrow: the action moves under the text instead of squeezing it', async ({ page }) => {
+    await open(page)
+    const box = page.locator('[data-layout-case="person-banner-narrow"]')
+    const title = (await box.locator('[data-slot=person-banner-title]').boundingBox())!
+    const button = (await box.locator('[data-slot=button]').boundingBox())!
+    expect(button.y).toBeGreaterThanOrEqual(title.y + title.height - 1)
+  })
+})
+
+test('a fact list sets its labels apart: darker than the text under them, with room between facts', async ({
+  page,
+}) => {
+  await open(page)
+  const box = page.locator('[data-layout-case="fact-list"]')
+  const style = (slot: string) =>
+    box
+      .locator(`[data-slot=${slot}]`)
+      .first()
+      .evaluate((el) => {
+        const s = getComputedStyle(el)
+        return { color: s.color, weight: Number(s.fontWeight) }
+      })
+  const label = await style('fact-label')
+  const text = await style('fact-text')
+  expect(label.weight).toBeGreaterThanOrEqual(600)
+  expect(label.color).not.toBe(text.color)
+  // The label is the page's primary ink, the same as a person's name.
+  const ink = await page.locator('[data-layout-case="person-row"] .text-name').evaluate((el) => getComputedStyle(el).color)
+  expect(label.color).toBe(ink)
+  // A fact's label sits closer to its own text than to the fact above.
+  const facts = box.locator('[data-slot=fact]')
+  const first = (await facts.nth(0).boundingBox())!
+  const second = (await facts.nth(1).boundingBox())!
+  const between = second.y - (first.y + first.height)
+  const labelBox = (await facts.nth(1).locator('[data-slot=fact-label]').boundingBox())!
+  const textBox = (await facts.nth(1).locator('[data-slot=fact-text]').boundingBox())!
+  const within = textBox.y - (labelBox.y + labelBox.height)
+  expect(between).toBeGreaterThanOrEqual(16)
+  expect(within).toBeLessThanOrEqual(4)
 })
 
 test.describe('narrow panels', () => {
@@ -134,8 +246,23 @@ test('rows in an EntityList keep clear of each other', async ({ page }) => {
   await expect(avatars).toHaveCount(3)
   const boxes = await avatars.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().toJSON()))
   for (let i = 1; i < boxes.length; i++) {
-    expect(boxes[i].top - boxes[i - 1].bottom).toBeGreaterThanOrEqual(16)
+    expect(boxes[i].top - boxes[i - 1].bottom).toBeGreaterThanOrEqual(24)
   }
+})
+
+test('rows stacked by hand still keep clear of each other', async ({ page }) => {
+  await open(page)
+  const avatars = page.locator('[data-layout-case="hand-stacked-rows"] [data-slot=person-avatar]')
+  await expect(avatars).toHaveCount(3)
+  const boxes = await avatars.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().toJSON()))
+  for (let i = 1; i < boxes.length; i++) {
+    expect(boxes[i].top - boxes[i - 1].bottom).toBeGreaterThanOrEqual(12)
+  }
+})
+
+test('a dialog with no size is 576px wide', async ({ page }) => {
+  const content = await openDialog(page, 'banner')
+  expect((await content.boundingBox())!.width).toBe(576)
 })
 
 test.describe('JobMove', () => {

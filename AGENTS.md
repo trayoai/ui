@@ -101,6 +101,12 @@ the wrong place or not at all. Nothing errors at build time.
    card. `<Meta>` (`text-meta`, `--text-xs`, muted) only for timestamps, counts
    and secondary attributes. A screen set mostly in Meta reads as grey and
    unfinished. Name the role, never the pixel size.
+   **Faces and logos carry a screen; text stays short.** Leave `size` off so
+   people and companies render at the kit's sizes, and never shrink one to fit
+   more text beside it. A card `summary` is one or two sentences (it clamps at
+   three lines), a tag is one to three words (a card shows three and counts
+   the rest), and a reason or note is a sentence, not a paragraph. Cut the
+   words before you add a line.
 
 10. **A tool is not a landing page.** `<GradientText>` is for one phrase in a
     hero; `<BrandMesh>` for one hero or empty state. Not on a page title, not
@@ -163,9 +169,14 @@ the wrong place or not at all. Nothing errors at build time.
 18. **The kit does the layout; slots take content-sized children.** A
     `<Button>` sizes to its label. Don't give one `w-full` or `flex-1` in a
     row with siblings: a button cannot shrink, so it pushes out of its
-    container. A card `footer` is the one place a full-width button is safe.
+    container. A card `footer` takes a bare `<Button>`: the card makes it
+    compact and secondary and keeps it at the right, at the width of its
+    label. Never `w-full` there, and never a solid primary on every card.
     A job change is `<JobMove from to>`. A list of people or companies goes
-    in `<EntityList>`, never a hand-spaced stack. A label for a person or company
+    in `<EntityList>`, never a hand-spaced stack. A list of labelled points
+    (why now, fit, evidence) is `<FactList>` with a `<Fact label>` each, never
+    a `<Meta>` label over a `<Body>` paragraph: the label must be darker than
+    the text it heads, not lighter. A label for a person or company
     ("Left", "Owner", "Reports to") goes on its own line above the entity in
     `text-meta`, never inline beside the logo or avatar. A row of chips or
     buttons that may not fit gets `flex flex-wrap gap-2`. Size a dialog with

@@ -347,8 +347,8 @@ const ACCOUNT_COLUMNS: Column<AccountRow>[] = [
   {
     id: 'account',
     header: 'Account',
-    // size='md' (32px), not the row default of 40px: the larger tile crowds
-    // a 60px table row and the logos read as a solid strip.
+    // size='md' (36px), not the row default of 48px: down a table the
+    // larger tiles read as a solid strip.
     accessor: (r) => <Company company={r.company} size='md' showWebsite />,
     className: 'min-w-[260px]',
     sortable: true,

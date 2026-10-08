@@ -389,7 +389,7 @@ export function DataTable<T>({
                 // onRowClick / navigation. A non-selectable row keeps the cell
                 // (column alignment) but renders no checkbox.
                 <TableCell
-                  className="h-15 w-10 py-0"
+                  className="h-17 w-10 py-0"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {(selection.isRowSelectable?.(key) ?? true) && (
@@ -417,14 +417,14 @@ export function DataTable<T>({
                 <TableCell
                   key={c.id}
                   className={cn(
-                    // Fixed-height rows: pin the row height (h-15) and use
-                    // horizontal-only padding so every row is 60px regardless
+                    // Fixed-height rows: pin the row height (h-17) and use
+                    // horizontal-only padding so every row is 68px regardless
                     // of cell content (avatars/controls) or the body
                     // line-height — the base TableCell's `p-2` would let rows
                     // vary with their content. (Height is a min for table
                     // cells, so the vertical padding must be dropped, not just
                     // capped.)
-                    'h-15 px-2.5 py-0 text-body-sm',
+                    'h-17 px-2.5 py-0 text-body-sm',
                     colIndex === 0 ? 'text-text-primary' : 'text-text-muted',
                     alignClass(c.align),
                     c.className,

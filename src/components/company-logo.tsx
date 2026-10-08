@@ -8,11 +8,11 @@ export const LOGO_SIZES = {
   // Sits inside a line of meta text (the company mark under a person's name).
   '2xs': 'size-4 rounded-[4px] text-[7px]',
   xs: 'size-5 rounded-[5px] text-[9px]',
-  sm: 'size-6 rounded-[6px] text-[10px]',
-  md: 'size-8 rounded-md text-xs',
-  lg: 'size-10 rounded-lg text-sm',
-  xl: 'size-14 rounded-xl text-lg',
-  '2xl': 'size-20 rounded-2xl text-2xl',
+  sm: 'size-7 rounded-[7px] text-[11px]',
+  md: 'size-9 rounded-md text-xs',
+  lg: 'size-12 rounded-lg text-base',
+  xl: 'size-16 rounded-xl text-xl',
+  '2xl': 'size-24 rounded-2xl text-3xl',
 } as const
 
 export type LogoSize = keyof typeof LOGO_SIZES

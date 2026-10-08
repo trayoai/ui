@@ -166,7 +166,7 @@ const columns: Column<AccountRow>[] = [
   {
     id: 'account',
     header: 'Account',
-    // size="md" in a table: the default 40px tile crowds the 60px row.
+    // size="md" (36px) in a table: the default 48px logo tile reads as a solid strip.
     accessor: (r) => <Company company={r.company} size="md" showWebsite />,
     className: 'min-w-[260px]',
     sortable: true,
@@ -306,7 +306,7 @@ gets the same face everywhere, forever. It never degrades to initials.
 <Person person={apiPerson} variant="inline" />        // avatar + name, in a sentence
 <Person person={apiPerson} variant="stacked" />       // centred, for a tile
 <Person person={apiPerson} showContact contacted />   // email/phone/profile glyphs + a "we reached out" check
-<PersonCard person={apiPerson} summary="…" tags={['CISO']} footer={<Button size="sm">Reach out</Button>} />
+<PersonCard person={apiPerson} summary="…" tags={['CISO']} footer={<Button>Reach out</Button>} />
 <PersonBanner person={apiPerson} actions={<Button><Mail /> Contact details</Button>} />  // brand-coloured header band, one per screen
 ```
 
@@ -314,9 +314,10 @@ gets the same face everywhere, forever. It never degrades to initials.
 passes straight through. Everything but `name` is optional.
 
 A list of people (or companies) goes in `<EntityList>`, which owns the spacing:
-10px above and below each row and a hairline between them (`divided={false}`
-drops the hairline). The rows have no vertical padding of their own, so a
-hand-spaced stack lets the avatars touch.
+12px above and below each row and a hairline between them (`divided={false}`
+drops the hairline). The rows have no vertical padding of their own; one that
+directly follows another in a hand-built stack takes 12px above it so the
+faces never touch, but the list is the supported shape.
 
 ```tsx
 <EntityList>
@@ -324,12 +325,37 @@ hand-spaced stack lets the avatars touch.
 </EntityList>
 ```
 
-The `footer` slot is safe to fill: a button there sizes to its label and sits at
-the right, `className="w-full"` makes it fill the space beside the contact
-links, and a label too long for that space drops onto its own line.
+A list of labelled points — the reasons or signals behind a person or a company —
+goes in `<FactList>`. Each label is set in the primary ink at name weight and
+sits close to its own sentence, with more room between facts than inside one:
+
+```tsx
+<Well>
+  <FactList title="Why now">
+    <Fact label="FDA approval">Approved the 2026-2027 formulas.</Fact>
+    <Fact label="Trial results">Positive Phase 3 results with Merck.</Fact>
+  </FactList>
+</Well>
+```
+
+Do not build this from a `<Meta>` label over a `<Body>` paragraph: the label
+ends up lighter than the text it heads and the facts run together.
+
+A card is a glance, so it keeps its text short: `summary` clamps at three lines
+(the full string stays in the tooltip) and `tags` shows three, then a count of
+the rest. Pass one or two sentences and one-to-three-word tags.
+
+The `footer` slot takes a bare `<Button>`. The card renders it compact and
+secondary (`size="sm"`, `variant="secondary"`) unless you name another, keeps
+it at the right at the width of its label, and drops a label too long for the
+space beside the contact links onto its own line. It does not stretch:
+`className="w-full"` has no effect there. A card repeats down a grid, so a
+full-width primary on each one outweighs the people it sits under.
 
 `PersonBanner` is the header of a page or drawer about one person: a
-full-width band in the brand colour with the face, name, title and one action.
+full-width band in the brand colour with the face, name, title, company and one
+action. The title and the company each get their own line, so a long title
+never cuts the company off, and on a narrow band the action moves under the text.
 Use it once per screen, at the top; a person in a list or grid is a `<Person>`
 or `<PersonCard>`. Put a default (primary) `<Button>` in `actions` — the band
 inverts it, filled with the band's foreground and labelled in the brand
@@ -355,7 +381,7 @@ default (`size="2xl"`), so a title and company fit beside the action.
 A `<PersonBanner>` placed in a `<DialogContent>` by hand also gets the room it
 needs for the close button, but `<PersonDialog>` is the supported shape.
 
-Size any dialog with `size` (`small` | `medium` | `large`, or `sm` … `6xl`), not
+A dialog with no `size` is 576px wide (`xl`). Size any dialog with `size` (`small` | `medium` | `large`, or `sm` … `6xl`), not
 a `max-w-*` class: the width is set per breakpoint, and a bare `max-w-2xl`
 only replaces the phone value.
 
@@ -376,7 +402,7 @@ initials tile for companies with no mark.
 <Company company={{ name: 'Ramp', domain: 'ramp.com' }} />
 <Company company={apiAccount} variant="inline" />     // logo + name, for a table cell
 <Company company={apiAccount} showWebsite />          // + industry · headcount · location · site
-<CompanyCard company={apiAccount} summary="…" tags={['Series D']} footer={<Button size="sm">Research</Button>} />
+<CompanyCard company={apiAccount} summary="…" tags={['Series D']} footer={<Button>Research</Button>} />
 ```
 
 `CompanyLike` is a loose superset of a `/v1` account. A published `logoUrl`
@@ -424,7 +450,7 @@ status; `teal` is still accepted and renders as `blue`. Without `size` it is
 | States | `EmptyState` `StatTile` `Callout` `Skeleton` `Progress` |
 | Type | `PageTitle` `SectionTitle` `CardTitle` `EntityName` `Body` `Meta` `Eyebrow` `SectionLabel` `Code` `DataLabel` |
 | Controls | `Button` `Input` `Textarea` `Select` `Checkbox` `Switch` `Label` `Tabs` `SegmentedControl` `Pagination` (+ `usePagination`) |
-| Display | `Badge` `TagChip` `Card` `EntityList` `Separator` `Tooltip` `ScrollArea` |
+| Display | `Badge` `TagChip` `Card` `EntityList` `FactList` `Separator` `Tooltip` `ScrollArea` |
 | Overlays | `Dialog` `PersonDialog` `Popover` `DropdownMenu` |
 | Feedback | `Toaster` `toast()` `useToast()` |
 | Charts | `ChartLegend` `DataLabel` `CHART_COLORS` `CHART_SEQUENTIAL` `CHART_MUTED` `chartColor` `chartSequential` |
@@ -727,7 +753,7 @@ const palette = applyBrand(document, contract, { theme: 'light', dialect: 'edito
 console.log(palette.theme, palette.adjustments)
 ```
 
-**Canvas.** A page given as white or grey takes the brand's hue as a soft tint by default, and dark mode is built in that hue. Pass `canvas: 'vibrant'` for a stronger tint, or `canvas: 'neutral'` to keep the page and cards exactly as given and dark mode on the kit's own slate, so the brand colour shows only on controls and accents. A page that already has a colour is kept as given in every case.
+**Canvas.** A page given as white or grey takes the brand's hue as a soft tint by default (an off-white page with near-white cards, so a cyan or blue brand does not turn the screen blue), and dark mode is built in that hue. Pass `canvas: 'vibrant'` for a visibly coloured page, or `canvas: 'neutral'` to keep the page and cards exactly as given and dark mode on the kit's own slate, so the brand colour shows only on controls and accents. A page that already has a colour is kept as given in every case.
 
 **Container tone.** Every palette carries the brand's container (Material's `primaryContainer`: tone 90 with tone-10 text; 30/90 in dark) and a tertiary one, as `bg-container text-container-foreground` and `bg-container-tertiary …`. Use them where the brand should sit on a surface — a selected row, a stat strip, a side panel — with readable text guaranteed. `canvas: 'vibrant'` tints a neutral page harder than the default `'soft'`, still 7:1 for text.
 
@@ -782,7 +808,13 @@ What the resolver guarantees, so you never adjust a colour for contrast:
 - accents become chart series that clear 3:1 on the card, light and dark;
 - on the brand's surfaces, text clears 7:1 and supporting text 4.5:1, borders
   and the hover row are derived, and every check above runs against those
-  surfaces instead of the kit's.
+  surfaces instead of the kit's;
+- the level is the same for every brand: secondary text, meta text and accent
+  text all clear 4.5:1 on the page, the well, the card and the brand
+  container (`bg-container`), whether the brand colour is a navy or a pale
+  cyan. Meta text keeps 3:1 on the container; put `text-container-foreground`
+  there for anything longer than a label. A derived ink is a near-neutral, so
+  the greys and borders mixed from it do not turn into tones of the brand.
 
 Without `data-brand` on `<html>` nothing changes. The live demo at
 [ui.trayo.ai/demo](https://ui.trayo.ai/demo) has a brand switcher.

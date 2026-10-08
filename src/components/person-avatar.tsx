@@ -6,11 +6,11 @@ import { placeholderFaceUrl } from '../lib/placeholder-faces'
 
 export const AVATAR_SIZES = {
   xs: 'size-5',
-  sm: 'size-6',
-  md: 'size-8',
-  lg: 'size-10',
-  xl: 'size-14',
-  '2xl': 'size-20',
+  sm: 'size-7',
+  md: 'size-9',
+  lg: 'size-12',
+  xl: 'size-16',
+  '2xl': 'size-24',
 } as const
 
 export type AvatarSize = keyof typeof AVATAR_SIZES

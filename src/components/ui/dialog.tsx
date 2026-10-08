@@ -75,7 +75,7 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
-  size = 'lg',
+  size = 'xl',
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean

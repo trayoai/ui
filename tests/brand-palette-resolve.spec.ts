@@ -350,6 +350,17 @@ describe('containers (Material tone 90 / on 10; dark 30 / 90)', () => {
 })
 
 describe('canvas strength', () => {
+  it('the default tint leaves a light page in a cool hue, not a blue one', () => {
+    // Regression (2026-10-07): Snowflake's cyan at the old strength gave a
+    // #e6f7ff page with blue cards and wells; the whole screen read as blue.
+    const { tokens } = resolveBrandPalette({ primary: '#29b5e8' })
+    const page = toOklch(rgb(tokens['--brand-background']!))
+    expect(page.l).toBeGreaterThanOrEqual(0.98)
+    expect(page.c).toBeLessThanOrEqual(0.012)
+    expect(toOklch(rgb(tokens['--brand-surface']!)).c).toBeLessThanOrEqual(0.006)
+    expect(toOklch(rgb(tokens['--brand-well']!)).c).toBeLessThanOrEqual(0.012)
+  })
+
   it("'vibrant' tints a neutral page more than 'soft', still 7:1 for text", () => {
     const soft = resolveBrandPalette({ primary: '#611f69', background: '#ffffff' })
     const vivid = resolveBrandPalette({ primary: '#611f69', background: '#ffffff', canvas: 'vibrant' })
@@ -779,16 +790,18 @@ describe('complete override — surfaces', () => {
       [slack, toOklch(rgb('#611f69')).h]
     ] as const) {
       const bg = toOklch(rgb(p.slots.background!))
-      // As much of the 0.024 chroma as sRGB allows at this lightness for
-      // this hue (navy near white clips well under it), never a flat white.
-      const reachable = toOklch(fromOklch({ l: 0.965, c: 0.024, h: hue })).c
-      expect(bg.c).toBeGreaterThanOrEqual(Math.min(0.024, reachable) - 0.003)
-      expect(bg.c).toBeGreaterThanOrEqual(0.008)
-      expect(bg.l).toBeLessThanOrEqual(0.966)
+      // As much of the 0.008 chroma as sRGB allows at this lightness for
+      // this hue, never a flat white, and never enough to read as a
+      // coloured page.
+      const reachable = toOklch(fromOklch({ l: 0.985, c: 0.008, h: hue })).c
+      expect(bg.c).toBeGreaterThanOrEqual(Math.min(0.008, reachable) - 0.003)
+      expect(bg.c).toBeGreaterThanOrEqual(0.004)
+      expect(bg.c).toBeLessThanOrEqual(0.012)
+      expect(bg.l).toBeLessThanOrEqual(0.986)
       expect(Math.abs(bg.h - hue)).toBeLessThan(8)
       // Cards stay a lighter, fainter step above the page.
       const card = toOklch(rgb(p.slots.surface!))
-      expect(card.l).toBeGreaterThan(bg.l + 0.01)
+      expect(card.l).toBeGreaterThan(bg.l + 0.008)
       expect(card.c).toBeLessThan(bg.c)
       expect(p.adjustments.join(' ')).toMatch(/canvas takes the brand's hue/)
       // Text still reads on the tinted ladder.
@@ -934,5 +947,75 @@ describe('brandSlotsAgentGuide', () => {
       expect(guide).toMatch(new RegExp(`^${name} \\((required|optional)\\)`, 'm'))
     }
     expect(guide).toMatch(/never adjust a colour for contrast/)
+  })
+})
+
+describe('contrast is the same for every brand', () => {
+  // A panel around the hue wheel at three depths: the light primaries (cyan,
+  // green, yellow) are the ones that used to land under the floors on the
+  // brand's own container, where a navy or a purple cleared them by a mile.
+  const panel: BrandPaletteInput[] = []
+  for (let h = 0; h < 360; h += 30) {
+    for (const l of [0.45, 0.6, 0.75]) {
+      const primary = toHex(fromOklch({ l, c: 0.15, h }))
+      panel.push({ primary }, { primary, canvas: 'vibrant' })
+    }
+  }
+  panel.push({ primary: '#29b5e8' }, { primary: '#f25022' }, { primary: '#29b5e8', background: '#dff1fa' })
+
+  const measure = (input: BrandPaletteInput) => {
+    const t = resolveBrandPalette(input).tokens
+    const page = ['--brand-background', '--brand-well', '--brand-surface', '--brand-raised'].map(
+      (k) => rgb(t[k as keyof typeof t]!)
+    )
+    const container = rgb(t['--brand-container']!)
+    // The soft accent fill (selected rows, soft badges) over the card and well.
+    const soft = ['--brand-surface', '--brand-well'].map((k) =>
+      over(t['--brand-accent-soft'], t[k as keyof typeof t]!)
+    )
+    const worst = (token: string, bgs: (typeof container)[]) =>
+      Math.min(...bgs.map((bg) => contrast(rgb(t[token as keyof typeof t]!), bg)))
+    return {
+      text: worst('--brand-text', [...page, container]),
+      secondary: worst('--brand-text-secondary', page),
+      secondaryOnContainer: worst('--brand-text-secondary', [container]),
+      muted: worst('--brand-text-muted', page),
+      mutedOnContainer: worst('--brand-text-muted', [container]),
+      accent: worst('--brand-accent-text', [...page, container, ...soft]),
+      mutedOnPage: contrast(rgb(t['--brand-text-muted']!), page[0]),
+      secondaryOnPage: contrast(rgb(t['--brand-text-secondary']!), page[0])
+    }
+  }
+
+  it('every text tone clears its floor on every surface, the brand container included', () => {
+    for (const input of panel) {
+      const m = measure(input)
+      const label = JSON.stringify(input)
+      expect(m.text, label).toBeGreaterThanOrEqual(7)
+      expect(m.secondary, label).toBeGreaterThanOrEqual(TEXT_CONTRAST)
+      expect(m.secondaryOnContainer, label).toBeGreaterThanOrEqual(TEXT_CONTRAST)
+      // Meta text is text: 4.5:1 on the page ladder, not the 3:1 of a ring.
+      expect(m.muted, label).toBeGreaterThanOrEqual(TEXT_CONTRAST)
+      expect(m.mutedOnContainer, label).toBeGreaterThanOrEqual(NON_TEXT_CONTRAST)
+      expect(m.accent, label).toBeGreaterThanOrEqual(TEXT_CONTRAST)
+      const t = resolveBrandPalette(input).tokens
+      expect(
+        contrast(rgb(t['--brand-accent-text-dark']), rgb(t['--brand-container-dark']!)),
+        `${label} dark`
+      ).toBeGreaterThanOrEqual(TEXT_CONTRAST)
+    }
+  })
+
+  it('derived greys sit in one narrow band, whatever the hue', () => {
+    const derived = panel.filter((p) => !p.background).map(measure)
+    const spread = (values: number[]) => Math.max(...values) - Math.min(...values)
+    expect(spread(derived.map((m) => m.mutedOnPage))).toBeLessThan(0.6)
+    expect(spread(derived.map((m) => m.secondaryOnPage))).toBeLessThan(1)
+  })
+
+  it('a derived ink is a near-neutral, not a tone of the brand', () => {
+    for (const primary of ['#29b5e8', '#f25022', '#1db954']) {
+      expect(toOklch(rgb(resolveBrandPalette({ primary }).tokens['--brand-text']!)).c).toBeLessThan(0.01)
+    }
   })
 })

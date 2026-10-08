@@ -139,6 +139,14 @@ describe('brand slots — tokens.css ⇄ lib/brand-palette', () => {
   })
 })
 
+describe('brand shell glow', () => {
+  it('is half as strong as Trayo\'s on a light branded page, and unchanged in dark', () => {
+    // A saturated primary at Trayo's 10% pools as a coloured corner.
+    expect(brandLight.get('--shell-glow-cool-alpha')).toBe('0.05')
+    expect(brandDark.get('--shell-glow-cool-alpha')).toBe(dark.get('--shell-glow-cool-alpha'))
+  })
+})
+
 describe('Trayo defaults are unchanged without data-brand', () => {
   it('shell cool glow keeps its prior light and dark values', () => {
     expect(root.get('--shell-glow-cool-rgb')).toBe('123 93 243')

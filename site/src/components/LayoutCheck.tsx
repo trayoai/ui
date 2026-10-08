@@ -11,6 +11,8 @@ import {
   DialogHeader,
   DialogTitle,
   EntityList,
+  Fact,
+  FactList,
   Input,
   JobMove,
   Meta,
@@ -47,6 +49,12 @@ const JUSTIN: PersonLike = {
   title: 'Head of Digital Workplace & AI',
   company: 'Delta Dental Ins.',
 }
+
+// A paragraph, where a card has room for a couple of sentences.
+const LONG_SUMMARY =
+  'As Group Head of Digital Workplace, she leads enterprise-wide collaboration strategy, governance, ' +
+  'licensing and operations, and is directly responsible for platform selection, vendor consolidation ' +
+  'and the rollout of AI assistants across forty thousand seats in eleven countries this fiscal year.'
 
 const RAMP: CompanyLike = { name: 'Ramp', domain: 'ramp.com', industry: 'Fintech' }
 
@@ -99,13 +107,69 @@ export function LayoutCheck() {
     <AppShell>
       <PageContainer>
         <div data-layout-ready={ready ? '' : undefined}>
-          <Case name='person-card-full-width-footer' width={320}>
+          <Case name='person-card-long-text' width={320}>
+            <PersonCard
+              person={DANA}
+              summary={LONG_SUMMARY}
+              tags={['VP of Infrastructure', 'Grounded', 'Microsoft Azure', 'Windows 365', 'Security']}
+            />
+          </Case>
+          <Case name='company-card-long-text' width={320}>
+            <CompanyCard
+              company={RAMP}
+              summary={LONG_SUMMARY}
+              tags={['Series D', 'Fintech', 'Hiring', 'New CFO', 'Expanding']}
+            />
+          </Case>
+          {/* The width of the band inside a default PersonDialog, and a phone. */}
+          <Case name='person-banner-dialog-width' width={620}>
+            <PersonBanner
+              person={{ ...DANA, company: 'Prudential Financial', companyDomain: 'prudential.com' }}
+              actions={<Button>Draft in Outlook</Button>}
+            />
+          </Case>
+          <Case name='person-banner-narrow' width={340}>
+            <PersonBanner
+              person={{ ...DANA, company: 'Prudential Financial', companyDomain: 'prudential.com' }}
+              actions={<Button>Draft in Outlook</Button>}
+            />
+          </Case>
+          <Case name='fact-list' width={420}>
+            <FactList title='Why now'>
+              <Fact label='FDA Approval'>
+                Moderna announced that the FDA approved supplemental licence applications for the
+                2026-2027 formulas.
+              </Fact>
+              <Fact label='Clinical Trial Results'>
+                Moderna and Merck announced positive Phase 3 results.
+              </Fact>
+              <Fact label='New Vaccine Approval'>The FDA approved a new seasonal vaccine.</Fact>
+            </FactList>
+          </Case>
+          {/* Rows stacked by hand with a small gap, not in an EntityList. */}
+          <Case name='hand-stacked-rows' width={420}>
+            <div className='flex flex-col gap-1'>
+              {[DANA, JUSTIN, { ...DANA, id: 'p-3', name: 'Tracy Strong' }].map((p) => (
+                <Person key={p.id} person={p} />
+              ))}
+            </div>
+          </Case>
+          <Case name='person-row' width={384}>
+            <Person person={DANA} />
+          </Case>
+          <Case name='person-card-bare-footer-button' width={320}>
+            <PersonCard person={DANA} footer={<Button className='w-full'>Draft intro</Button>} />
+          </Case>
+          <Case name='person-card-explicit-footer-button' width={320}>
             <PersonCard
               person={DANA}
               footer={
-                <Button size='sm' variant='secondary' className='w-full'>
-                  Draft intro
-                </Button>
+                <>
+                  <Button size='sm' variant='secondary'>
+                    Skip
+                  </Button>
+                  <Button variant='default'>Draft intro</Button>
+                </>
               }
             />
           </Case>
@@ -118,15 +182,8 @@ export function LayoutCheck() {
           <Case name='person-card-no-contact' width={320}>
             <PersonCard person={JUSTIN} footer={<Button size='sm'>Draft intro</Button>} />
           </Case>
-          <Case name='company-card-full-width-footer' width={320}>
-            <CompanyCard
-              company={RAMP}
-              footer={
-                <Button size='sm' variant='secondary' className='w-full'>
-                  Research
-                </Button>
-              }
-            />
+          <Case name='company-card-bare-footer-button' width={320}>
+            <CompanyCard company={RAMP} footer={<Button className='w-full'>Research</Button>} />
           </Case>
           <Case name='surface-header-wide-actions' width={384}>
             <Surface

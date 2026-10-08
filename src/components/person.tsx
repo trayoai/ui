@@ -1,8 +1,9 @@
 import * as React from 'react'
 import { Mail, MapPin, Phone, UserRound } from 'lucide-react'
 import { cn } from '../lib/cn'
-import { Badge } from './ui/badge'
 import { CardFooterSlot } from './card-footer-slot'
+import { ENTITY_ROW_GAP } from './entity-list'
+import { CardSummary, CardTags } from './card-text'
 import { CompanyLogo } from './company-logo'
 import { PersonAvatar, type AvatarSize } from './person-avatar'
 
@@ -157,7 +158,7 @@ export function Person({
           {person.title && <span className='text-meta truncate'>{person.title}</span>}
           {person.company && (
             <span className='mt-1 inline-flex items-center gap-1.5'>
-              <CompanyLogo name={person.company} domain={person.companyDomain} size='xs' />
+              <CompanyLogo name={person.company} domain={person.companyDomain} size='sm' />
               <span className='text-body-sm truncate text-text-secondary'>{person.company}</span>
             </span>
           )}
@@ -174,7 +175,8 @@ export function Person({
 
   return (
     <div
-      className={cn('flex min-w-0 items-center gap-3', className)}
+      data-slot='entity-row'
+      className={cn('flex min-w-0 items-center gap-3', ENTITY_ROW_GAP, className)}
       onClick={onClick}
     >
       {avatar}
@@ -183,7 +185,7 @@ export function Person({
         {subtitle && (
           <span className='text-meta flex min-w-0 items-center gap-1.5 truncate'>
             {person.company && person.companyDomain && (
-              <CompanyLogo name={person.company} domain={person.companyDomain} size='2xs' />
+              <CompanyLogo name={person.company} domain={person.companyDomain} size='xs' />
             )}
             <span className='truncate'>{subtitle}</span>
           </span>
@@ -236,11 +238,14 @@ export function PersonContactLinks({
 
 export interface PersonCardProps {
   person: PersonLike
-  /** Free text under the identity block — a research summary, a "why now". */
+  /** One or two sentences under the identity block — a "why now". Clamps
+   *  at three lines. */
   summary?: React.ReactNode
-  /** Short labels: seniority, function, a signal that fired. */
+  /** Short labels: seniority, function, a signal that fired. Three show;
+   *  the rest become a count. */
   tags?: string[]
-  /** Footer slot, usually the primary CTA. */
+  /** Footer slot: the card's one action. A `<Button>` here is `sm` and
+   *  `secondary` unless it says otherwise, and never stretches. */
   footer?: React.ReactNode
   /** Show email / phone / profile glyph links. On by default for cards. */
   showContact?: boolean
@@ -322,17 +327,9 @@ export function PersonCard({
         {actions && <span className='flex shrink-0 items-center gap-2'>{actions}</span>}
       </div>
 
-      {summary && <p className='text-body text-text-secondary'>{summary}</p>}
+      {summary && <CardSummary>{summary}</CardSummary>}
 
-      {!!tags?.length && (
-        <div className='flex flex-wrap gap-1.5'>
-          {tags.map((t) => (
-            <Badge key={t} variant='soft'>
-              {t}
-            </Badge>
-          ))}
-        </div>
-      )}
+      {!!tags?.length && <CardTags tags={tags} />}
 
     </>
   )
@@ -395,9 +392,10 @@ export interface PersonBannerProps {
 
 /**
  * A person as the header of a page or drawer about them: a full-width band in
- * the brand colour, with the face, the name at section size, the title, and
- * one action on the right. One per screen, at the top; for a person in a list
- * or grid use `<Person>` or `<PersonCard>`.
+ * the brand colour, with the face, the name at section size, the title, the
+ * company on its own line, and one action on the right (under the text when
+ * the band is narrow). One per screen, at the top; for a person in a list or
+ * grid use `<Person>` or `<PersonCard>`.
  *
  * The band is the brand fill (as a gradient into a deeper shade of itself)
  * with its checked foreground, so it follows a
@@ -406,14 +404,15 @@ export interface PersonBannerProps {
  * Button in `actions` read correctly on the fill without its own styling.
  */
 export function PersonBanner({ person, actions, contacted, href, className }: PersonBannerProps) {
-  const subtitle = [person.title, person.company].filter(Boolean).join(' · ')
   const nameClass = 'text-section truncate text-text-primary'
   return (
     <div
       data-slot='person-banner'
       className={cn(
         // `relative isolate` holds the noise layer's -z-10 inside the band.
-        'relative isolate flex min-w-0 items-center gap-4 rounded-xl bg-accent-brand px-5 py-4 text-accent-brand-foreground',
+        // A wrapping row: when the band is too narrow for the text block's
+        // minimum beside the action, the action moves under it.
+        'relative isolate flex min-w-0 flex-wrap items-center gap-x-4 gap-y-3 rounded-xl bg-accent-brand px-5 py-4 text-accent-brand-foreground',
         // Same 160deg direction as the card and strip gradients: the brand
         // fill at the top-left, where the name sits, shifting away from the
         // foreground toward the bottom-right — toward black under a light
@@ -452,7 +451,7 @@ export function PersonBanner({ person, actions, contacted, href, className }: Pe
         // (not the card's), the ring a tint of the band's foreground.
         className='avatar-ring-gap m-1 [--surface-card:var(--accent-brand)] [--border-strong:color-mix(in_oklab,var(--accent-brand-foreground)_55%,transparent)]'
       />
-      <div className='flex min-w-0 flex-1 flex-col gap-0.5'>
+      <div className='flex min-w-48 flex-1 flex-col gap-0.5'>
         {href ? (
           <a href={href} className={cn(nameClass, 'hover:underline')}>
             {person.name}
@@ -460,7 +459,22 @@ export function PersonBanner({ person, actions, contacted, href, className }: Pe
         ) : (
           <span className={nameClass}>{person.name}</span>
         )}
-        {subtitle && <span className='text-body-sm truncate'>{subtitle}</span>}
+        {/* The title and the company each get their own line: on one line
+            the company, the part that says where this person is, was the
+            first thing a long title cut off. */}
+        {person.title && (
+          <span data-slot='person-banner-title' className='text-body-sm line-clamp-2'>
+            {person.title}
+          </span>
+        )}
+        {person.company && (
+          <span className='mt-1 flex min-w-0 items-center gap-1.5'>
+            <CompanyLogo name={person.company} domain={person.companyDomain} size='xs' />
+            <span data-slot='person-banner-company' className='text-body-sm truncate'>
+              {person.company}
+            </span>
+          </span>
+        )}
       </div>
       {/* A `default` Button here is the band inverted: filled with the band's
           foreground, labelled in the brand colour. It reads on any brand. */}
