@@ -68,6 +68,10 @@ const TABLE_COLUMNS: Column<PersonLike>[] = [
   },
 ]
 
+// A short title: a table sizes its columns to their text and scrolls sideways
+// when that is wider than the box, and this case is about image sizes.
+const TABLE_ROW: PersonLike = { id: 'p-4', name: 'Dana Whitfield', title: 'CIO', company: 'Ramp', companyDomain: 'ramp.com' }
+
 // A paragraph, where a card has room for a couple of sentences.
 const LONG_SUMMARY =
   'As Group Head of Digital Workplace, she leads enterprise-wide collaboration strategy, governance, ' +
@@ -191,7 +195,7 @@ export function LayoutCheck() {
             <DataTable columns={TABLE_COLUMNS} rows={[]} getRowKey={(p) => p.id!} loading skeletonRows={1} />
           </Case>
           <Case name='table-loaded' width={520}>
-            <DataTable columns={TABLE_COLUMNS} rows={[DANA]} getRowKey={(p) => p.id!} />
+            <DataTable columns={TABLE_COLUMNS} rows={[TABLE_ROW]} getRowKey={(p) => p.id!} />
           </Case>
           <Case name='person-row' width={384}>
             <Person person={DANA} />
