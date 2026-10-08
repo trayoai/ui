@@ -97,6 +97,21 @@ test.describe('card footers', () => {
     expect(await fill('person-card-explicit-footer-button', 'Draft intro')).not.toBe(secondary)
   })
 
+  test('a footer button inside a tooltip gets the same defaults', async ({ page }) => {
+    await open(page)
+    const look = (name: string, label: string) =>
+      page
+        .locator(`[data-layout-case="${name}"]`)
+        .getByRole('button', { name: label })
+        .evaluate((el) => {
+          const s = getComputedStyle(el)
+          return s.backgroundImage + s.backgroundColor + el.getBoundingClientRect().height
+        })
+    expect(await look('person-card-wrapped-footer-button', 'Draft intro')).toBe(
+      await look('person-card-bare-footer-button', 'Draft intro')
+    )
+  })
+
   test('the footer button is right-aligned when the person has no contact links', async ({ page }) => {
     await open(page)
     const box = page.locator('[data-layout-case="person-card-no-contact"]')
@@ -135,8 +150,6 @@ test.describe('faces and logos lead, text stays short', () => {
         (el) => el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight)
       )
       expect(Math.round(lines)).toBe(3)
-      // The full text is still there for a pointer and a screen reader.
-      expect((await summary.getAttribute('title'))!.length).toBeGreaterThan(200)
       const tags = await box.locator('[data-slot=badge]').allTextContents()
       expect(tags).toHaveLength(4)
       expect(tags[3]).toBe('+2')
@@ -198,6 +211,53 @@ test('a fact list sets its labels apart: darker than the text under them, with r
   expect(within).toBeLessThanOrEqual(4)
 })
 
+test.describe('card text opens in place', () => {
+  const lineCount = (el: HTMLElement) => el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight)
+
+  test('a cut summary has a More button that works from the keyboard', async ({ page }) => {
+    await open(page)
+    const box = page.locator('[data-layout-case="person-card-long-text"]')
+    const more = box.getByRole('button', { name: 'More', exact: true })
+    await expect(more).toHaveAttribute('aria-expanded', 'false')
+    await more.focus()
+    await page.keyboard.press('Enter')
+    expect(Math.round(await box.locator('p').evaluate(lineCount))).toBeGreaterThan(3)
+    const less = box.getByRole('button', { name: 'Less', exact: true })
+    await expect(less).toHaveAttribute('aria-expanded', 'true')
+    await less.click()
+    expect(Math.round(await box.locator('p').evaluate(lineCount))).toBe(3)
+    expect(await escapees(page, '[data-layout-case="person-card-long-text"]')).toEqual([])
+  })
+
+  test('a formatted summary opens the same way, with nothing left in a tooltip', async ({ page }) => {
+    await open(page)
+    const box = page.locator('[data-layout-case="person-card-formatted-text"]')
+    await expect(box.locator('p')).not.toHaveAttribute('title')
+    await box.getByRole('button', { name: 'More', exact: true }).click()
+    await expect(box.locator('p strong')).toBeVisible()
+    expect(Math.round(await box.locator('p').evaluate(lineCount))).toBeGreaterThan(3)
+  })
+
+  test('a summary that fits has no button', async ({ page }) => {
+    await open(page)
+    const box = page.locator('[data-layout-case="person-card-short-text"]')
+    await expect(box.locator('p')).toBeVisible()
+    await expect(box.getByRole('button')).toHaveCount(0)
+  })
+
+  test('the tag count is a button that shows the rest of the tags', async ({ page }) => {
+    await open(page)
+    const box = page.locator('[data-layout-case="company-card-long-text"]')
+    const count = box.getByRole('button', { name: 'Show 2 more tags' })
+    await expect(count).toHaveText('+2')
+    await count.focus()
+    await page.keyboard.press('Enter')
+    await expect(box.locator('[data-slot=badge]')).toContainText(['Series D', 'Fintech', 'Hiring', 'New CFO', 'Expanding'])
+    await box.getByRole('button', { name: 'Show fewer tags' }).click()
+    await expect(box.locator('[data-slot=badge]')).toHaveCount(4)
+  })
+})
+
 test.describe('narrow panels', () => {
   test('a callout puts its action under the text, not beside it', async ({ page }) => {
     await open(page)
@@ -249,14 +309,24 @@ test('rows in an EntityList keep clear of each other', async ({ page }) => {
   }
 })
 
-test('rows stacked by hand still keep clear of each other', async ({ page }) => {
+test('rows side by side sit on the same line', async ({ page }) => {
   await open(page)
-  const avatars = page.locator('[data-layout-case="hand-stacked-rows"] [data-slot=person-avatar]')
-  await expect(avatars).toHaveCount(3)
-  const boxes = await avatars.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().toJSON()))
-  for (let i = 1; i < boxes.length; i++) {
-    expect(boxes[i].top - boxes[i - 1].bottom).toBeGreaterThanOrEqual(12)
-  }
+  const avatars = page.locator('[data-layout-case="rows-side-by-side"] [data-slot=person-avatar]')
+  await expect(avatars).toHaveCount(2)
+  const [a, b] = await avatars.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().top))
+  expect(b).toBe(a)
+})
+
+test('table skeletons are the size of the cells they stand in for', async ({ page }) => {
+  await open(page)
+  const width = async (name: string, selector: string) =>
+    (await page.locator(`[data-layout-case="${name}"] tbody ${selector}`).first().boundingBox())!.width
+  expect(await width('table-loading', 'td:nth-child(1) [data-slot=skeleton]')).toBe(
+    await width('table-loaded', '[data-slot=person-avatar]')
+  )
+  expect(await width('table-loading', 'td:nth-child(2) [data-slot=skeleton]')).toBe(
+    await width('table-loaded', 'td:nth-child(2) [data-slot=company-logo]')
+  )
 })
 
 test('a dialog with no size is 576px wide', async ({ page }) => {

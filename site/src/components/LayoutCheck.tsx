@@ -4,7 +4,9 @@ import {
   Badge,
   Button,
   Callout,
+  Company,
   CompanyCard,
+  DataTable,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -22,6 +24,11 @@ import {
   PersonCard,
   PersonDialog,
   Surface,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+  type Column,
   type CompanyLike,
   type PersonLike,
 } from '../../../src'
@@ -49,6 +56,17 @@ const JUSTIN: PersonLike = {
   title: 'Head of Digital Workplace & AI',
   company: 'Delta Dental Ins.',
 }
+
+// The cells the README documents for a table: a `md` person, an inline company.
+const TABLE_COLUMNS: Column<PersonLike>[] = [
+  { id: 'person', header: 'Person', accessor: (p) => <Person person={p} size='md' />, skeleton: 'person' },
+  {
+    id: 'company',
+    header: 'Company',
+    accessor: (p) => <Company company={{ name: p.company!, domain: p.companyDomain }} variant='inline' />,
+    skeleton: 'company',
+  },
+]
 
 // A paragraph, where a card has room for a couple of sentences.
 const LONG_SUMMARY =
@@ -114,6 +132,21 @@ export function LayoutCheck() {
               tags={['VP of Infrastructure', 'Grounded', 'Microsoft Azure', 'Windows 365', 'Security']}
             />
           </Case>
+          <Case name='person-card-formatted-text' width={320}>
+            <PersonCard
+              person={DANA}
+              summary={
+                <>
+                  As Group Head of Digital Workplace, she leads enterprise-wide collaboration strategy, governance,
+                  licensing and operations, and is directly responsible for platform selection, vendor
+                  consolidation and the rollout of <strong>AI assistants across forty thousand seats</strong>.
+                </>
+              }
+            />
+          </Case>
+          <Case name='person-card-short-text' width={320}>
+            <PersonCard person={JUSTIN} summary='Owns the collaboration budget.' tags={['CIO']} />
+          </Case>
           <Case name='company-card-long-text' width={320}>
             <CompanyCard
               company={RAMP}
@@ -146,13 +179,19 @@ export function LayoutCheck() {
               <Fact label='New Vaccine Approval'>The FDA approved a new seasonal vaccine.</Fact>
             </FactList>
           </Case>
-          {/* Rows stacked by hand with a small gap, not in an EntityList. */}
-          <Case name='hand-stacked-rows' width={420}>
-            <div className='flex flex-col gap-1'>
-              {[DANA, JUSTIN, { ...DANA, id: 'p-3', name: 'Tracy Strong' }].map((p) => (
-                <Person key={p.id} person={p} />
-              ))}
+          {/* Rows side by side: one must not sit lower than the other. */}
+          <Case name='rows-side-by-side' width={520}>
+            <div className='grid grid-cols-2 gap-4'>
+              <Person person={DANA} />
+              <Person person={JUSTIN} />
             </div>
+          </Case>
+          {/* The same table loading and loaded: the placeholders are the cells' size. */}
+          <Case name='table-loading' width={520}>
+            <DataTable columns={TABLE_COLUMNS} rows={[]} getRowKey={(p) => p.id!} loading skeletonRows={1} />
+          </Case>
+          <Case name='table-loaded' width={520}>
+            <DataTable columns={TABLE_COLUMNS} rows={[DANA]} getRowKey={(p) => p.id!} />
           </Case>
           <Case name='person-row' width={384}>
             <Person person={DANA} />
@@ -172,6 +211,21 @@ export function LayoutCheck() {
                 </>
               }
             />
+          </Case>
+          <Case name='person-card-wrapped-footer-button' width={320}>
+            <TooltipProvider>
+              <PersonCard
+                person={DANA}
+                footer={
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button>Draft intro</Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Opens a draft</TooltipContent>
+                  </Tooltip>
+                }
+              />
+            </TooltipProvider>
           </Case>
           <Case name='person-card-long-footer-label' width={320}>
             <PersonCard

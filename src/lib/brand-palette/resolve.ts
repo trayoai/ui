@@ -37,6 +37,13 @@ export const TRAYO_SURFACES = {
 export const TEXT_CONTRAST = 4.5
 export const NON_TEXT_CONTRAST = 3
 
+/**
+ * What a derived secondary text tone clears on the page, well and card. Meta
+ * text is held at TEXT_CONTRAST, so at the old ~5.9:1 the two greys were
+ * 1.3:1 apart and Body and Meta read as one tone; at 7:1 they are 1.5:1.
+ */
+const DERIVED_SECONDARY_CONTRAST = 7
+
 /** OKLCH chroma under which a colour reads as a grey (black-and-white brands). */
 const NEUTRAL_CHROMA = 0.04
 /** OKLCH lightness of the near-white dark-mode fill for a black-and-white brand. */
@@ -722,11 +729,19 @@ function resolveSurfaces(
   if (!same(text, textInput)) {
     adjustments.push(`text ${hexOf(textInput)} is under 7:1 on the brand surfaces; ${hexOf(text)} is used.`)
   }
+  // A brand's own mutedText only has to read. A derived one is darkened
+  // further, to DERIVED_SECONDARY_CONTRAST on the page ladder: meta text sits
+  // at the text minimum, so secondary text has to be this dark for the two
+  // to stay apart.
   const secondaryInput = input.mutedText ? parseHex(input.mutedText)! : quantize(composite(text, 0.7, shell))
-  const textSecondary = shiftLightnessUntil(secondaryInput, 'darker', (c) =>
-    [...surfaces, container].every((bg) => contrast(c, bg) >= TEXT_CONTRAST)
+  const secondaryFloor = input.mutedText ? TEXT_CONTRAST : DERIVED_SECONDARY_CONTRAST
+  const textSecondary = shiftLightnessUntil(
+    secondaryInput,
+    'darker',
+    (c) =>
+      surfaces.every((bg) => contrast(c, bg) >= secondaryFloor) && contrast(c, container) >= TEXT_CONTRAST
   )
-  if (!same(textSecondary, secondaryInput)) {
+  if (input.mutedText && !same(textSecondary, secondaryInput)) {
     adjustments.push(
       `mutedText ${hexOf(secondaryInput)} is under ${TEXT_CONTRAST}:1 on the brand surfaces; ${hexOf(textSecondary)} is used.`
     )

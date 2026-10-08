@@ -3,7 +3,6 @@ import { ExternalLink, MapPin, Users } from 'lucide-react'
 import { cn } from '../lib/cn'
 import { normalizeDomain } from '../lib/brand-image'
 import { CardFooterSlot } from './card-footer-slot'
-import { ENTITY_ROW_GAP } from './entity-list'
 import { CardSummary, CardTags } from './card-text'
 import { CompanyLogo, type LogoSize } from './company-logo'
 
@@ -129,7 +128,7 @@ export function Company({
   return (
     <div
       data-slot='entity-row'
-      className={cn('flex min-w-0 items-center gap-3', ENTITY_ROW_GAP, className)}
+      className={cn('flex min-w-0 items-center gap-3', className)}
       onClick={onClick}
     >
       {logo}

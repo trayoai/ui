@@ -23,9 +23,8 @@ export interface PersonDialogProps {
   footer?: React.ReactNode
   contacted?: boolean
   /**
-   * Defaults to `2xl` (672px), wider than a plain dialog's `lg`: the banner
-   * gives up most of its width to the avatar and the action, and at 512px a
-   * title with a company beside it truncates.
+   * Defaults to `2xl` (672px), wider than a plain dialog's `xl` (576px): the
+   * banner gives up most of its width to the avatar and the action.
    */
   size?: React.ComponentProps<typeof DialogContent>['size']
   /** The body. It scrolls when it is taller than the dialog allows. */

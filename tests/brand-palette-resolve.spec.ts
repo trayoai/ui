@@ -1013,6 +1013,22 @@ describe('contrast is the same for every brand', () => {
     expect(spread(derived.map((m) => m.secondaryOnPage))).toBeLessThan(1)
   })
 
+  it('derived secondary text is dark enough to stand apart from meta text', () => {
+    // Meta text is held at 4.5:1, so the gap has to come from the other
+    // side: a derived secondary tone clears 7:1 on the page ladder.
+    for (const input of panel.filter((p) => !p.background)) {
+      const m = measure(input)
+      const label = JSON.stringify(input)
+      expect(m.secondary, label).toBeGreaterThanOrEqual(7)
+      expect(m.secondaryOnPage / m.mutedOnPage, label).toBeGreaterThanOrEqual(1.5)
+    }
+  })
+
+  it("a brand's own mutedText is kept, not darkened to the derived level", () => {
+    const p = resolveBrandPalette({ primary: '#611f69', background: '#ffffff', mutedText: '#616061' })
+    expect(p.tokens['--brand-text-secondary']).toBe('#616061')
+  })
+
   it('a derived ink is a near-neutral, not a tone of the brand', () => {
     for (const primary of ['#29b5e8', '#f25022', '#1db954']) {
       expect(toOklch(rgb(resolveBrandPalette({ primary }).tokens['--brand-text']!)).c).toBeLessThan(0.01)

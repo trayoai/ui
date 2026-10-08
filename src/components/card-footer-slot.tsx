@@ -1,25 +1,46 @@
 import * as React from 'react'
 import { Button, type ButtonProps } from './ui/button'
+import { DropdownMenuContent } from './ui/dropdown-menu'
+import { PopoverContent } from './ui/popover'
+import { TooltipContent } from './ui/tooltip'
+
+/**
+ * Overlay bodies: a button written inside one is that overlay's own control,
+ * not the footer's action, so the defaults stop here.
+ */
+const OVERLAY_CONTENT: unknown[] = [TooltipContent, PopoverContent, DropdownMenuContent]
 
 /**
  * A card repeats, so its footer action is the compact, quiet button: a
  * `<Button>` with no `size` or `variant` of its own gets `sm` and `secondary`.
- * One it names is kept. Fragments are looked through; a button wrapped in
- * something else (a tooltip, a menu trigger) is left as written.
+ * One it names is kept.
+ *
+ * Every `<Button>` written in the footer is found, however it is wrapped (a
+ * fragment, a tooltip or menu trigger, a layout div). One that only exists
+ * inside another component (`footer={<MyButton />}`) cannot be seen from
+ * here; that component passes `size='sm' variant='secondary'` itself.
+ *
+ * The shape of `children` is kept, a single element staying a single element,
+ * because an `asChild` trigger accepts exactly one.
  */
-function withFooterDefaults(children: React.ReactNode): React.ReactNode {
-  return React.Children.map(children, (child) => {
-    if (!React.isValidElement(child)) return child
-    if (child.type === React.Fragment) {
-      return withFooterDefaults((child.props as { children?: React.ReactNode }).children)
-    }
-    if (child.type !== Button) return child
-    const { size, variant } = child.props as ButtonProps
-    return React.cloneElement(child as React.ReactElement<ButtonProps>, {
+function withFooterDefaults(node: React.ReactNode): React.ReactNode {
+  if (Array.isArray(node)) return node.map(withFooterDefaults)
+  if (!React.isValidElement(node)) return node
+  if (node.type === Button) {
+    const { size, variant } = node.props as ButtonProps
+    return React.cloneElement(node as React.ReactElement<ButtonProps>, {
       size: size ?? 'sm',
       variant: variant ?? 'secondary',
     })
-  })
+  }
+  if (OVERLAY_CONTENT.includes(node.type)) return node
+  const { children } = node.props as { children?: React.ReactNode }
+  // Nothing to look into, or a render prop.
+  if (children == null || typeof children === 'function') return node
+  // Several children go back as separate arguments, as JSX passes them, so
+  // React does not ask for keys on them.
+  const walked = withFooterDefaults(children)
+  return React.cloneElement(node, undefined, ...(Array.isArray(walked) ? walked : [walked]))
 }
 
 /**

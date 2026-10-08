@@ -2,7 +2,6 @@ import * as React from 'react'
 import { Mail, MapPin, Phone, UserRound } from 'lucide-react'
 import { cn } from '../lib/cn'
 import { CardFooterSlot } from './card-footer-slot'
-import { ENTITY_ROW_GAP } from './entity-list'
 import { CardSummary, CardTags } from './card-text'
 import { CompanyLogo } from './company-logo'
 import { PersonAvatar, type AvatarSize } from './person-avatar'
@@ -176,7 +175,7 @@ export function Person({
   return (
     <div
       data-slot='entity-row'
-      className={cn('flex min-w-0 items-center gap-3', ENTITY_ROW_GAP, className)}
+      className={cn('flex min-w-0 items-center gap-3', className)}
       onClick={onClick}
     >
       {avatar}

@@ -1412,7 +1412,7 @@
   background-color: var(--container);
   color: var(--container-foreground);
   --text-secondary: var(--container-foreground);
-  --text-muted: color-mix(in srgb, var(--container-foreground) 70%, var(--container));
+  --text-muted: color-mix(in srgb, var(--container-foreground) 72%, var(--container));
   --accent-text: var(--container-foreground);
 }
 [data-dialect-callout='outlined'] [data-slot='callout'] { background-color: transparent; border-width: 1.5px; }
@@ -1431,8 +1431,8 @@
 [data-dialect-tile='tinted'] [data-slot='stat-tile'] {
   background-image: none; background-color: var(--container); box-shadow: none;
   --text-primary: var(--container-foreground);
-  --text-secondary: color-mix(in srgb, var(--container-foreground) 82%, var(--container));
-  --text-muted: color-mix(in srgb, var(--container-foreground) 64%, var(--container));
+  --text-secondary: color-mix(in srgb, var(--container-foreground) 86%, var(--container));
+  --text-muted: color-mix(in srgb, var(--container-foreground) 72%, var(--container));
   --foreground: var(--text-primary); --muted-foreground: var(--text-muted);
   --border-subtle: color-mix(in srgb, var(--container-foreground) 14%, transparent);
 }
@@ -1470,6 +1470,23 @@
 
 /* stat tile */
 [data-dialect-tile='big-number'] [data-slot='stat-tile'] .text-page-title { font-size: 2.25rem; line-height: 1.05; }
+
+/* Text on the brand container. `bg-container` is darker than the page, so
+   the page's secondary and meta greys lose contrast on it. In here both are
+   a step of the container's own foreground (7:1 on the fill) mixed back
+   toward the fill: they keep their order, clear 4.5:1 for every brand, and
+   the page's greys never have to be dark enough for a tinted panel. 72% is
+   the least that clears 4.5:1 when the foreground only just makes 7:1 (a
+   pale cyan or green); the tinted card and filled callout dialects above
+   use the same steps. */
+.bg-container {
+  --text-secondary: color-mix(in srgb, var(--container-foreground) 86%, var(--container));
+  --text-muted: color-mix(in srgb, var(--container-foreground) 72%, var(--container));
+}
+.bg-container-tertiary {
+  --text-secondary: color-mix(in srgb, var(--container-tertiary-foreground) 86%, var(--container-tertiary));
+  --text-muted: color-mix(in srgb, var(--container-tertiary-foreground) 72%, var(--container-tertiary));
+}
 
 @theme inline {
   /* Clash Display — optional display face for a wordmark. Not bundled: load it

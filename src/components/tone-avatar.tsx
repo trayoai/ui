@@ -30,11 +30,11 @@ const TONE: Record<AvatarTone, string> = {
 // Initials scale with the avatar, on the same steps as CompanyLogo.
 const INITIALS_SIZE: Record<AvatarSize, string> = {
   xs: 'text-[9px]',
-  sm: 'text-[10px]',
+  sm: 'text-[11px]',
   md: 'text-xs',
-  lg: 'text-sm',
-  xl: 'text-lg',
-  '2xl': 'text-2xl',
+  lg: 'text-base',
+  xl: 'text-xl',
+  '2xl': 'text-3xl',
 };
 
 // "The Home Depot" → "HD"; "Ada Lovelace" → "AL".
@@ -62,7 +62,7 @@ export function ToneAvatar({
   initials?: string;
   tone?: AvatarTone;
   /**
-   * The shared avatar scale (`xs` 20px … `2xl` 80px), so a tone avatar lines
+   * The shared avatar scale (`xs` 20px … `2xl` 96px), so a tone avatar lines
    * up with a `PersonAvatar` or `CompanyLogo` of the same size. Omitted, it
    * is the original 28px.
    */

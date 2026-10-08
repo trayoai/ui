@@ -1,14 +1,6 @@
 import * as React from 'react'
 import { cn } from '../lib/cn'
 
-/**
- * On a `<Person>` or `<Company>` row: 12px above it when it directly follows
- * another row. A row has no padding of its own, so rows stacked by hand with
- * a small gap would otherwise put their 48px faces a few pixels apart. Rows
- * in an `<EntityList>`, a table or a card are not siblings and are untouched.
- */
-export const ENTITY_ROW_GAP = '[[data-slot=entity-row]+&]:mt-3'
-
 export interface EntityListProps extends React.ComponentProps<'ul'> {
   /** A hairline between rows. On by default; turn it off for a short, loose list. */
   divided?: boolean

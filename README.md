@@ -315,9 +315,8 @@ passes straight through. Everything but `name` is optional.
 
 A list of people (or companies) goes in `<EntityList>`, which owns the spacing:
 12px above and below each row and a hairline between them (`divided={false}`
-drops the hairline). The rows have no vertical padding of their own; one that
-directly follows another in a hand-built stack takes 12px above it so the
-faces never touch, but the list is the supported shape.
+drops the hairline). The rows have no vertical padding of their own, so a
+hand-spaced stack lets the avatars touch.
 
 ```tsx
 <EntityList>
@@ -342,15 +341,19 @@ Do not build this from a `<Meta>` label over a `<Body>` paragraph: the label
 ends up lighter than the text it heads and the facts run together.
 
 A card is a glance, so it keeps its text short: `summary` clamps at three lines
-(the full string stays in the tooltip) and `tags` shows three, then a count of
-the rest. Pass one or two sentences and one-to-three-word tags.
+with a "More" button that opens it in place, and `tags` shows three, then a
+`+N` button that shows the rest. Both work from the keyboard and on touch. Pass one or two sentences and one-to-three-word tags.
 
 The `footer` slot takes a bare `<Button>`. The card renders it compact and
 secondary (`size="sm"`, `variant="secondary"`) unless you name another, keeps
 it at the right at the width of its label, and drops a label too long for the
 space beside the contact links onto its own line. It does not stretch:
 `className="w-full"` has no effect there. A card repeats down a grid, so a
-full-width primary on each one outweighs the people it sits under.
+full-width primary on each one outweighs the people it sits under. The
+defaults reach a `<Button>` written anywhere in the footer, including inside a
+tooltip or menu trigger. A button that only exists inside your own component
+(`footer={<MyButton />}`) is out of reach: give it `size="sm"
+variant="secondary"` there.
 
 `PersonBanner` is the header of a page or drawer about one person: a
 full-width band in the brand colour with the face, name, title, company and one
@@ -806,15 +809,17 @@ What the resolver guarantees, so you never adjust a colour for contrast:
   with near-white;
 - shell text, hover and selected rows read on the shell;
 - accents become chart series that clear 3:1 on the card, light and dark;
-- on the brand's surfaces, text clears 7:1 and supporting text 4.5:1, borders
+- on the brand's surfaces, text clears 7:1 and supporting text 4.5:1 (a
+  derived secondary tone clears 7:1, so it stays apart from meta text), borders
   and the hover row are derived, and every check above runs against those
   surfaces instead of the kit's;
 - the level is the same for every brand: secondary text, meta text and accent
   text all clear 4.5:1 on the page, the well, the card and the brand
   container (`bg-container`), whether the brand colour is a navy or a pale
-  cyan. Meta text keeps 3:1 on the container; put `text-container-foreground`
-  there for anything longer than a label. A derived ink is a near-neutral, so
-  the greys and borders mixed from it do not turn into tones of the brand.
+  cyan. Inside `bg-container` the secondary and meta tones switch to steps of
+  the container's own foreground, so `<Body>` and `<Meta>` read there without
+  extra classes. A derived ink is a near-neutral, so the greys and borders
+  mixed from it do not turn into tones of the brand.
 
 Without `data-brand` on `<html>` nothing changes. The live demo at
 [ui.trayo.ai/demo](https://ui.trayo.ai/demo) has a brand switcher.

@@ -3,7 +3,8 @@ import { resolve } from 'node:path'
 
 import { describe, expect, it } from 'vitest'
 
-import { DIALECT_AXES } from '../src/lib/brand-palette'
+import { DIALECT_AXES, resolveBrandPalette } from '../src/lib/brand-palette'
+import { composite, contrast, fromOklch, parseHex, toHex } from '../src/lib/brand-palette/color'
 import {
   BRAND_CHART_TOKENS,
   BRAND_CONTAINER_TOKENS,
@@ -354,6 +355,55 @@ describe('dialect rules keep interaction states', () => {
   it('dense sets the cell height, not extra padding', () => {
     expect(rules).toMatch(
       /dense'\] \[data-slot='table-cell'\] \{ height: 2\.25rem; padding-top: 0; padding-bottom: 0; \}/
+    )
+  })
+})
+
+describe('text on the brand container', () => {
+  // `.bg-container` repoints secondary and meta text at a mix of the
+  // container's own foreground, so they read on the panel without the page's
+  // greys having to be dark enough for it.
+  const pairs = [
+    ['.bg-container', '--container', '--brand-container', '--brand-on-container'],
+    ['.bg-container-tertiary', '--container-tertiary', '--brand-container-tertiary', '--brand-on-container-tertiary']
+  ] as const
+  const share = (value: string | undefined, fg: string, bg: string) => {
+    const m = new RegExp(
+      `^color-mix\\(in srgb, var\\(${fg}-foreground\\) (\\d+)%, var\\(${bg}\\)\\)$`
+    ).exec(value ?? '')
+    if (!m) throw new Error(`unexpected mix: ${value}`)
+    return Number(m[1]) / 100
+  }
+
+  it('secondary and meta text clear 4.5:1 on it for every brand, light and dark', () => {
+    const inputs = [{ primary: '#29b5e8' }, { primary: '#f25022' }, { primary: '#002991' }, { primary: '#611f69' }]
+    for (let h = 0; h < 360; h += 30) inputs.push({ primary: toHex(fromOklch({ l: 0.6, c: 0.15, h })) })
+    for (const [selector, name, fill, on] of pairs) {
+      const rule = block(new RegExp(selector.replace('.', '\\.') + '\\s*'))
+      for (const token of ['--text-secondary', '--text-muted']) {
+        const alpha = share(rule.get(token), name, name)
+        for (const input of inputs) {
+          const t = resolveBrandPalette(input).tokens as Record<string, string>
+          for (const suffix of ['', '-dark']) {
+            const bg = parseHex(t[fill + suffix])!
+            const fg = composite(parseHex(t[on + suffix])!, alpha, bg)
+            expect(contrast(fg, bg), `${selector} ${token} ${input.primary}${suffix}`).toBeGreaterThanOrEqual(4.5)
+          }
+        }
+        // Trayo's own container, without a brand.
+        for (const theme of [root, dark]) {
+          const bg = parseHex(theme.get(name)!)!
+          const fg = composite(parseHex(theme.get(`${name}-foreground`)!)!, alpha, bg)
+          expect(contrast(fg, bg), `${selector} ${token} trayo`).toBeGreaterThanOrEqual(4.5)
+        }
+      }
+    }
+  })
+
+  it('meta text stays lighter than secondary text there', () => {
+    const rule = block(/\.bg-container\s*/)
+    expect(share(rule.get('--text-muted'), '--container', '--container')).toBeLessThan(
+      share(rule.get('--text-secondary'), '--container', '--container')
     )
   })
 })
