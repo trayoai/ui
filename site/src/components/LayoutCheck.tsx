@@ -26,8 +26,10 @@ import {
   CompanyCard,
   DataTable,
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   EntityList,
@@ -45,6 +47,7 @@ import {
   StatGrid,
   StatTile,
   Surface,
+  TagChip,
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -420,6 +423,10 @@ export function LayoutCheck() {
               tags={['Series D', 'Fintech', 'Hiring', 'New CFO', 'Expanding']}
             />
           </Case>
+          {/* Written as a Badge is, with the text as children. */}
+          <Case name='tag-chip-children' width={240}>
+            <TagChip>Fraud &amp; KYC hiring</TagChip>
+          </Case>
           {/* The width of the band inside a default PersonDialog, and a phone. */}
           <Case name='person-banner-dialog-width' width={620}>
             <PersonBanner
@@ -628,6 +635,48 @@ export function LayoutCheck() {
                   actions={<Badge variant='secondary'>Chief Information Security Officer</Badge>}
                 />
               </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Thirty rows in a plain wrapper, as an app writes a list of events:
+              the dialog must still fit the screen, and scrolls as a whole. */}
+          <Dialog open={dialog === 'tall'}>
+            <DialogContent size='large'>
+              <DialogHeader>
+                <DialogTitle>{RAMP.name}</DialogTitle>
+                <DialogDescription>Thirty events, no scrolling body.</DialogDescription>
+              </DialogHeader>
+              <div className='flex flex-col gap-2'>
+              {Array.from({ length: 30 }, (_, i) => (
+                <div key={i} data-tall-row className='rounded-lg border border-border-subtle p-3'>
+                  <Meta>Event {i + 1} of 30, each with a line of detail under its headline.</Meta>
+                </div>
+              ))}
+              </div>
+              <DialogFooter>
+                <Button>Draft outreach</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* The same rows in a DialogBody: only the body scrolls, and the
+              header, footer and close button stay on screen. */}
+          <Dialog open={dialog === 'tall-body'}>
+            <DialogContent size='large'>
+              <DialogHeader>
+                <DialogTitle>{RAMP.name}</DialogTitle>
+                <DialogDescription>Thirty events in a scrolling body.</DialogDescription>
+              </DialogHeader>
+              <DialogBody className='gap-2'>
+              {Array.from({ length: 30 }, (_, i) => (
+                <div key={i} data-tall-row className='rounded-lg border border-border-subtle p-3'>
+                  <Meta>Event {i + 1} of 30, each with a line of detail under its headline.</Meta>
+                </div>
+              ))}
+              </DialogBody>
+              <DialogFooter>
+                <Button>Draft outreach</Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>

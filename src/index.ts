@@ -200,6 +200,7 @@ export {
 } from './components/ui/dropdown-menu'
 export {
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogDescription,
