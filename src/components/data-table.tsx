@@ -2,6 +2,7 @@ import type * as React from 'react';
 import { Fragment } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '../lib/cn';
+import { EntityScaleContext } from '../lib/entity-scale';
 import { Badge } from './ui/badge';
 import { Checkbox } from './ui/checkbox';
 import {
@@ -126,7 +127,29 @@ export interface DataTableProps<T> {
    *  `rows`), server-side when it is given (`rows` is the current page). The
    *  footer is omitted while there is a single page and no page-size Select. */
   pagination?: DataTablePagination;
+  /** `simple` is for a list inside a card or a dialog with nothing to sort,
+   *  select or page. Rows are 64px instead of 68px (88px when `scale` draws
+   *  them large), the first and last cells sit flush with the card's own padding
+   *  (put it in a padded `Surface`, not `padded={false}`), the last row has no
+   *  rule under it, and only a clickable table shows the hover band.
+   *  `large` is that layout with the large scale pinned, whatever the
+   *  number of rows. */
+  variant?: 'default' | 'simple' | 'large';
+  /** How large the rows and the people or companies in them are drawn.
+   *  `auto` (default) follows the list: with six rows or fewer in total the
+   *  table draws them large (88px rows, a 64px face or logo, the name at
+   *  card-title size), because a short list has the room and the people are
+   *  the point. While loading, `skeletonRows` stands in for the count, so
+   *  set it to the number of rows you expect. A `<Person>` or `<Company>` given its own `size` keeps it. `default` and `large` pin it, for a list whose length changes
+   *  under a filter and should not change size with it. */
+  scale?: 'auto' | 'default' | 'large';
+  /** Drops the column header row, for a list whose columns explain
+   *  themselves. Each column `header` is still read to screen readers. */
+  hideHeader?: boolean;
 }
+
+/** At or under this many rows in total, an `auto` table draws them large. */
+const FEW_ROWS = 6;
 
 export function DataTable<T>({
   columns,
@@ -146,7 +169,23 @@ export function DataTable<T>({
   skeletonRows = 8,
   count,
   pagination,
+  variant = 'default',
+  scale = 'auto',
+  hideHeader = false,
 }: DataTableProps<T>) {
+  // Counted across every page, so the last page of a long list stays small.
+  // While the first load is in flight there are no rows to count, so the
+  // number of skeleton rows stands in: it is how many the caller expects.
+  const totalRows =
+    pagination?.total ?? (loading && rows.length === 0 ? skeletonRows : rows.length);
+  const large =
+    variant === 'large' ||
+    scale === 'large' ||
+    (scale === 'auto' && totalRows > 0 && totalRows <= FEW_ROWS);
+  // `large` is laid out as `simple` is: flush in a padded card.
+  const simple = variant !== 'default';
+  // Simple rows are 64px: the 48px face keeps 8px above and below it.
+  const rowHeight = large ? 'h-22' : simple ? 'h-16' : 'h-17';
   if (!loading && rows.length === 0 && empty) return <>{empty}</>;
   // Only render skeleton placeholders when there is nothing to show yet.
   // A background refetch or poll (most data libraries flip `loading` to true
@@ -251,18 +290,26 @@ export function DataTable<T>({
   };
 
   return (
-    <>
+    <EntityScaleContext.Provider value={large ? 'large' : 'default'}>
     {/* The leading cell of every
         row (header + body) gets a larger left inset (16px) than the default cell
         padding, so identity/checkbox columns breathe against the card edge. */}
+    <div data-slot="data-table-bleed" className={simple ? '-mx-4' : 'contents'}>
     <Table
+      data-variant={variant}
       className={cn(
-        '[&_tr>:first-child]:pl-4',
+        simple
+          ? // 16px at both edges, which the wrapper below pulls back out: a
+            // padded card's own inset. The content stays in line with the
+            // card's title while the hover band and the rules run to the
+            // card's edges. No rule under the last row: the card closes it.
+            '[&_tr>:first-child]:pl-4 [&_tr>:last-child]:pr-4 [&_tbody>tr:last-child]:border-b-0'
+          : '[&_tr>:first-child]:pl-4',
         layout === 'fixed' && 'table-fixed',
         tableClassName,
       )}
     >
-      <TableHeader>
+      <TableHeader className={hideHeader ? 'sr-only' : undefined}>
         <TableRow>
           {selection && (
             <TableHead className="h-10 w-10 bg-transparent">
@@ -291,7 +338,8 @@ export function DataTable<T>({
               // Non-sortable headers inherit these directly; the sortable
               // button inherits the type + sets its color.
               className={cn(
-                'h-10 bg-transparent px-2.5 text-xs font-medium text-text-secondary',
+                simple ? 'h-8' : 'h-10',
+                'bg-transparent px-2.5 text-xs font-medium text-text-secondary',
                 alignClass(c.align),
                 c.className,
               )}
@@ -335,6 +383,8 @@ export function DataTable<T>({
                 columns={columns}
                 hasSelection={!!selection}
                 index={i}
+                rowHeight={rowHeight}
+                large={large}
               />
             ))
           : pageRows.map((row) => {
@@ -363,7 +413,7 @@ export function DataTable<T>({
                 // invisible vs the card in light, so `well` is the right band.
                 // Applied to all rows (not just clickable) to override the base
                 // default uniformly; the pointer cursor stays gated on onRowClick.
-                'hover:bg-surface-well',
+                simple && !onRowClick ? 'hover:bg-transparent' : 'hover:bg-surface-well',
                 // The hover band is asymmetric: it arrives fast (75ms) and
                 // lets go slowly (250ms). A symmetric fade (the base TableRow's
                 // ~150ms `transition-colors`) feels laggy when sweeping the
@@ -389,7 +439,7 @@ export function DataTable<T>({
                 // onRowClick / navigation. A non-selectable row keeps the cell
                 // (column alignment) but renders no checkbox.
                 <TableCell
-                  className="h-17 w-10 py-0"
+                  className={cn(rowHeight, 'w-10 py-0')}
                   onClick={(e) => e.stopPropagation()}
                 >
                   {(selection.isRowSelectable?.(key) ?? true) && (
@@ -424,7 +474,9 @@ export function DataTable<T>({
                     // vary with their content. (Height is a min for table
                     // cells, so the vertical padding must be dropped, not just
                     // capped.)
-                    'h-17 px-2.5 py-0 text-body-sm',
+                    rowHeight,
+                    'px-2.5 py-0',
+                    large ? 'text-body' : 'text-body-sm',
                     colIndex === 0 ? 'text-text-primary' : 'text-text-muted',
                     alignClass(c.align),
                     c.className,
@@ -453,6 +505,7 @@ export function DataTable<T>({
         })}
       </TableBody>
     </Table>
+    </div>
     {showPagination && (
       // The footer sits OUTSIDE the scroll region as a sibling of the table,
       // so it never scrolls away horizontally with a wide table. `px-4`
@@ -468,6 +521,6 @@ export function DataTable<T>({
         className="border-t border-border-subtle px-4 py-2"
       />
     )}
-    </>
+    </EntityScaleContext.Provider>
   );
 }

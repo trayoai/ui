@@ -14,8 +14,14 @@ import { AVATAR_SIZES, type AvatarSize } from './person-avatar';
 // existing callers keep compiling, and renders as `blue`.
 export type AvatarTone = 'violet' | 'blue' | 'amber' | 'rose' | 'brand' | 'neutral' | 'teal';
 
-const TINT =
-  'bg-[color-mix(in_oklab,var(--tone)_18%,var(--surface-card))] text-[color:color-mix(in_oklab,var(--tone)_58%,var(--text-primary))]';
+// On a dark card an 18% tint is almost the card itself, so dark takes a
+// stronger one, lighter initials, and a hairline of the tone around the edge:
+// the disc is then told from the card by its outline as well as its fill.
+const TINT = cn(
+  'bg-[color-mix(in_oklab,var(--tone)_18%,var(--surface-card))] text-[color:color-mix(in_oklab,var(--tone)_58%,var(--text-primary))]',
+  'dark:bg-[color-mix(in_oklab,var(--tone)_34%,var(--surface-card))] dark:text-[color:color-mix(in_oklab,var(--tone)_40%,var(--text-primary))]',
+  'dark:shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--tone)_55%,transparent)]',
+);
 
 const TONE: Record<AvatarTone, string> = {
   violet: cn(TINT, '[--tone:var(--avatar-tone-violet)]'),

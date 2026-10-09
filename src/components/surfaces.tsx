@@ -364,35 +364,230 @@ export function GradientText({
   )
 }
 
-/** The page-title row: title, optional subtitle, right-aligned actions. */
+export interface PageHeaderStat {
+  label: React.ReactNode
+  value: React.ReactNode
+}
+
+/* The stats sit on a small sheet of their own, split by hairlines, one step
+   off whatever the header stands on: a card on the page, a well on a card,
+   a tint of the ink on the band. */
+const PAGE_HEADER_STATS = {
+  plain: 'border-border-subtle bg-surface-card shadow-[var(--shadow-card)]',
+  card: 'well-gradient border-border-subtle bg-surface-well',
+  band: 'border-container-foreground/15 bg-container-foreground/5',
+} as const
+
+const PAGE_HEADER_VARIANT = {
+  plain: '',
+  // On its own sheet: a dashboard's command bar, with an icon and a control.
+  card: 'items-center rounded-xl bg-[image:var(--gradient-card)] p-4 shadow-[var(--shadow-card)]',
+  // On the brand container: the one tinted block at the top of a branded page.
+  // `relative isolate overflow-hidden` holds the texture layers inside it.
+  band: 'relative isolate items-center overflow-hidden rounded-xl bg-container px-5 py-4 text-container-foreground shadow-[var(--shadow-card)]',
+} as const
+
+/**
+ * The page-title row: title, optional subtitle, right-aligned actions.
+ *
+ * `size="lead"` is for a tool's main screen: the title at the hero size with
+ * the subtitle stacked under it, so the screen is named at a glance and still
+ * reads in a thumbnail. `size="large"` is the step between, for a header on
+ * a card or a screen that should lead without the hero size. Inner views
+ * keep the default.
+ *
+ * `variant` changes what the header stands on: `plain` (the page), `card` (a
+ * sheet of its own) or `band` (the brand container). `stats` puts a few bare
+ * figures on the right, for counts that describe the page without needing
+ * tiles. Pick one variant for the whole app.
+ */
 export function PageHeader({
   title,
   subtitle,
+  description,
+  eyebrow,
+  icon,
+  stats,
   actions,
+  size = 'default',
+  variant = 'plain',
   className,
   ...props
 }: Omit<React.ComponentProps<'header'>, 'title'> & {
   title: React.ReactNode
   subtitle?: React.ReactNode
+  /** The same line as `subtitle`, under the name the other panels use for it. */
+  description?: React.ReactNode
+  /** A short line above the title: the source, the period, the scope. */
+  eyebrow?: React.ReactNode
+  /** A lucide icon on a tile before the title; pass it bare. */
+  icon?: React.ReactNode
+  /** Up to four bare figures on the right: `{ label: 'Accounts', value: 15 }`. */
+  stats?: readonly PageHeaderStat[]
   actions?: React.ReactNode
+  size?: 'default' | 'large' | 'lead'
+  variant?: keyof typeof PAGE_HEADER_VARIANT
 }) {
+  const lead = size === 'lead'
+  const large = size === 'large'
+  const line = subtitle ?? description
+  const stacked = lead || large || eyebrow != null || icon != null || variant !== 'plain'
+  const ink = variant === 'band' ? 'text-container-foreground' : 'text-text-primary'
   return (
     <header
       data-slot='page-header'
+      data-size={size}
+      data-variant={variant}
       className={cn(
-        'mb-6 flex flex-wrap items-start justify-between gap-3',
+        'mb-6 flex flex-wrap items-start justify-between gap-x-6 gap-y-4',
+        lead && variant === 'plain' && 'items-end pt-2',
+        PAGE_HEADER_VARIANT[variant],
         className
       )}
       {...props}
     >
-      <div className='flex min-w-0 flex-wrap items-baseline gap-3'>
-        <h1 className='text-page-title text-text-primary'>{title}</h1>
-        {subtitle != null && (
-          <p className='text-body text-text-secondary'>{subtitle}</p>
+      {variant === 'band' && (
+        <>
+          {/* The same two layers as the person banner: a dot grid fading in
+              from the right in the band's own ink, and the grain over it. */}
+          <span
+            aria-hidden
+            className='bg-dot-grid dot-grid-right pointer-events-none absolute inset-0 -z-10 [--dot-size:6%] [--dot:color-mix(in_oklab,var(--container-foreground)_22%,transparent)]'
+          />
+          <span aria-hidden className='noise-grain pointer-events-none absolute inset-0 -z-10 opacity-35' />
+        </>
+      )}
+      <div className={cn('flex min-w-0 flex-[1_1_16rem] items-center', lead ? 'gap-4' : 'gap-3')}>
+        {icon != null && (
+          // As tall as the title and its subtitle together, so the tile heads
+          // the block and is not a bullet beside it.
+          <IconTile
+            className={cn(
+              'rounded-lg',
+              lead
+                ? 'size-16 rounded-xl [&_svg]:size-7'
+                : large
+                  ? 'size-14 rounded-xl [&_svg]:size-6'
+                  : 'size-12 [&_svg]:size-6'
+            )}
+          >
+            {icon}
+          </IconTile>
         )}
+        <div
+          className={cn(
+            'flex min-w-0',
+            stacked ? 'flex-col' : 'flex-wrap items-baseline gap-3',
+            stacked && (lead ? 'gap-2' : large ? 'gap-1' : 'gap-0.5')
+          )}
+        >
+          {eyebrow != null && <span className='text-eyebrow'>{eyebrow}</span>}
+          <h1
+            className={cn(
+              lead ? 'text-hero' : large ? 'text-page-title-lg' : 'text-page-title',
+              ink
+            )}
+          >
+            {title}
+          </h1>
+          {line != null && (
+            <p className={cn(lead ? 'text-lead max-w-4xl' : 'text-body', 'text-text-secondary')}>
+              {line}
+            </p>
+          )}
+        </div>
       </div>
-      {actions && <div className='flex shrink-0 items-center gap-2'>{actions}</div>}
+      {(stats != null || actions) && (
+        <div className='flex max-w-full flex-wrap items-center gap-x-4 gap-y-3'>
+          {stats != null && stats.length > 0 && (
+            <dl
+              data-slot='page-header-stats'
+              className={cn(
+                // One row where it fits; where it does not, the cells wrap
+                // and grow to fill each line. That follows the header's own
+                // width, not the viewport's, so it holds in a narrow column.
+                'flex max-w-full flex-wrap overflow-hidden rounded-lg border',
+                PAGE_HEADER_STATS[variant]
+              )}
+            >
+              {stats.map((stat, i) => (
+                <div
+                  key={i}
+                  // Every cell draws a top and a left line, pulled 1px out of the
+                  // sheet: the outer ones are clipped, the inner ones are the
+                  // dividers, whichever way the cells wrapped.
+                  className='-mt-px -ml-px flex min-w-20 flex-auto flex-col border-t border-l border-inherit px-4 py-2'
+                >
+                  <dd className={cn(lead ? 'text-page-title' : 'text-section', 'tabular-nums', ink)}>
+                    {stat.value}
+                  </dd>
+                  <dt className='text-meta whitespace-nowrap text-text-secondary'>{stat.label}</dt>
+                </div>
+              ))}
+            </dl>
+          )}
+          {actions && <div className='flex shrink-0 items-center gap-2'>{actions}</div>}
+        </div>
+      )}
     </header>
+  )
+}
+
+/* Columns from `lg`, and how many of them the main column takes. */
+const SPLIT_RATIO = {
+  '2:1': ['lg:grid-cols-3', 'lg:col-span-2'],
+  '3:1': ['lg:grid-cols-4', 'lg:col-span-3'],
+  '3:2': ['lg:grid-cols-5', 'lg:col-span-3'],
+  '1:1': ['lg:grid-cols-2', ''],
+} as const
+
+/**
+ * A main column with a second one beside it from `lg`, stacked below. Put it
+ * directly in a `PageContainer`: the headline card with a breakdown beside
+ * it, a table with a summary rail.
+ *
+ * `ratio` sets how wide the main column is against the aside: `2:1` (default)
+ * for a card and a rail, `3:1` for a table and a thin rail, `3:2` when the
+ * aside holds a chart, `1:1` for two equals. `side="start"` moves the aside
+ * to the left. Two or more children in a column stack inside it.
+ */
+export function Split({
+  aside,
+  side = 'end',
+  ratio = '2:1',
+  stretch = true,
+  className,
+  children,
+  ...props
+}: React.ComponentProps<'div'> & {
+  /** The second column. */
+  aside: React.ReactNode
+  /** Which side the aside sits on from `lg`. It always stacks second. */
+  side?: 'start' | 'end'
+  /** Main column to aside, from `lg`. */
+  ratio?: keyof typeof SPLIT_RATIO
+  /** Both columns take the taller one's height (default). `false` leaves each at its own. */
+  stretch?: boolean
+}) {
+  const [columns, main] = SPLIT_RATIO[ratio]
+  return (
+    <div
+      data-slot='split'
+      data-ratio={ratio}
+      className={cn('grid gap-4', columns, !stretch && 'items-start', className)}
+      {...props}
+    >
+      <div className={cn('flex min-w-0 flex-col gap-4 [&>*]:flex-1', main)}>{children}</div>
+      <div
+        className={cn(
+          'flex min-w-0 flex-col gap-4 [&>*]:flex-1',
+          ratio === '3:2' && 'lg:col-span-2',
+          side === 'start' && 'lg:order-first'
+        )}
+      >
+        {aside}
+      </div>
+    </div>
   )
 }
 

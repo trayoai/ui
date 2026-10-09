@@ -17,6 +17,8 @@ const twMerge = extendTailwindMerge({
             'display',
             'hero',
             'page-title',
+            'page-title-lg', // 32px large page header
+            'lead', // 16px sentence under a lead page title
             'section',
             'card-title',
             'name',

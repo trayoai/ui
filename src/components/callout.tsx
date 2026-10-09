@@ -17,6 +17,8 @@ import { cn } from '../lib/cn'
 
 export type CalloutTone = 'note' | 'info' | 'success' | 'warning' | 'destructive'
 
+export type CalloutTexture = 'diagonal' | 'dots' | 'wash' | 'none'
+
 export interface CalloutProps
   extends Omit<React.ComponentProps<'div'>, 'title'> {
   /**
@@ -37,6 +39,14 @@ export interface CalloutProps
    * padding tightens, the action centres. Keep the body to one clause.
    */
   compact?: boolean
+  /**
+   * What is drawn behind the copy, in the tone's own colour. `diagonal`
+   * (default) is fine lines fading in toward the right. `dots` is the dot grid
+   * against the right edge. `wash` is the tone deepening toward the right,
+   * with no pattern. `none` is the flat tint alone, for a long note or one
+   * that sits beside a busy panel.
+   */
+  texture?: CalloutTexture
 }
 
 /* Each tone is a panel (border + fill), a colour for the eyebrow, and a colour
@@ -71,6 +81,13 @@ const TONE: Record<CalloutTone, { panel: string; title: string; icon: string }> 
   },
 }
 
+const TEXTURE: Record<Exclude<CalloutTexture, 'none'>, string> = {
+  diagonal: 'diagonal-fade',
+  dots: 'bg-dot-grid dot-grid-right [--dot-size:6%] [--dot:color-mix(in_oklab,currentColor_32%,transparent)]',
+  // The same 115deg sweep as the diagonal's fade, as colour and not lines.
+  wash: 'bg-[image:linear-gradient(115deg,transparent_45%,color-mix(in_oklab,currentColor_18%,transparent))]',
+}
+
 /**
  * An explanatory note, caveat or status panel. Give it a short `title`, one
  * to three lines of body copy as children, and at most one `action`.
@@ -90,6 +107,7 @@ export function Callout({
   icon,
   action,
   compact = false,
+  texture = 'diagonal',
   role,
   className,
   children,
@@ -100,6 +118,7 @@ export function Callout({
     <div
       data-slot='callout'
       data-tone={tone}
+      data-texture={texture}
       role={role ?? (tone === 'destructive' ? 'alert' : 'note')}
       className={cn(
         // `isolate overflow-hidden` keeps the texture layer inside the panel.
@@ -110,12 +129,14 @@ export function Callout({
       )}
       {...props}
     >
-      {/* The website cards' diagonal texture, in the tone's own colour: fine
-          lines that fade in toward the bottom-right corner. */}
-      <span
-        aria-hidden
-        className={cn('diagonal-fade pointer-events-none absolute inset-0 -z-10', t.icon)}
-      />
+      {/* The texture layer, in the tone's own colour: each one fades in from
+          the right, so it never sits behind the start of a line. */}
+      {texture !== 'none' && (
+        <span
+          aria-hidden
+          className={cn('pointer-events-none absolute inset-0 -z-10', TEXTURE[texture], t.icon)}
+        />
+      )}
       {/* Icon and text wrap as one unit, and ask for 16rem before the action
           may share their line: in a narrow column a `shrink-0` action beside
           the text took a third of the panel and left the copy a few words

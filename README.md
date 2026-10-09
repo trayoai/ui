@@ -244,6 +244,59 @@ Select, so small lists can pass `pagination` unconditionally. For lists that
 are not tables — a card grid, a feed — render `<Pagination>` yourself with the
 same props.
 
+### A short list in a card
+
+With nothing to sort, select or page, the full table is more than a short list
+needs. `variant="simple"`
+sets the first and last cells flush with the card's own padding, drops the rule
+under the last row, and shows the hover band only when the table has an
+`onRowClick`. Put it in a padded `Surface`, not `padded={false}`, and let the
+row be the click target in place of a button on every row. `hideHeader` drops
+the column header row for a list whose columns explain themselves; the headers
+are still read to screen readers.
+
+```tsx
+<Surface title="Who to call" description="6 stakeholders, ranked">
+  <DataTable
+    variant="simple"
+    columns={columns}
+    rows={stakeholders}
+    getRowKey={(p) => p.id}
+    onRowClick={open}
+  />
+</Surface>
+```
+
+Every table sizes its rows to the list. With six rows or fewer in total, the
+rows are 88px and each `<Person>` or `<Company>` in a cell draws a 64px face or
+logo with its name at card-title size (18px); with more, the rows are the
+standard size with 48px faces. While `loading`, `skeletonRows` stands in for
+the count, so set it to the number of rows you expect and the placeholders
+come up at the size the rows will be. A `<Person>` or `<Company>` that is given its
+own `size` keeps it, name included. The count is across every page, so the last
+page of a long list does not change size. Pin it with `scale="default"` or
+`scale="large"` when a filter can take the list across six rows and the size
+should not change with it.
+
+`variant="large"` pins the large size and the flush layout together, for a
+list where the people or companies are the point
+of the screen: 88px rows, and every `<Person>` or `<Company>` row in a cell
+draws a 64px face or logo with its name at card-title size (18px). The table
+sets the size, so the cells are written as for any other table: leave `size`
+off.
+
+```tsx
+<DataTable variant="large" columns={columns} rows={stakeholders}
+           getRowKey={(p) => p.id} onRowClick={open} />
+```
+
+The table passes the size down through `EntityScaleContext`, which is
+exported: wrap a hand-built list in `<EntityScaleContext.Provider
+value="large">` and the `<Person>` and `<Company>` rows inside draw large the
+same way.
+
+A list with no columns to align is an `EntityList`, not a table.
+
 ### Column options
 
 | Field | What it does |
@@ -340,6 +393,12 @@ sits close to its own sentence, with more room between facts than inside one:
 Do not build this from a `<Meta>` label over a `<Body>` paragraph: the label
 ends up lighter than the text it heads and the facts run together.
 
+Contact links (`<PersonContactLinks>`, or `showContact` on a person) are plain
+glyphs that take a circle on hover, so a row of them stays quiet in a table or
+a list. On a `PersonCard` footer they are `outlined`, a hairline circle at
+rest, so they read as controls beside the card's button; pass `outlined`
+yourself to get that anywhere else.
+
 A card is a glance, so it keeps its text short: `summary` clamps at three lines
 with a "More" button that opens it in place, and `tags` shows three, then a
 `+N` button that shows the rest. Both work from the keyboard and on touch. Pass one or two sentences and one-to-three-word tags.
@@ -355,6 +414,25 @@ tooltip or menu trigger. A button that only exists inside your own component
 (`footer={<MyButton />}`) is out of reach: give it `size="sm"
 variant="secondary"` there.
 
+The one person a panel is about (the author of a post, the owner of an account)
+is `<Person variant="lead">`: a 96px face with the ring, the name at page-title
+size, the title and the company each on a line. A list row stays the default.
+
+A post with its author is `<PostCard>`. It draws the author in the lead layout,
+keeps the text's line breaks and clamps it to four lines behind a "Show more"
+switch, and puts the link out in the header.
+
+```tsx
+<PostCard
+  author={apiPerson}
+  text={post.text}
+  published="Published 21 September 2026"
+  href={post.url}
+  linkLabel="Open on LinkedIn"
+  note="Comments last loaded on 23 September 2026"
+/>
+```
+
 `PersonBanner` is the header of a page or drawer about one person: a
 full-width band in the brand colour with the face, name, title, company and one
 action. The title and the company each get their own line, so a long title
@@ -365,9 +443,17 @@ inverts it, filled with the band's foreground and labelled in the brand
 colour, so it reads on any brand. A `tertiary` or `quiet` Button also works
 when the action should recede.
 
+`tone` sets the band: `solid` (default, the brand fill), `soft` (the brand
+container, the same band in the pale tint) or `plain` (an ordinary card with no
+fill or texture, for a page that already has a brand block). `size="compact"`
+is for a drawer or a side panel: a 48px face, tighter padding, and the company
+and title on one line where they fit. On the soft and plain tones a default
+`<Button>` stays the brand's own solid.
+
 In a dialog, use `<PersonDialog>`: it places the banner, keeps the close button
 clear of it, scrolls the body and wraps the footer actions. It is 672px wide by
-default (`size="2xl"`), so a title and company fit beside the action.
+default (`size="2xl"`), so a title and company fit beside the action. `tone`
+sets the banner's tone (`solid`, `soft` or `plain`).
 
 ```tsx
 <PersonDialog
@@ -448,12 +534,14 @@ status; `teal` is still accepted and renders as `blue`. Without `size` it is
 
 | What | Components |
 |---|---|
-| Page scaffolding | `AppShell` `AppShellNavLink` `PageContainer` `PageHeader` `Surface` `IconTile` `Well` `StatGrid` |
+| Page scaffolding | `AppShell` `AppShellNavLink` `PageContainer` `PageHeader` `Split` `Surface` `IconTile` `Well` `StatGrid` |
+| Summaries | `HeroStat` `StatBand` `EntityStack` `Funnel` `SplitBar` `Meter` `MethodNote` (see [Summaries and breakdowns](#summaries-and-breakdowns)) |
+| Breakdowns and small charts | `BreakdownTiles` `DistributionList` `ShareTicks` `ShareRing` `DivergingColumns` `ColumnChart` `Sparkline` `Ring` |
 | Decorative | `BrandMesh` (drifting brand gradient) `GradientText` |
 | States | `EmptyState` `StatTile` `Callout` `Skeleton` `Progress` |
 | Type | `PageTitle` `SectionTitle` `CardTitle` `EntityName` `Body` `Meta` `Eyebrow` `SectionLabel` `Code` `DataLabel` |
 | Controls | `Button` `Input` `Textarea` `Select` `Checkbox` `Switch` `Label` `Tabs` `SegmentedControl` `Pagination` (+ `usePagination`) |
-| Display | `Badge` `TagChip` `Card` `EntityList` `FactList` `Separator` `Tooltip` `ScrollArea` |
+| Display | `Badge` `TagChip` `Card` `EntityList` `FactList` `PostCard` `Separator` `Tooltip` `ScrollArea` |
 | Overlays | `Dialog` `PersonDialog` `Popover` `DropdownMenu` |
 | Feedback | `Toaster` `toast()` `useToast()` |
 | Charts | `ChartLegend` `DataLabel` `CHART_COLORS` `CHART_SEQUENTIAL` `CHART_MUTED` `chartColor` `chartSequential` |
@@ -467,11 +555,32 @@ sticky, blurred, on a hairline, its inner width aligned with `PageContainer`
 take the soft accent when `active`; use `asChild` to wrap your router's link.
 A filter group is a `SegmentedControl`; a row of `StatTile`s goes in a
 `StatGrid`, which is two columns on a phone and lets an odd last tile span both
-so nothing dangles.
+so nothing dangles. A row of tiles is one way to summarise a page, not the
+only one: see [Summaries and breakdowns](#summaries-and-breakdowns).
 
 `PageContainer` spaces its sections. Put the `PageHeader`, `StatGrid`,
 `Surface`s and `Callout`s directly inside it, with no wrapper `<div>` and no
 margins between them: only direct children get the gap.
+
+`PageHeader` names the page. Three sizes: the default 24px title with the
+subtitle beside it, for inner views; `size="large"` (32px) for a header on a
+card; `size="lead"` (40px, with a 16px subtitle stacked under it) for a tool's
+main screen, where the title should still read in a thumbnail. An `eyebrow`
+sits above the title, an `icon` on a tile before it, and `stats` puts up to
+four bare figures on the right. `variant` sets what the header stands on:
+`plain` (the page), `card` (a sheet of its own) or `band` (the brand
+container). Pick one treatment for the whole app.
+
+```tsx
+<PageHeader
+  size="lead"
+  eyebrow="Mid-market FinServ · Q4"
+  title="Target accounts"
+  subtitle="15 companies this workspace did not already hold."
+  stats={[{ label: 'Accounts', value: 15 }, { label: 'Contacts', value: 19 }]}
+  actions={<Button>Push list</Button>}
+/>
+```
 
 A panel with a name is a `Surface` with a `title`: the header strip (title,
 optional `description`, `icon` and right-aligned `actions`) sits on the well
@@ -545,6 +654,158 @@ Bare `<AppShell>` still renders no bar. `SegmentedControl` is a radio group —
 arrow keys move the selection — for filtering what is on screen; view switching
 belongs in the top bar, and content panels belong to `Tabs`.
 
+### Summaries and breakdowns
+
+A strip of equal `StatTile`s is one shape among several, and using it on every
+screen is what makes two tools look like the same tool. Pick by what the
+numbers are:
+
+| The numbers are… | Use |
+|---|---|
+| One figure that matters, with context | `HeroStat` (with a `ColumnChart` in `media`) |
+| Stages of one pipeline | `Funnel` |
+| A few plain counts, none of them the headline | `StatBand` |
+| Figures that each carry a change or a trend | `StatBand headed` with a `Sparkline` or `Ring` in `media` |
+| A count per company, which the user can pick | `BreakdownTiles` |
+| Parts of one whole, with a row each | `DistributionList` |
+| Parts of one whole, in a line or around a total | `ShareTicks` / `ShareRing` |
+| Two parts of one whole | `SplitBar` |
+| Two opposed counts per period (joined, left) | `DivergingColumns` |
+| A score on a row, against a pass mark | `Meter` |
+| How the data was made (searches, steps, sources) | `MethodNote`, or `stats` on the `PageHeader` |
+| Independent KPIs with a change | `StatGrid` of `StatTile`s |
+
+One summary pattern per page, and none at all when the table already shows the
+count. A figure with no sentence to go with it belongs in the `PageHeader`
+`stats` or a `MethodNote`, not on a card of its own.
+
+`Split` sets a main column beside a second one from `lg` (stacked below), so a
+page is not one full-width stack. `ratio` is `2:1` (default), `3:1` for a table
+and a thin rail, `3:2` when the aside holds a chart, `1:1` for two equals;
+`side="start"` moves the aside to the left, and `stretch={false}` leaves each
+column at its own height.
+
+```tsx
+<Split
+  aside={
+    <Surface title="Where the gripes land" description="Pick one to filter">
+      <BreakdownTiles items={vendors} value={vendor} onValueChange={setVendor} />
+    </Surface>
+  }
+>
+  <HeroStat
+    title="Gripes kept"
+    description="From 264 posts read"
+    value={20}
+    chip={<Badge variant="warning">10 hot</Badge>}
+    reading="Firebase and MongoDB Atlas draw 14 of the 20."
+    media={<ColumnChart items={weeks} label="Gripes kept per week" />}
+    figures={[
+      { label: 'Posts read', value: 264, hint: '6 searches' },
+      { label: 'Hot', value: 10, share: 0.5 },
+    ]}
+  />
+</Split>
+```
+
+`StatBand` is a few figures on one sheet, split by hairlines. Each item takes a
+`label`, a `value`, an optional `hint` and `delta`, and either an `icon` or a
+`media` node at the right. `EntityStack` is the media for a count of people or
+companies: an overlapping pile of `<PersonAvatar size="sm">`s or
+`<CompanyLogo size="xs">`s, with the rest collapsed into a `+N` disc.
+
+```tsx
+<StatBand
+  items={[
+    {
+      label: 'Accounts imported',
+      value: 15,
+      media: (
+        <EntityStack max={3}>
+          {accounts.map((a) => <CompanyLogo key={a.id} name={a.name} domain={a.domain} size="xs" />)}
+        </EntityStack>
+      ),
+    },
+    { label: 'On the list', value: 34, icon: <ListChecks /> },
+  ]}
+/>
+
+<StatBand
+  headed
+  items={[
+    { icon: <Radar />, label: 'Signals this month', value: 47, delta: '+12%', hint: 'vs last month',
+      media: <Sparkline area values={perWeek} /> },
+    { icon: <Building2 />, label: 'Account coverage', value: '53%', media: <Ring value={8 / 15} /> },
+  ]}
+/>
+```
+
+`Funnel` takes `stages` in order, widest first, and says what share of the
+step before came through; `orientation="horizontal"` sets them in a row.
+`Meter` is a score in a table cell or list row, with the pass mark ticked on
+its bar (`mark`).
+
+```tsx
+<Funnel
+  stages={[
+    { label: 'Commenters', value: 10, hint: 'author excluded' },
+    { label: 'Passed the ICP', value: 5, hint: 'pass mark 55' },
+    { label: 'Verified work email', value: 4 },
+  ]}
+/>
+<Meter value={82} mark={55} label="Strong" />
+```
+
+The share components (`ShareTicks`, `ShareRing`, `DistributionList`) take the
+same segments: `{ label, value, display?, hint?, muted? }`. Colour marks the
+segment, in the chart palette's order; `muted` draws the remainder in the one
+neutral fill. `DistributionList` rows also take a `company` (for its logo) or
+an `icon`, and a `detail` line.
+
+```tsx
+<DistributionList
+  items={[
+    { label: 'Firebase', value: 7, detail: 'mostly cost', company: { name: 'Firebase', domain: 'firebase.com' } },
+    { label: 'Others', value: 2, muted: true },
+  ]}
+/>
+<DivergingColumns upLabel="Joined" downLabel="Left" items={[{ label: 'May', up: 12, down: 5 }]} />
+```
+
+`DivergingColumns` is one measure in two directions, so it is one colour:
+solid above the line and outlined below. The two sides are told apart by
+shape, under any brand palette.
+
+`MethodNote` says where a screen's data came from as figures, with the prose
+closed behind a switch. With `flow` the `points` are a sequence with an arrow
+between them (rows returned, then distinct, then kept); without it they are
+parallel sources side by side, each with a `detail` sentence. A caveat or a
+warning is still a `Callout`.
+
+```tsx
+<MethodNote
+  icon={<ListFilter />}
+  title="How this list was built"
+  summary="6 LinkedIn topic searches, narrowed to buyers complaining."
+  flow
+  points={[
+    { value: 300, label: 'rows returned' },
+    { value: 264, label: 'distinct posts' },
+    { value: 20, label: 'kept after reading' },
+  ]}
+>
+  Posts written by people who work at those vendors were dropped.
+</MethodNote>
+```
+
+These are drawn with plain elements and SVG, in the chart tokens, with no
+chart dependency. They show shape and proportion; none has an axis or hover
+values. `Sparkline` shows direction only. Their bars follow `Progress`: a thin
+solid bar for the settled number, hatching for the part that is not (the
+remainder, the dropped, a score under its pass mark). `bar="solid"` on
+`Funnel`, `SplitBar`, `Meter`, `HeroStat` or `DistributionList` draws that
+part as a flat neutral track instead; use one style across an app.
+
 ### Buttons
 
 Variants: `default | secondary | tertiary | quiet | destructive | destructive-outline | destructive-quiet`.
@@ -572,7 +833,10 @@ size them per instance.
 The note box: "how this was built", a coverage caveat, a data limit, a result
 that cleared the bar. A short `title` as the eyebrow, one to three lines of
 body, at most one `action`. Tones `note` (default) `info` `success` `warning`
-`destructive`; `compact` puts title and body on one line.
+`destructive`; `compact` puts title and body on one line. `texture` sets what
+is drawn behind the copy, in the tone's colour: `diagonal` (default), `dots`,
+`wash` (the tone deepening toward the right, no pattern) or `none`. Pick one
+for the whole app.
 
 ```tsx
 <Callout title="How this was built" action={<a href="/method">Full method</a>}>
@@ -628,8 +892,10 @@ It renders the eyebrow "Preview - nothing was sent" above the title; pass
 
 ### Charts
 
-Bubbles, treemaps, quadrants, sparklines and bars are built from the same
-tokens as everything else. Nothing in a chart is a hex colour or an arbitrary
+The common shapes are components already: columns, shares, funnels and
+sparklines are in [Summaries and breakdowns](#summaries-and-breakdowns). Reach
+for those first. Anything else (bubbles, treemaps, quadrants, a chart with an
+axis) is built from the same tokens as everything else. Nothing in a chart is a hex colour or an arbitrary
 font size.
 
 - **Series colour** — the categorical palette `chart-1` … `chart-5` (brand
@@ -694,12 +960,13 @@ Follow these and the result stays on-brand. Break them and it drifts.
 2. **Two type vocabularies, never mixed.** *Content* (titles, names, body, meta,
    labels) uses a **role class**: `text-page-title` `text-section`
    `text-card-title` `text-name` `text-body` `text-meta` `text-label`
-   `text-eyebrow` `text-code`. Roles carry the heading font —
+   `text-eyebrow` `text-code`, plus `text-page-title-lg` and `text-lead` for a
+   large or lead `PageHeader`. Roles carry the heading font —
    `text-[16px] font-semibold` silently drops it. *Controls* (buttons, inputs,
    badges, tabs) use the plain Tailwind scale (`text-sm font-medium`).
 
 3. **Never arbitrary type.** No `text-[13px]`, `tracking-[0.07em]`,
-   `leading-[1.55]`. The ramp is 11/12/13/14/16/18/24/40/56 and it is enough.
+   `leading-[1.55]`. The ramp is 11/12/13/14/16/18/24/32/40/56 and it is enough.
    Below `text-meta` there is exactly one role, `text-data-label`
    (`--text-caption`), and it is for chart and axis labels only —
    `text-[10px]` is never the answer.
@@ -720,7 +987,8 @@ Follow these and the result stays on-brand. Break them and it drifts.
 7. **A tool is not a landing page.** `<GradientText>` is for one phrase in a
    hero and `<BrandMesh>` for one hero or empty state — not a page title, not
    the backdrop of a table or a stat strip. `<PageHeader>` with a plain title
-   is the default.
+   is the default; a tool's main screen takes `size="lead"`, still with a
+   plain title.
 
 You own these files now, so editing them is fair game. Prefer extending a
 variant over forking a component, and keep the token vocabulary intact — that
@@ -812,7 +1080,11 @@ What the resolver guarantees, so you never adjust a colour for contrast:
 - dark mode lifts the fill until it stands out; a black-and-white brand fills
   with near-white;
 - shell text, hover and selected rows read on the shell;
-- accents become chart series that clear 3:1 on the card, light and dark;
+- accents become chart series that clear 3:1 on the card, light and dark, and
+  that can be told from each other: a series too close to an earlier one in a
+  theme (a navy primary and a sky accent, both lightened for a dark card)
+  gives way there to the nearest kit colour that is clearly apart, and the
+  swap is reported in `adjustments`;
 - on the brand's surfaces, text clears 7:1 and supporting text 4.5:1 (a
   derived secondary tone clears 7:1, so it stays apart from meta text), borders
   and the hover row are derived, and every check above runs against those

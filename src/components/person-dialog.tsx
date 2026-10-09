@@ -22,6 +22,8 @@ export interface PersonDialogProps {
   /** Under the body: the secondary actions, as a row that wraps. */
   footer?: React.ReactNode
   contacted?: boolean
+  /** The banner's tone: `solid` (default), `soft` or `plain`. */
+  tone?: React.ComponentProps<typeof PersonBanner>['tone']
   /**
    * Defaults to `2xl` (672px), wider than a plain dialog's `xl` (576px): the
    * banner gives up most of its width to the avatar and the action.
@@ -54,6 +56,7 @@ export function PersonDialog({
   actions,
   footer,
   contacted,
+  tone,
   size = '2xl',
   children,
 }: PersonDialogProps) {
@@ -62,7 +65,7 @@ export function PersonDialog({
       {trigger != null && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent data-person-dialog size={size} aria-describedby={undefined}>
         <DialogTitle className='sr-only'>{person.name}</DialogTitle>
-        <PersonBanner person={person} actions={actions} contacted={contacted} />
+        <PersonBanner person={person} actions={actions} contacted={contacted} tone={tone} />
         {children != null && <DialogBody className='py-0'>{children}</DialogBody>}
         {footer != null && (
           <div data-slot='person-dialog-footer' className='flex flex-wrap items-center gap-2'>

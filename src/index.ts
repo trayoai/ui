@@ -14,6 +14,8 @@
 /* ---------------------------------------------------------------- entities */
 export { Person, PersonBanner, PersonCard, PersonContactLinks, personPhotoUrl } from './components/person'
 export type { PersonLike, PersonProps, PersonBannerProps, PersonCardProps } from './components/person'
+export { PostCard } from './components/post-card'
+export type { PostCardProps } from './components/post-card'
 export { PersonDialog } from './components/person-dialog'
 export type { PersonDialogProps } from './components/person-dialog'
 export { Company, CompanyCard, CompanyMeta } from './components/company'
@@ -65,13 +67,58 @@ export {
   IconTile,
   PageContainer,
   PageHeader,
+  Split,
   StatGrid,
   StatTile,
   Surface,
   Well,
 } from './components/surfaces'
+export type { PageHeaderStat } from './components/surfaces'
+export {
+  BreakdownTiles,
+  ColumnChart,
+  DistributionList,
+  DivergingColumns,
+  EntityStack,
+  Funnel,
+  HeroStat,
+  Meter,
+  Ring,
+  ShareRing,
+  ShareTicks,
+  Sparkline,
+  SplitBar,
+  StatBand,
+} from './components/insights'
+export type {
+  BarStyle,
+  BreakdownItem,
+  BreakdownTilesProps,
+  ColumnChartItem,
+  ColumnChartProps,
+  DistributionItem,
+  DistributionListProps,
+  DivergingColumnsProps,
+  DivergingItem,
+  EntityStackProps,
+  FunnelProps,
+  FunnelStage,
+  HeroStatFigure,
+  HeroStatProps,
+  MeterProps,
+  ShareRingProps,
+  ShareSegment,
+  ShareTicksProps,
+  SparklineProps,
+  SplitBarProps,
+  SplitBarSide,
+  StatBandItem,
+  StatBandProps,
+} from './components/insights'
+export { MethodNote } from './components/method-note'
+export type { MethodNoteProps, MethodPoint } from './components/method-note'
 export { Callout } from './components/callout'
-export type { CalloutProps, CalloutTone } from './components/callout'
+export type { CalloutProps, CalloutTexture, CalloutTone } from './components/callout'
 export {
   Body,
   CardTitle,
@@ -210,6 +257,8 @@ export type {
 
 /* ----------------------------------------------------------------- helpers */
 export { cn } from './lib/cn'
+export { EntityScaleContext, useEntityScale } from './lib/entity-scale'
+export type { EntityScale } from './lib/entity-scale'
 export { initials } from './lib/initials'
 export { brandImageUrl, logoCandidates, normalizeDomain } from './lib/brand-image'
 export {

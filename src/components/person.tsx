@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { Mail, MapPin, Phone, UserRound } from 'lucide-react'
 import { cn } from '../lib/cn'
+import { useEntityScale } from '../lib/entity-scale'
 import { CardFooterSlot } from './card-footer-slot'
 import { CardSummary, CardTags } from './card-text'
 import { CompanyLogo } from './company-logo'
@@ -72,8 +73,10 @@ export interface PersonProps {
    * `row` — one line, for tables and lists (the default).
    * `inline` — avatar + name only, for sentences and chips.
    * `stacked` — name over title over company, for a card body or a header.
+   * `lead` — the one person a panel is about: a 96px face with a ring, the
+   *   name at page-title size, the title and the company each on a line.
    */
-  variant?: 'row' | 'inline' | 'stacked'
+  variant?: 'row' | 'inline' | 'stacked' | 'lead'
   size?: AvatarSize
   /** Show email / phone / profile glyph links when the person has them. */
   showContact?: boolean
@@ -104,11 +107,37 @@ export function Person({
   onClick,
   className,
 }: PersonProps) {
+  // A row inside a large table: a 64px face, the name and its line a step up.
+  // An explicit `size` opts out: the name must not grow beside a face the
+  // caller has pinned small.
+  const large = useEntityScale() === 'large' && variant === 'row' && size == null
   const avatarSize: AvatarSize =
-    size ?? (variant === 'inline' ? 'sm' : variant === 'stacked' ? 'xl' : 'lg')
+    size ??
+    (variant === 'inline'
+      ? 'sm'
+      : variant === 'lead'
+        ? '2xl'
+        : variant === 'stacked' || large
+          ? 'xl'
+          : 'lg')
 
   const nameEl = (
-    <span className={cn(variant === 'inline' ? 'text-name-sm' : 'text-name', 'truncate text-text-primary')}>
+    <span
+      className={cn(
+        variant === 'inline'
+          ? 'text-name-sm'
+          : variant === 'lead'
+            ? // The name keeps pace with the face: page-title size beside
+              // the 96px default, section size if a smaller face is asked for.
+              avatarSize === '2xl'
+              ? 'text-page-title'
+              : 'text-section'
+            : large
+              ? 'text-card-title'
+              : 'text-name',
+        'truncate text-text-primary'
+      )}
+    >
       {person.name}
     </span>
   )
@@ -128,9 +157,9 @@ export function Person({
       personId={person.id}
       size={avatarSize}
       contacted={contacted}
-      // Stacked only: the avatar leads the block, so it takes the same offset
-      // ring as the PersonCard avatar. The 4px margin is the ring's reach.
-      className={variant === 'stacked' ? 'avatar-ring-gap m-1' : undefined}
+      // Stacked and lead: the avatar leads the block, so it takes the same
+      // offset ring as the PersonCard avatar. The 4px margin is the ring's reach.
+      className={variant === 'stacked' || variant === 'lead' ? 'avatar-ring-gap m-1' : undefined}
     />
   )
 
@@ -160,7 +189,7 @@ export function Person({
           {person.title && <span className='text-meta truncate'>{person.title}</span>}
           {person.company && (
             <span className='mt-1 inline-flex items-center gap-1.5'>
-              <CompanyLogo name={person.company} domain={person.companyDomain} size='sm' />
+              <CompanyLogo name={person.company} domain={person.companyDomain} size='xs' />
               <span className='text-body-sm truncate text-text-secondary'>{person.company}</span>
             </span>
           )}
@@ -175,17 +204,52 @@ export function Person({
     )
   }
 
+  if (variant === 'lead') {
+    return (
+      <div
+        data-slot='entity-lead'
+        className={cn('flex min-w-0 flex-wrap items-center gap-x-4 gap-y-3', onClick && 'cursor-pointer', className)}
+        onClick={onClick}
+      >
+        {avatar}
+        <div className='flex min-w-48 flex-1 flex-col gap-0.5'>
+          <span className='flex min-w-0 items-center gap-2'>{name}</span>
+          {person.title && (
+            <span className='text-body line-clamp-2 text-text-secondary'>{person.title}</span>
+          )}
+          {person.company && (
+            <span className='mt-1 flex min-w-0 items-center gap-1.5'>
+              <CompanyLogo name={person.company} domain={person.companyDomain} size='xs' />
+              <span className='text-body truncate text-text-secondary'>{person.company}</span>
+            </span>
+          )}
+        </div>
+        {(showContact || actions) && (
+          <span className='flex shrink-0 items-center gap-2'>
+            {showContact && <PersonContactLinks person={person} />}
+            {actions}
+          </span>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div
       data-slot='entity-row'
-      className={cn('flex min-w-0 items-center gap-3', onClick && 'cursor-pointer', className)}
+      className={cn('flex min-w-0 items-center', large ? 'gap-4' : 'gap-3', onClick && 'cursor-pointer', className)}
       onClick={onClick}
     >
       {avatar}
-      <div className='flex min-w-0 flex-col'>
+      <div className={cn('flex min-w-0 flex-col', large ? 'gap-1' : 'gap-0.5')}>
         <span className='flex min-w-0 items-center gap-2'>{name}</span>
         {subtitle && (
-          <span className='text-meta flex min-w-0 items-center gap-1.5 truncate'>
+          <span
+            className={cn(
+              'flex min-w-0 items-center gap-1.5 truncate',
+              large ? 'text-body text-text-secondary' : 'text-meta'
+            )}
+          >
             {person.company && person.companyDomain && (
               <CompanyLogo name={person.company} domain={person.companyDomain} size='xs' />
             )}
@@ -209,9 +273,13 @@ export function Person({
 
 export function PersonContactLinks({
   person,
+  outlined = false,
   className,
 }: {
   person: PersonLike
+  /** Draws each glyph in a hairline circle at rest, so the row reads as
+   *  controls. Without it the circle appears on hover only. */
+  outlined?: boolean
   className?: string
 }) {
   const profile = person.profileUrl || null
@@ -224,7 +292,7 @@ export function PersonContactLinks({
     items.push({ key: 'profile', href: profile, label: 'View profile', icon: <UserRound /> })
   if (!items.length) return null
   return (
-    <span className={cn('flex shrink-0 items-center gap-1', className)}>
+    <span className={cn('flex shrink-0 items-center', outlined ? 'gap-1.5' : 'gap-1', className)}>
       {items.map((i) => (
         <a
           key={i.key}
@@ -233,7 +301,10 @@ export function PersonContactLinks({
           aria-label={i.label}
           target={i.key === 'profile' ? '_blank' : undefined}
           rel={i.key === 'profile' ? 'noreferrer' : undefined}
-          className='flex size-7 items-center justify-center rounded-full border border-transparent text-text-muted transition-all hover:border-accent-line hover:bg-accent-soft hover:text-accent-text [&_svg]:size-3.5'
+          className={cn(
+            'flex size-7 items-center justify-center rounded-full border transition-all hover:border-accent-line hover:bg-accent-soft hover:text-accent-text [&_svg]:size-3.5',
+            outlined ? 'border-border-strong text-text-secondary' : 'border-transparent text-text-muted'
+          )}
         >
           {i.icon}
         </a>
@@ -316,7 +387,7 @@ export function PersonCard({
             <span className='mt-1 flex min-w-0 items-center gap-2'>
               {person.company && (
                 <span className='inline-flex min-w-0 items-center gap-1.5'>
-                  <CompanyLogo name={person.company} domain={person.companyDomain} size='sm' />
+                  <CompanyLogo name={person.company} domain={person.companyDomain} size='xs' />
                   <span className='text-body-sm truncate text-text-secondary'>{person.company}</span>
                 </span>
               )}
@@ -380,7 +451,7 @@ export function PersonCard({
           notches beside the sheet's rounded bottom corners. The sheet is
           `relative` so it paints over the part tucked beneath it. */}
       <div className='well-gradient -mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-b-xl px-4 pt-5.5 pb-2.5'>
-        {showContact && <PersonContactLinks person={person} />}
+        {showContact && <PersonContactLinks person={person} outlined />}
         {footer != null && <CardFooterSlot>{footer}</CardFooterSlot>}
       </div>
     </div>
@@ -395,6 +466,17 @@ export interface PersonBannerProps {
   actions?: React.ReactNode
   contacted?: boolean
   href?: string
+  /**
+   * `solid` (default) is the brand fill. `soft` is the brand container: the
+   * same band in the pale tint. `plain` is an ordinary card with no fill or
+   * texture, for a page that already has a brand block or should stay neutral.
+   */
+  tone?: 'solid' | 'soft' | 'plain'
+  /**
+   * `compact` is for a drawer, a dialog or a side panel: a smaller face,
+   * tighter padding, and the company and title on one line where they fit.
+   */
+  size?: 'default' | 'compact'
   className?: string
 }
 
@@ -411,53 +493,92 @@ export interface PersonBannerProps {
  * repointed to that foreground, which is what lets a `tertiary` or `quiet`
  * Button in `actions` read correctly on the fill without its own styling.
  */
-export function PersonBanner({ person, actions, contacted, href, className }: PersonBannerProps) {
+export function PersonBanner({
+  person,
+  actions,
+  contacted,
+  href,
+  tone = 'solid',
+  size = 'default',
+  className,
+}: PersonBannerProps) {
   const nameClass = 'text-section truncate text-text-primary'
+  const soft = tone === 'soft'
+  const plain = tone === 'plain'
+  const solid = !soft && !plain
+  const compact = size === 'compact'
   return (
     <div
       data-slot='person-banner'
+      data-tone={tone}
+      data-size={size}
       className={cn(
         // `relative isolate` holds the noise layer's -z-10 inside the band.
         // A wrapping row: when the band is too narrow for the text block's
         // minimum beside the action, the action moves under it.
-        'relative isolate flex min-w-0 flex-wrap items-center gap-x-4 gap-y-3 rounded-xl bg-accent-brand px-5 py-4 text-accent-brand-foreground',
+        'relative isolate flex min-w-0 flex-wrap items-center rounded-xl',
+        compact ? 'gap-x-3 gap-y-2 px-4 py-3' : 'gap-x-4 gap-y-3 px-5 py-4',
+        // Plain: the kit's card sheet, and nothing repointed.
+        plain && 'bg-[image:var(--gradient-card)] shadow-[var(--shadow-card)]',
+        // Soft: the brand container and its own checked ink. `bg-container`
+        // already retunes the secondary and muted greys for the tint.
+        soft &&
+          'bg-container text-container-foreground shadow-[var(--shadow-card)] [--band-fill:var(--container)] [--band-ink:var(--container-foreground)] [--text-primary:var(--container-foreground)] [--border-strong:color-mix(in_oklab,var(--container-foreground)_30%,transparent)] [--surface-well:color-mix(in_oklab,var(--container-foreground)_8%,transparent)]',
+        solid && 'bg-accent-brand text-accent-brand-foreground',
         // Same 160deg direction as the card and strip gradients: the brand
         // fill at the top-left, where the name sits, shifting away from the
         // foreground toward the bottom-right — toward black under a light
         // foreground, toward white under a dark one — so the text and the
         // action read at least as well in that corner as beside the name.
-        'bg-[image:linear-gradient(160deg,var(--accent-brand),color-mix(in_oklab,var(--accent-brand)_74%,oklch(from_var(--accent-brand-foreground)_clamp(0,calc((0.6_-_l)*1000),1)_0_0)))]',
+        solid &&
+          'bg-[image:linear-gradient(160deg,var(--accent-brand),color-mix(in_oklab,var(--accent-brand)_74%,oklch(from_var(--accent-brand-foreground)_clamp(0,calc((0.6_-_l)*1000),1)_0_0)))]',
         // The band's own pair, kept under other names so the action slot can
         // swap them (see below).
-        '[--band-fill:var(--accent-brand)] [--band-ink:var(--accent-brand-foreground)]',
-        '[--text-primary:var(--accent-brand-foreground)]',
-        '[--text-secondary:var(--accent-brand-foreground)]',
-        '[--border-strong:color-mix(in_oklab,var(--accent-brand-foreground)_30%,transparent)]',
-        '[--surface-well:color-mix(in_oklab,var(--accent-brand-foreground)_12%,transparent)]',
-        '[--ring:var(--accent-brand-foreground)]',
+        solid && [
+          '[--band-fill:var(--accent-brand)] [--band-ink:var(--accent-brand-foreground)]',
+          '[--text-primary:var(--accent-brand-foreground)]',
+          '[--text-secondary:var(--accent-brand-foreground)]',
+          '[--border-strong:color-mix(in_oklab,var(--accent-brand-foreground)_30%,transparent)]',
+          '[--surface-well:color-mix(in_oklab,var(--accent-brand-foreground)_12%,transparent)]',
+          '[--ring:var(--accent-brand-foreground)]',
+        ],
         className
       )}
     >
-      {/* The website cards' backdrop: the dot grid against the right edge,
-          in a tint of the band's foreground, under a layer of noise. */}
-      <span
-        aria-hidden
-        className='bg-dot-grid dot-grid-right pointer-events-none absolute inset-0 -z-10 rounded-xl [--dot-size:6%] [--dot:color-mix(in_oklab,var(--accent-brand-foreground)_40%,transparent)]'
-      />
-      <span
-        aria-hidden
-        // Half the class's 70%: on a saturated fill the full grain reads as dirt.
-        className='noise-grain pointer-events-none absolute inset-0 -z-10 rounded-xl opacity-35'
-      />
+      {!plain && (
+        <>
+          {/* The website cards' backdrop: the dot grid against the right edge,
+              in a tint of the band's foreground, under a layer of noise. */}
+          <span
+            aria-hidden
+            className={cn(
+              'bg-dot-grid dot-grid-right pointer-events-none absolute inset-0 -z-10 rounded-xl [--dot-size:6%]',
+              // The same dots in the band's ink, lighter on the pale tint.
+              soft
+                ? '[--dot:color-mix(in_oklab,var(--band-ink)_22%,transparent)]'
+                : '[--dot:color-mix(in_oklab,var(--band-ink)_40%,transparent)]'
+            )}
+          />
+          <span
+            aria-hidden
+            // Half the class's 70%: on a saturated fill the full grain reads as dirt.
+            className='noise-grain pointer-events-none absolute inset-0 -z-10 rounded-xl opacity-35'
+          />
+        </>
+      )}
       <PersonAvatar
         name={person.name}
         src={personPhotoUrl(person)}
         personId={person.id}
-        size='xl'
+        size={compact ? 'lg' : 'xl'}
         contacted={contacted}
         // The offset ring, retuned for the fill: the gap is the brand colour
         // (not the card's), the ring a tint of the band's foreground.
-        className='avatar-ring-gap m-1 [--surface-card:var(--accent-brand)] [--border-strong:color-mix(in_oklab,var(--accent-brand-foreground)_55%,transparent)]'
+        className={cn(
+          'avatar-ring-gap m-1',
+          !plain &&
+            '[--surface-card:var(--band-fill)] [--border-strong:color-mix(in_oklab,var(--band-ink)_55%,transparent)]'
+        )}
       />
       <div className='flex min-w-48 flex-1 flex-col gap-0.5'>
         {href ? (
@@ -467,27 +588,62 @@ export function PersonBanner({ person, actions, contacted, href, className }: Pe
         ) : (
           <span className={nameClass}>{person.name}</span>
         )}
-        {/* The title and the company each get their own line: on one line
-            the company, the part that says where this person is, was the
-            first thing a long title cut off. */}
-        {person.title && (
-          <span data-slot='person-banner-title' className='text-body-sm line-clamp-2'>
-            {person.title}
-          </span>
-        )}
-        {person.company && (
-          <span className='mt-1 flex min-w-0 items-center gap-1.5'>
-            <CompanyLogo name={person.company} domain={person.companyDomain} size='xs' />
-            <span data-slot='person-banner-company' className='text-body-sm truncate'>
-              {person.company}
+        {compact ? (
+          // The company, then the title after it on the same line when there
+          // is room. When there is not, the title moves to a line of its own
+          // and stays whole: the role is never cut to make the band shorter.
+          (person.title || person.company) && (
+            <span className='flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5'>
+              {person.company && (
+                <span className='flex min-w-0 items-center gap-1.5'>
+                  <CompanyLogo name={person.company} domain={person.companyDomain} size='xs' />
+                  <span data-slot='person-banner-company' className='text-body-sm truncate'>
+                    {person.company}
+                  </span>
+                </span>
+              )}
+              {person.title && (
+                <span
+                  data-slot='person-banner-title'
+                  className='text-body-sm line-clamp-2 text-text-secondary'
+                >
+                  {person.title}
+                </span>
+              )}
             </span>
-          </span>
+          )
+        ) : (
+          <>
+            {/* The title and the company each get their own line: on one line
+                the company, the part that says where this person is, was the
+                first thing a long title cut off. */}
+            {person.title && (
+              <span data-slot='person-banner-title' className='text-body-sm line-clamp-2'>
+                {person.title}
+              </span>
+            )}
+            {person.company && (
+              <span className='mt-1 flex min-w-0 items-center gap-1.5'>
+                <CompanyLogo name={person.company} domain={person.companyDomain} size='xs' />
+                <span data-slot='person-banner-company' className='text-body-sm truncate'>
+                  {person.company}
+                </span>
+              </span>
+            )}
+          </>
         )}
       </div>
       {/* A `default` Button here is the band inverted: filled with the band's
           foreground, labelled in the brand colour. It reads on any brand. */}
       {actions && (
-        <span className='flex shrink-0 items-center gap-2 [--accent-brand:var(--band-ink)] [--accent-brand-foreground:var(--band-fill)]'>
+        <span
+          className={cn(
+            'flex shrink-0 items-center gap-2',
+            // On the solid band a default Button is the band inverted. On the
+            // soft one it stays the brand's own solid, which reads on the tint.
+            solid && '[--accent-brand:var(--band-ink)] [--accent-brand-foreground:var(--band-fill)]'
+          )}
+        >
           {actions}
         </span>
       )}
