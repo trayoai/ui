@@ -347,13 +347,21 @@ export function LayoutCheck() {
               <Surface title='Main'>Two thirds</Surface>
             </Split>
           </Case>
+          {/* `layout='fixed'`, as an app's table has: an auto-layout table grows
+              to its longest cell and scrolls sideways instead of truncating. */}
           {([['few', 3], ['many', 7]] as const).map(([name, n]) => (
             <Case key={name} name={`table-${name}-rows`} width={520}>
               <Surface>
                 <DataTable
                   variant='simple'
+                  layout='fixed'
                   columns={[{ id: 'person', header: 'Person', accessor: (p: PersonLike) => <Person person={p} /> }]}
-                  rows={Array.from({ length: n }, (_, i) => ({ ...DANA, id: `row-${i}` }))}
+                  rows={Array.from({ length: n }, (_, i) => ({
+                    ...DANA,
+                    id: `row-${i}`,
+                    // Longer than the column at any font: the row must truncate.
+                    title: `${DANA.title}, Europe, Middle East and Africa`,
+                  }))}
                   getRowKey={(p) => p.id!}
                 />
               </Surface>
@@ -363,6 +371,7 @@ export function LayoutCheck() {
             <Surface>
               <DataTable
                 variant='simple'
+                layout='fixed'
                 columns={[{ id: 'person', header: 'Person', skeleton: 'person' as const, accessor: (p: PersonLike) => <Person person={p} /> }]}
                 rows={[]}
                 getRowKey={(p) => p.id!}
@@ -375,6 +384,7 @@ export function LayoutCheck() {
             <Surface>
               <DataTable
                 variant='simple'
+                layout='fixed'
                 columns={[{ id: 'person', header: 'Person', accessor: (p: PersonLike) => <Person person={p} size='md' /> }]}
                 rows={[DANA]}
                 getRowKey={(p) => p.id!}

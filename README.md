@@ -259,6 +259,7 @@ are still read to screen readers.
 <Surface title="Who to call" description="6 stakeholders, ranked">
   <DataTable
     variant="simple"
+    layout="fixed"
     columns={columns}
     rows={stakeholders}
     getRowKey={(p) => p.id}
@@ -294,6 +295,10 @@ The table passes the size down through `EntityScaleContext`, which is
 exported: wrap a hand-built list in `<EntityScaleContext.Provider
 value="large">` and the `<Person>` and `<Company>` rows inside draw large the
 same way.
+
+Give these tables `layout="fixed"`, as any table with long names: a large row
+sets its text bigger, and an auto-layout table grows to its longest cell and
+scrolls sideways where a fixed one truncates.
 
 A list with no columns to align is an `EntityList`, not a table.
 
