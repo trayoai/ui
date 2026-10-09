@@ -207,7 +207,10 @@ the wrong place or not at all. Nothing errors at build time.
     ("Left", "Owner", "Reports to") goes on its own line above the entity in
     `text-meta`, never inline beside the logo or avatar. A row of chips or
     buttons that may not fit gets `flex flex-wrap gap-2`. Size a dialog with
-    its `size` prop, never a `max-w-*` class.
+    its `size` prop, never a `max-w-*` class. Content in a dialog that can
+    run long (a list of events, a table) goes in a `<DialogBody>` between the
+    header and the footer, so the body scrolls and the footer and the close
+    button stay on screen.
 
 19. **Pick the summary by the shape of the numbers, not by habit.** Four equal
     `<StatTile>`s on every screen is what makes two tools look like the same

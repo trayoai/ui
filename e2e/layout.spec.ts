@@ -289,6 +289,46 @@ test.describe('dialogs', () => {
     expect(await escapees(page, '[data-slot=dialog-content]')).toEqual([])
   })
 
+  // A dialog taller than the screen used to run off both ends of it, leaving
+  // the close button and the footer out of reach.
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 390, height: 844 },
+  ]) {
+    test.describe(`taller than a ${viewport.width}x${viewport.height} screen`, () => {
+      test.use({ viewport })
+
+      test('without a DialogBody it fits the screen and scrolls as a whole', async ({ page }) => {
+        const content = await openDialog(page, 'tall')
+        const box = (await content.boundingBox())!
+        expect(box.y).toBeGreaterThanOrEqual(0)
+        expect(box.y + box.height).toBeLessThanOrEqual(viewport.height)
+        expect(await content.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true)
+        // The footer is reachable: scrolling the dialog brings it on screen.
+        const footer = content.getByRole('button', { name: 'Draft outreach' })
+        await footer.scrollIntoViewIfNeeded()
+        await expect(footer).toBeInViewport()
+        expect(await escapees(page, '[data-slot=dialog-content]')).toEqual([])
+      })
+
+      test('with a DialogBody only the body scrolls', async ({ page }) => {
+        const content = await openDialog(page, 'tall-body')
+        const box = (await content.boundingBox())!
+        expect(box.y).toBeGreaterThanOrEqual(0)
+        expect(box.y + box.height).toBeLessThanOrEqual(viewport.height)
+        const body = content.locator('[data-slot=dialog-body]')
+        expect(await body.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true)
+        // Scroll the body to its end: the title, the footer and the close
+        // button are all still on screen.
+        await body.locator('[data-tall-row]').last().scrollIntoViewIfNeeded()
+        await expect(content.getByRole('heading', { name: 'Ramp' })).toBeInViewport()
+        await expect(content.getByRole('button', { name: 'Draft outreach' })).toBeInViewport()
+        await expect(content.getByRole('button', { name: 'Close' })).toBeInViewport()
+        expect(await content.evaluate((el) => el.scrollTop)).toBe(0)
+      })
+    })
+  }
+
   test.describe('on a phone', () => {
     test.use({ viewport: { width: 390, height: 844 } })
 
@@ -358,6 +398,11 @@ test('table skeletons are the size of the cells they stand in for', async ({ pag
   expect(await width('table-loading', 'td:nth-child(2) [data-slot=skeleton]')).toBe(
     await width('table-loaded', 'td:nth-child(2) [data-slot=company-logo]')
   )
+})
+
+test('a TagChip shows text given as children', async ({ page }) => {
+  await open(page)
+  await expect(page.locator('[data-layout-case="tag-chip-children"]')).toHaveText('Fraud & KYC hiring')
 })
 
 test('a dialog with no size is 576px wide', async ({ page }) => {

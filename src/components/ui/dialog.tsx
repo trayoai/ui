@@ -104,7 +104,15 @@ function DialogContent({
           // is otherwise the banner's own corner. Matched on any direct
           // child, not `:first-child`, because a screen-reader-only
           // `DialogTitle` usually comes before the banner.
-          'bg-surface-dialog data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full grid-cols-[minmax(0,1fr)] max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-border-subtle p-4 shadow-lg duration-200 md:p-6',
+          //
+          // Never taller than the screen. A dialog used to grow with its
+          // content, so a long one ran off the top and bottom of the viewport
+          // with its close button and footer out of reach. It is now capped at
+          // the viewport less the same 1rem margin the width keeps, and scrolls
+          // as a whole when its content is taller. That is the fallback: put
+          // long content in a `<DialogBody>` and only the body scrolls, with
+          // the header, footer and close button staying put.
+          'bg-surface-dialog data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid max-h-[calc(100dvh-2rem)] w-full grid-cols-[minmax(0,1fr)] max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 overflow-y-auto overscroll-contain rounded-lg border border-border-subtle p-4 shadow-lg duration-200 md:p-6',
           'has-[>[data-slot=person-banner]]:pt-12',
           dialogSizeClasses[size],
           className
@@ -147,10 +155,11 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
 
 /**
  * Scrollable body region for dialog content: the max-height, vertical scroll
- * and inner spacing in one place, so dialogs do not each hand-roll them. Pair
- * with a `DialogContent` that caps total height (e.g. `max-h-[90vh]
- * overflow-hidden`) so a long body scrolls within the shell while the
- * header/footer stay pinned.
+ * and inner spacing in one place, so dialogs do not each hand-roll them. Put
+ * anything that can run long here (a list of events, a table, a long form):
+ * the body scrolls within the shell while the header, the footer and the close
+ * button stay put. Without it a tall dialog still fits the screen, because
+ * `DialogContent` caps its own height, but then the whole dialog scrolls.
  * Override the default cap via `className` (e.g. `max-h-[70vh]`).
  */
 function DialogBody({ className, ...props }: React.ComponentProps<'div'>) {

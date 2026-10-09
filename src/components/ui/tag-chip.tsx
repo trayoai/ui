@@ -4,10 +4,15 @@ import { cn } from '../../lib/cn'
 import { XIcon } from 'lucide-react'
 import { Badge } from './badge'
 
-export interface TagChipProps
-  extends Omit<React.ComponentProps<'span'>, 'children'> {
+export interface TagChipProps extends React.ComponentProps<'span'> {
   /** The tag text. */
-  label: string
+  label?: string
+  /**
+   * The tag text again, for a caller who writes `<TagChip>Text</TagChip>` as
+   * they would a `<Badge>`. It used to be dropped, which left an empty pill.
+   * `label` wins when both are given.
+   */
+  children?: React.ReactNode
   /** When provided, renders a trailing remove (×) button. */
   onRemove?: () => void
   /** Disables the remove button. */
@@ -22,6 +27,7 @@ export interface TagChipProps
  */
 export function TagChip({
   label,
+  children,
   onRemove,
   disabled = false,
   className,
@@ -39,11 +45,11 @@ export function TagChip({
       )}
       {...props}
     >
-      {label}
+      {label ?? children}
       {onRemove && (
         <button
           type='button'
-          aria-label={`Remove ${label}`}
+          aria-label={`Remove ${label ?? (typeof children === 'string' ? children : 'tag')}`}
           disabled={disabled}
           // onMouseDown preventDefault keeps focus in an adjacent input (so the
           // chip stays inside a focused tag field) while still firing onClick.

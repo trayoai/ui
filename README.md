@@ -479,6 +479,21 @@ A dialog with no `size` is 576px wide (`xl`). Size any dialog with `size` (`smal
 a `max-w-*` class: the width is set per breakpoint, and a bare `max-w-2xl`
 only replaces the phone value.
 
+A dialog is never taller than the screen. Put content that can run long (a list
+of events, a table, a long form) in a `<DialogBody>` between the header and the
+footer: the body scrolls, and the header, footer and close button stay put.
+
+```tsx
+<DialogContent size="large">
+  <DialogHeader>…</DialogHeader>
+  <DialogBody>{events.map(…)}</DialogBody>
+  <DialogFooter>…</DialogFooter>
+</DialogContent>
+```
+
+Without a `<DialogBody>` a tall dialog still fits, but it scrolls as a whole and
+the close button scrolls away with the top of it.
+
 > **The photo field has two names.** The Trayo API returns `profileImageUrl`
 > from `GET /v1/people`, but a `POST /v1/find` contacts result carries
 > `photoUrl` — and `photoUrl` is also what you send when creating a person.
