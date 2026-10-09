@@ -150,6 +150,13 @@ const TERTIARY_MAX_CHROMA = 0.12
 const DARK_LADDER_L = { shell: 0.19, well: 0.224, card: 0.24, row: 0.29, raised: 0.33 }
 /** Two chart colours closer in hue than this read as the same series. */
 const SERIES_HUE_GAP = 18
+/**
+ * Two chart colours closer than this in OKLab, as drawn in one theme, read
+ * as the same series side by side. Hue alone misses it: a navy and a sky
+ * blue are apart on a light card and nearly one colour once both are
+ * lightened for a dark one.
+ */
+const SERIES_MIN_DISTANCE = 0.1
 
 export interface BrandPaletteInput {
   primary: string
@@ -260,6 +267,17 @@ const sameHue = (a: RGB, b: RGB) => {
   if (isNeutral(a) || isNeutral(b)) return false
   const d = Math.abs(toOklch(a).h - toOklch(b).h)
   return Math.min(d, 360 - d) < SERIES_HUE_GAP
+}
+
+/** Distance between two colours in OKLab. */
+const distance = (a: RGB, b: RGB) => {
+  const lab = (rgb: RGB) => {
+    const { l, c, h } = toOklch(rgb)
+    const r = (h * Math.PI) / 180
+    return [l, c * Math.cos(r), c * Math.sin(r)] as const
+  }
+  const [x, y] = [lab(a), lab(b)]
+  return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2])
 }
 
 /** A shell this light reads as page, not brand chrome; the resolver rejects it. */
@@ -528,6 +546,10 @@ export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPale
       const i = pool.findIndex(([light]) => !nearChosen(light))
       return i === -1 ? undefined : pool.splice(i, 1)[0]
     }
+    // Series 1 as tokens.css draws it: the ring (or primary) in light, the
+    // readable accent in dark.
+    const drawnLight: RGB[] = [ring]
+    const drawnDark: RGB[] = [accentTextDark]
     for (let n = 2; n <= CHART_SERIES + 1; n++) {
       const given = accents[n - 2]
       // Last resort (a brand taking most of the wheel): the primary's hue
@@ -543,17 +565,49 @@ export function resolveBrandPalette(input: BrandPaletteInput): ResolvedBrandPale
       const lightSource = given ?? filled![0]
       const darkSource = given ?? filled![1]
       if (filled) chosen.push(filled[0])
-      const light = shiftLightnessUntil(
-        lightSource,
-        'darker',
-        (c) => contrast(c, L.card) >= NON_TEXT_CONTRAST
-      )
-      const dark = shiftLightnessUntil(darkSource, 'lighter', (c) => contrast(c, D.card) >= NON_TEXT_CONTRAST)
+      const onLight = (c: RGB) =>
+        shiftLightnessUntil(c, 'darker', (s) => contrast(s, L.card) >= NON_TEXT_CONTRAST)
+      const onDark = (c: RGB) =>
+        shiftLightnessUntil(c, 'lighter', (s) => contrast(s, D.card) >= NON_TEXT_CONTRAST)
+      let light = onLight(lightSource)
+      let dark = onDark(darkSource)
       if (!same(light, lightSource)) {
         adjustments.push(
           `${given ? 'accent' : 'series'} ${hexOf(lightSource)} is under ${NON_TEXT_CONTRAST}:1 on the light card; chart series ${n} uses ${hexOf(light)}.`
         )
       }
+      // Each series must also be told from the ones before it, in the theme
+      // it is drawn in. One that is not gives way, in that theme only, to the
+      // first pool colour that is: the brand's colour stays where it works.
+      const apart = (c: RGB, drawn: RGB[]) => drawn.every((d) => distance(c, d) >= SERIES_MIN_DISTANCE)
+      const standIn = (theme: 0 | 1, drawn: RGB[]) => {
+        const fit = theme === 0 ? onLight : onDark
+        const i = pool.findIndex((pair) => !nearChosen(pair[0]) && apart(fit(pair[theme]), drawn))
+        if (i === -1) return undefined
+        const [pair] = pool.splice(i, 1)
+        chosen.push(pair[0])
+        return fit(pair[theme])
+      }
+      if (!apart(light, drawnLight)) {
+        const swap = standIn(0, drawnLight)
+        if (swap) {
+          adjustments.push(
+            `chart series ${n} (${hexOf(light)}) is too close to an earlier series on the light card; it uses ${hexOf(swap)} there.`
+          )
+          light = swap
+        }
+      }
+      if (!apart(dark, drawnDark)) {
+        const swap = standIn(1, drawnDark)
+        if (swap) {
+          adjustments.push(
+            `chart series ${n} (${hexOf(dark)}) is too close to an earlier series on the dark card; it uses ${hexOf(swap)} there.`
+          )
+          dark = swap
+        }
+      }
+      drawnLight.push(light)
+      drawnDark.push(dark)
       tokens[`--brand-chart-${n}` as BrandChartToken] = hexOf(light)
       tokens[`--brand-chart-dark-${n}` as BrandChartToken] = hexOf(dark)
     }

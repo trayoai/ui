@@ -13,6 +13,11 @@ export interface DataTableSkeletonRowProps<T> {
   /** Position of this row among the skeleton rows. Offsets its shimmer so the
    *  sweep cascades down the table, and varies the bar widths row to row. */
   index?: number;
+  /** The cells' height class, to match the table's rows. */
+  rowHeight?: string;
+  /** The table will draw its rows large: the person placeholder is the
+   *  64px face with taller bars beside it. */
+  large?: boolean;
 }
 
 /** Bar widths cycled by row + column, so the placeholder reads as uneven text
@@ -28,6 +33,8 @@ const BAR_WIDTHS = [
  *  (`sm`) company. Read from the size scales so the placeholders follow them. */
 const PERSON_SHAPE = AVATAR_SIZES.md;
 const COMPANY_SHAPE = LOGO_SIZES.sm;
+/** A person row in a table that draws its rows large. */
+const PERSON_SHAPE_LARGE = AVATAR_SIZES.xl;
 
 /** Delay between one row's shimmer and the next. */
 const ROW_STAGGER_MS = 80;
@@ -41,6 +48,8 @@ export function DataTableSkeletonRow<T>({
   columns,
   hasSelection = false,
   index = 0,
+  rowHeight = 'h-17',
+  large = false,
 }: DataTableSkeletonRowProps<T>) {
   return (
     <TableRow
@@ -51,7 +60,7 @@ export function DataTableSkeletonRow<T>({
       }
     >
       {hasSelection && (
-        <TableCell className='h-17 w-10 py-0'>
+        <TableCell className={cn(rowHeight, 'w-10 py-0')}>
           <Skeleton className='size-4 rounded bg-surface-well' />
         </TableCell>
       )}
@@ -64,13 +73,20 @@ export function DataTableSkeletonRow<T>({
               ? 'justify-center'
               : undefined;
         return (
-          <TableCell key={c.id} className={cn('h-17 px-2.5 py-0', c.className)}>
+          <TableCell key={c.id} className={cn(rowHeight, 'px-2.5 py-0', c.className)}>
             {c.skeleton === 'person' ? (
-              <div className={cn('flex items-center gap-2.5', justify)}>
-                <Skeleton className={cn(PERSON_SHAPE, 'shrink-0 rounded-full bg-surface-well')} />
-                <div className='flex min-w-0 flex-1 flex-col gap-1.5'>
-                  <Skeleton className={cn('h-3 w-full bg-surface-well', width)} />
-                  <Skeleton className='h-2.5 w-full max-w-[72px] bg-surface-well' />
+              <div className={cn('flex items-center', large ? 'gap-4' : 'gap-2.5', justify)}>
+                <Skeleton
+                  className={cn(
+                    large ? PERSON_SHAPE_LARGE : PERSON_SHAPE,
+                    'shrink-0 rounded-full bg-surface-well'
+                  )}
+                />
+                <div className={cn('flex min-w-0 flex-1 flex-col', large ? 'gap-2' : 'gap-1.5')}>
+                  <Skeleton className={cn(large ? 'h-4' : 'h-3', 'w-full bg-surface-well', width)} />
+                  <Skeleton
+                    className={cn(large ? 'h-3 max-w-[120px]' : 'h-2.5 max-w-[72px]', 'w-full bg-surface-well')}
+                  />
                 </div>
               </div>
             ) : c.skeleton === 'company' ? (

@@ -1033,3 +1033,52 @@ describe('contrast is the same for every brand', () => {
     }
   })
 })
+
+describe('chart series are told apart in the theme they are drawn in', () => {
+  const lab = (hex: string) => {
+    const { l, c, h } = toOklch(rgb(hex))
+    const r = (h * Math.PI) / 180
+    return [l, c * Math.cos(r), c * Math.sin(r)]
+  }
+  const distance = (a: string, b: string) => {
+    const [x, y] = [lab(a), lab(b)]
+    return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2])
+  }
+  const series = (p: ReturnType<typeof resolveBrandPalette>) => ({
+    light: [
+      p.tokens['--brand-ring'],
+      ...[2, 3, 4, 5].map((n) => p.tokens[`--brand-chart-${n}` as BrandChartToken]!)
+    ],
+    dark: [
+      p.tokens['--brand-accent-text-dark'],
+      ...[2, 3, 4, 5].map((n) => p.tokens[`--brand-chart-dark-${n}` as BrandChartToken]!)
+    ]
+  })
+
+  it('a navy primary with a sky accent: the accent gives way in dark, where the two meet', () => {
+    // Regression: lightened for the dark card, #002991 and #3fb6ff were 0.06
+    // apart, so "Joined" and "Left" read as one bar.
+    const p = resolveBrandPalette({ primary: '#002991', accents: ['#3fb6ff'], background: '#ffffff' })
+    const s = series(p)
+    expect(distance(s.dark[0], s.dark[1])).toBeGreaterThanOrEqual(0.1)
+    expect(p.tokens['--brand-chart-dark-2']).not.toBe('#3fb6ff')
+    // In light they were already apart, so the brand's own accent hue stays.
+    const hue = (hex: string) => toOklch(rgb(hex)).h
+    expect(Math.abs(hue(p.tokens['--brand-chart-2']!) - hue('#3fb6ff'))).toBeLessThan(10)
+    expect(p.adjustments.join(' ')).toMatch(/chart series 2 .* too close to an earlier series on the dark card/)
+  })
+
+  it('every pair of series is apart in both themes, whatever hue the primary takes', () => {
+    for (let h = 0; h < 360; h += 30) {
+      const primary = toHex(fromOklch({ l: 0.5, c: 0.15, h }))
+      const s = series(resolveBrandPalette({ primary, background: '#ffffff' }))
+      for (const theme of [s.light, s.dark]) {
+        for (let i = 0; i < theme.length; i++) {
+          for (let j = i + 1; j < theme.length; j++) {
+            expect(distance(theme[i], theme[j]), `${primary}: ${theme[i]} vs ${theme[j]}`).toBeGreaterThanOrEqual(0.1)
+          }
+        }
+      }
+    }
+  })
+})

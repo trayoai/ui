@@ -135,7 +135,9 @@ export function PersonAvatar({
       {contacted && (
         <span
           aria-label='Contacted'
-          className='absolute -right-0.5 -bottom-0.5 flex size-[42%] min-h-3 min-w-3 items-center justify-center rounded-full bg-[var(--color-emerald-500)] ring-2 ring-surface-card'
+          // A third of the face, held between 12px and 20px: a mark on the
+          // avatar, never a second avatar on top of it.
+          className='absolute -right-0.5 -bottom-0.5 flex size-[30%] max-h-5 min-h-3 max-w-5 min-w-3 items-center justify-center rounded-full bg-[var(--color-emerald-500)] ring-2 ring-surface-card'
         >
           <Check className='size-[62%] text-white' strokeWidth={3} />
         </span>

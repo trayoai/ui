@@ -1,8 +1,26 @@
+import { Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import {
   AppShell,
   Badge,
+  BreakdownTiles,
   Button,
+  ColumnChart,
+  CompanyLogo,
+  DistributionList,
+  DivergingColumns,
+  EntityStack,
+  Funnel,
+  HeroStat,
+  MethodNote,
+  PostCard,
+  Ring,
+  ShareRing,
+  ShareTicks,
+  Sparkline,
+  Split,
+  SplitBar,
+  StatBand,
   Callout,
   Company,
   CompanyCard,
@@ -132,6 +150,247 @@ export function LayoutCheck() {
     <AppShell>
       <PageContainer>
         <div data-layout-ready={ready ? '' : undefined}>
+          <Case name='page-header-band-stats' width={320}>
+            <PageHeader
+              variant='band'
+              size='lead'
+              eyebrow='Software Development · 501-1000 employees · San Francisco'
+              title='Airtable buying committee'
+              subtitle="6 people Trayo put in front of Ramp's finance pitch."
+              stats={[
+                { label: 'Screened', value: 18 },
+                { label: 'Shortlisted', value: 6 },
+                { label: 'Work emails', value: '6/6' },
+                { label: 'Phones', value: '5/6' },
+              ]}
+              actions={<Button variant='secondary'>Account brief</Button>}
+            />
+          </Case>
+          <Case name='page-header-card-actions' width={320}>
+            <PageHeader
+              variant='card'
+              size='large'
+              icon={<Users />}
+              title='Competitor gripe radar'
+              subtitle='LinkedIn posts naming a competitor and a pain, refreshed daily.'
+              actions={
+                <>
+                  <Badge variant='success'>21 new this week</Badge>
+                  <Button variant='secondary'>Last 30 days</Button>
+                </>
+              }
+            />
+          </Case>
+          <Case name='hero-stat-narrow' width={320}>
+            <HeroStat
+              title='Gripes kept'
+              description='From 264 posts read, 8 Sept to 8 Oct'
+              value='1,204'
+              chip={<Badge variant='warning'>10 hot</Badge>}
+              reading='Firebase and MongoDB Atlas draw 14 of the 20.'
+              media={
+                <ColumnChart
+                  items={[7, 4, 6, 3, 0, 5, 2].map((value, i) => ({ label: `${8 + i * 7} September`, value }))}
+                />
+              }
+              figures={[
+                { label: 'Posts read', value: 264, hint: '6 searches' },
+                { label: 'Hot', value: 10, hint: 'vendor and a pain', share: 0.5 },
+                { label: 'Named accounts', value: 16, hint: '2 with a committee', share: 0.76 },
+              ]}
+            />
+          </Case>
+          <Case name='stat-band-narrow' width={320}>
+            <StatBand
+              items={[
+                {
+                  label: 'Accounts imported from the ranked search',
+                  value: '12,480',
+                  hint: '0 duplicates',
+                  media: (
+                    <EntityStack max={3}>
+                      {['ramp.com', 'stripe.com', 'notion.so', 'linear.app', 'figma.com'].map((d) => (
+                        <CompanyLogo key={d} name={d} domain={d} size='xs' />
+                      ))}
+                    </EntityStack>
+                  ),
+                },
+                { label: 'On the list', value: 34, icon: <Users /> },
+              ]}
+            />
+          </Case>
+          <Case name='stat-band-headed-narrow' width={320}>
+            <StatBand
+              headed
+              items={[
+                {
+                  icon: <Users />,
+                  label: 'Contacts per account, across every imported account',
+                  value: '12,480',
+                  delta: '+12%',
+                  hint: 'against the previous run of the same search',
+                  media: <Sparkline area values={[4, 6, 5, 9, 7, 11]} />,
+                },
+                { icon: <Users />, label: 'Coverage', value: '53%', media: <Ring value={0.53} /> },
+              ]}
+            />
+          </Case>
+          <Case name='breakdown-tiles-narrow' width={260}>
+            <BreakdownTiles
+              items={[
+                { label: 'MongoDB Atlas Enterprise Advanced', value: 1204, hint: 'mostly cost and lock-in', company: { name: 'MongoDB', domain: 'mongodb.com' } },
+                { label: 'Firebase', value: 7, company: { name: 'Firebase', domain: 'firebase.com' } },
+              ]}
+            />
+          </Case>
+          <Case name='funnel-narrow' width={240}>
+            <Funnel
+              stages={[
+                { label: 'Commenters on the source post', value: 10480, hint: 'author and colleagues excluded' },
+                { label: 'Passed the ICP', value: 5, hint: 'pass mark 55' },
+              ]}
+            />
+          </Case>
+          <Case name='split-bar-narrow' width={220}>
+            <SplitBar
+              start={{ label: 'Kept on the worklist', value: 1204, hint: 'cleared the pass mark' }}
+              end={{ label: 'Dropped', value: 5, hint: 'a reason for each one' }}
+            />
+          </Case>
+          <Case name='distribution-list-narrow' width={300}>
+            <DistributionList
+              items={[
+                { label: 'MongoDB Atlas Enterprise Advanced', value: 1204, detail: 'mostly cost and lock-in · 4 hot', company: { name: 'MongoDB', domain: 'mongodb.com' } },
+                { label: 'Others', value: 2, detail: 'Appwrite, PlanetScale', muted: true },
+              ]}
+            />
+          </Case>
+          <Case name='share-ring-narrow' width={240}>
+            <ShareRing
+              label='Commenters'
+              value='12,480'
+              segments={[
+                { label: 'Strong fit with a verified work email', value: 2, hint: '20%' },
+                { label: 'Dropped', value: 5, hint: '50%', muted: true },
+              ]}
+            />
+          </Case>
+          <Case name='share-ticks-narrow' width={240}>
+            <ShareTicks
+              segments={[
+                { label: 'Buying authority', value: 35 },
+                { label: 'Distributed-workforce signal', value: 25 },
+                { label: 'Engagement quality', value: 15 },
+              ]}
+            />
+          </Case>
+          <Case name='diverging-columns-narrow' width={280}>
+            <DivergingColumns
+              upLabel='Joined a tracked account'
+              downLabel='Left a tracked account'
+              items={['May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((label, i) => ({
+                label,
+                up: 1200 + i,
+                down: 800 - i,
+              }))}
+            />
+          </Case>
+          <Case name='method-note-flow-narrow' width={300}>
+            <MethodNote
+              icon={<Users />}
+              title='How this list was built, and where each row came from'
+              summary='6 LinkedIn topic searches through Trayo, narrowed to buyers complaining.'
+              flow
+              points={[
+                { value: 300, label: 'rows returned' },
+                { value: 91, label: 'name a vendor and a pain, in the same post' },
+                { value: 20, label: 'kept after reading' },
+              ]}
+            >
+              Posts written by people who work at those vendors were dropped.
+            </MethodNote>
+          </Case>
+          <Case name='method-note-sources-narrow' width={300}>
+            <MethodNote
+              title='Where the competitor list came from'
+              points={[
+                { value: 12, label: 'Ranked roster', detail: 'Ranked by Trayo from the workspace positioning.' },
+                { value: 4, label: 'From the ICP competitor terms', detail: 'The names developers actually complain about.' },
+              ]}
+            />
+          </Case>
+          <Case name='person-lead-narrow' width={300}>
+            <Person person={DANA} variant='lead' showContact actions={<Button size='sm'>Contact details</Button>} />
+          </Case>
+          <Case name='post-card-narrow' width={320}>
+            <PostCard
+              author={DANA}
+              published='Published 21 September 2026'
+              href='https://example.com/post'
+              linkLabel='Open on LinkedIn'
+              note='Comments last loaded by Trayo on 23 September 2026'
+              text={LONG_SUMMARY + ' ' + LONG_SUMMARY}
+            />
+          </Case>
+          {(['solid', 'soft', 'plain'] as const).map((tone) => (
+            <Case key={tone} name={`person-banner-compact-${tone}`} width={300}>
+              <PersonBanner
+                size='compact'
+                tone={tone}
+                person={DANA}
+                actions={<Button size='sm'>Contact details</Button>}
+              />
+            </Case>
+          ))}
+          <Case name='split-narrow-page' width={320}>
+            <Split aside={<Surface title='Aside'>One third</Surface>}>
+              <Surface title='Main'>Two thirds</Surface>
+            </Split>
+          </Case>
+          {/* `layout='fixed'`, as an app's table has: an auto-layout table grows
+              to its longest cell and scrolls sideways instead of truncating. */}
+          {([['few', 3], ['many', 7]] as const).map(([name, n]) => (
+            <Case key={name} name={`table-${name}-rows`} width={520}>
+              <Surface>
+                <DataTable
+                  variant='simple'
+                  layout='fixed'
+                  columns={[{ id: 'person', header: 'Person', accessor: (p: PersonLike) => <Person person={p} /> }]}
+                  rows={Array.from({ length: n }, (_, i) => ({
+                    ...DANA,
+                    id: `row-${i}`,
+                    // Longer than the column at any font: the row must truncate.
+                    title: `${DANA.title}, Europe, Middle East and Africa`,
+                  }))}
+                  getRowKey={(p) => p.id!}
+                />
+              </Surface>
+            </Case>
+          ))}
+          <Case name='table-few-rows-loading' width={520}>
+            <Surface>
+              <DataTable
+                variant='simple'
+                layout='fixed'
+                columns={[{ id: 'person', header: 'Person', skeleton: 'person' as const, accessor: (p: PersonLike) => <Person person={p} /> }]}
+                rows={[]}
+                getRowKey={(p) => p.id!}
+                loading
+                skeletonRows={3}
+              />
+            </Surface>
+          </Case>
+          <Case name='table-few-rows-pinned-size' width={520}>
+            <Surface>
+              <DataTable
+                variant='simple'
+                layout='fixed'
+                columns={[{ id: 'person', header: 'Person', accessor: (p: PersonLike) => <Person person={p} size='md' /> }]}
+                rows={[DANA]}
+                getRowKey={(p) => p.id!}
+              />
+            </Surface>
+          </Case>
           <Case name='person-card-long-text' width={320}>
             <PersonCard
               person={DANA}
@@ -193,12 +452,13 @@ export function LayoutCheck() {
               <Person person={JUSTIN} />
             </div>
           </Case>
-          {/* The same table loading and loaded: the placeholders are the cells' size. */}
+          {/* The same table loading and loaded: the placeholders are the cells' size.
+              Its cells pin their sizes, so the table pins its scale too. */}
           <Case name='table-loading' width={520}>
-            <DataTable columns={TABLE_COLUMNS} rows={[]} getRowKey={(p) => p.id!} loading skeletonRows={1} />
+            <DataTable scale='default' columns={TABLE_COLUMNS} rows={[]} getRowKey={(p) => p.id!} loading skeletonRows={1} />
           </Case>
           <Case name='table-loaded' width={520}>
-            <DataTable columns={TABLE_COLUMNS} rows={[TABLE_ROW]} getRowKey={(p) => p.id!} />
+            <DataTable scale='default' columns={TABLE_COLUMNS} rows={[TABLE_ROW]} getRowKey={(p) => p.id!} />
           </Case>
           <Case name='person-row' width={384}>
             <Person person={DANA} />

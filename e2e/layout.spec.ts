@@ -389,3 +389,36 @@ test.describe('JobMove', () => {
     expect(first.height).toBeLessThan(56)
   })
 })
+
+test.describe('a table sizes its rows to the list', () => {
+  const face = (page: Page, name: string) =>
+    page.locator(`[data-layout-case="${name}"] tbody tr`).first().locator('[data-slot=person-avatar]')
+
+  test('six rows or fewer: 64px faces on 88px rows', async ({ page }) => {
+    await open(page)
+    expect((await face(page, 'table-few-rows').boundingBox())!.width).toBe(64)
+    const row = page.locator('[data-layout-case="table-few-rows"] tbody tr').first()
+    expect((await row.boundingBox())!.height).toBeGreaterThanOrEqual(88)
+  })
+
+  test('while loading, the skeleton rows are the size the rows will be', async ({ page }) => {
+    await open(page)
+    const loading = page.locator('[data-layout-case="table-few-rows-loading"] tbody tr').first()
+    const loaded = page.locator('[data-layout-case="table-few-rows"] tbody tr').first()
+    expect((await loading.boundingBox())!.height).toBe((await loaded.boundingBox())!.height)
+    expect((await loading.locator('[data-slot=skeleton]').first().boundingBox())!.width).toBe(64)
+  })
+
+  test('more than six rows: the standard 48px faces', async ({ page }) => {
+    await open(page)
+    expect((await face(page, 'table-many-rows').boundingBox())!.width).toBe(48)
+  })
+
+  test('a person with its own size keeps it, name included', async ({ page }) => {
+    await open(page)
+    const box = page.locator('[data-layout-case="table-few-rows-pinned-size"]')
+    expect((await box.locator('[data-slot=person-avatar]').boundingBox())!.width).toBe(36)
+    const name = box.locator('[data-slot=entity-row] span.truncate').first()
+    expect(await name.evaluate((el) => getComputedStyle(el).fontSize)).toBe('14px')
+  })
+})

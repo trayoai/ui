@@ -67,9 +67,13 @@ the wrong place or not at all. Nothing errors at build time.
    always end up with a face, never initials. The one person a page or drawer
    is about gets `<PersonBanner>` at the top — one per screen, never in a list.
    Its `actions` slot takes one default `<Button>` (the primary; the band
-   inverts it to read on the fill), not a `tertiary` one. In a dialog, use
-   `<PersonDialog>`: it places the banner and keeps the close button clear of
-   it.
+   inverts it to read on the fill), not a `tertiary` one. Its `tone` is
+   `solid` (default) | `soft` | `plain`: use `soft` or `plain` when the page
+   already has a brand block, and `size="compact"` in a drawer or side panel.
+   In a dialog, use `<PersonDialog>`: it places the banner and keeps the close
+   button clear of it. The one person a panel is about (a post's author, an
+   account's owner) is `<Person variant="lead">`, not a list row with a
+   bigger `size`. A post with its author is `<PostCard author text>`.
 
 2. **Rendering a company? Use `<Company>` or `<CompanyCard>`.** Pass the
    `domain`; the logo resolves itself. Never hand-write a logo `<img>` or an
@@ -90,7 +94,8 @@ the wrong place or not at all. Nothing errors at build time.
 6. **Type roles for content, the Tailwind scale for controls.** Content gets
    `text-page-title` / `text-section` / `text-card-title` / `text-name` /
    `text-body` / `text-meta` / `text-eyebrow`. Controls get `text-sm
-   font-medium`. Never `text-[15px]` or `tracking-[0.04em]`.
+   font-medium`. The larger page titles come from `<PageHeader size>`, never
+   from a class. Never `text-[15px]` or `tracking-[0.04em]`.
 
 7. **`<Button loading>`** — do not swap in your own spinner.
 
@@ -111,13 +116,22 @@ the wrong place or not at all. Nothing errors at build time.
 10. **A tool is not a landing page.** `<GradientText>` is for one phrase in a
     hero; `<BrandMesh>` for one hero or empty state. Not on a page title, not
     behind a table or a stat strip. `<PageHeader>` with a plain title is the
-    default. The same goes for the textures: `bg-dot-grid` fills the empty
+    default. A tool's main screen takes `<PageHeader size="lead">` (40px, an
+    `eyebrow` above, a one-sentence `subtitle` below) so it reads in a
+    screenshot; inner views keep the default size, and `size="large"` is the
+    step between. The title is three to six words. `variant` is `plain` |
+    `card` | `band` (the brand container): pick one for the whole app, and
+    never put a `band` header and a solid `<PersonBanner>` on one screen. The same goes for the textures: `bg-dot-grid` fills the empty
     part of a screen (an empty state, an idle panel), never the space behind
     a table or body text.
 
 11. **Notes go in `<Callout>`.** "How this was built", a coverage caveat, a
     data limit, a target met: `<Callout tone="note|info|success|warning|destructive">`,
-    never a hand-made bordered div.
+    never a hand-made bordered div. Its `texture` is `diagonal` (default) |
+    `dots` | `wash` | `none`: one for the whole app. How the data was made,
+    when it has numbers (rows returned, kept, sources), is a `<MethodNote>`:
+    `points` as figures, `flow` for a sequence, the prose as children behind
+    its switch. A caveat or a warning stays a `<Callout>`.
 
 12. **Stubbed actions confirm with a preview toast.** One `<Toaster />` inside
     `<AppShell>`; `toast({ variant: 'preview', title, description })` says
@@ -125,7 +139,8 @@ the wrong place or not at all. Nothing errors at build time.
 
 13. **Page scaffolding is provided.** View links in `<AppShell nav>` as
     `<AppShellNavLink>`s; filter groups are a `<SegmentedControl>` with counts;
-    stat strips sit in a `<StatGrid>`. Contact rows are `<PersonContactLinks>`,
+    a row of `<StatTile>`s sits in a `<StatGrid>` (rule 19 says when to use
+    one). Contact rows are `<PersonContactLinks>`,
     firmographics are `<CompanyMeta>`. A panel with a name — a table, a chart,
     a list — is `<Surface title description actions>` (`padded={false}` around
     a `DataTable`), never a hand-built card header. Give each DataTable column
@@ -135,13 +150,24 @@ the wrong place or not at all. Nothing errors at build time.
 
 14. **Long lists are paged.** Over ~50 rows, pass DataTable's `pagination`
     prop (client-side without `total`, server-side with it) or render
-    `<Pagination>`. Never render a long list in full.
+    `<Pagination>`. Never render a long list in full. The other end: a
+    short list with nothing to sort, select or page uses
+    `<DataTable variant="simple">` in a padded `<Surface>` (not
+    `padded={false}`), with `onRowClick` in place of a button on every row.
+    A table with six rows or fewer draws its people and companies large on
+    its own (64px face, larger name); `scale="default"` or `scale="large"`
+    pins the size when a filter moves the list across six rows. Never pass
+    `size` to the `<Person>` in a cell to get there.
+    A list with no columns to align is an `<EntityList>`.
 
 15. **Charts use the chart tokens.** `bg-chart-1`…`5` / `CHART_COLORS[i]`
     for series, `CHART_SEQUENTIAL` for intensity, `CHART_MUTED` for
     out-of-scope, `<DataLabel>` (`text-data-label`) for labels, `<ChartLegend>`
     for the key. Plan against actual is `<Progress value target max>`, not a
-    hand-drawn pair of bars.
+    hand-drawn pair of bars. Use the built charts before drawing one:
+    `<ColumnChart>`, `<Sparkline>`, `<Ring>`, `<DivergingColumns>` and the
+    share components in rule 19. One colour per series: several colours only
+    where colour marks a segment of a whole.
     Never a hex, never `text-[10px]`.
 
 16. **Button variants are** `default | secondary | tertiary | quiet |
@@ -183,6 +209,26 @@ the wrong place or not at all. Nothing errors at build time.
     buttons that may not fit gets `flex flex-wrap gap-2`. Size a dialog with
     its `size` prop, never a `max-w-*` class.
 
+19. **Pick the summary by the shape of the numbers, not by habit.** Four equal
+    `<StatTile>`s on every screen is what makes two tools look like the same
+    tool. One figure that matters: `<HeroStat>`. Stages of one pipeline
+    (pulled, passed, reachable): `<Funnel>`. A few plain counts: `<StatBand>`,
+    with an `<EntityStack>` of the logos or faces a count is made of. Figures
+    with a change or a trend: `<StatBand headed>` with a `<Sparkline>` or
+    `<Ring>`. A count per company: `<BreakdownTiles>` (pass `onValueChange`
+    and it is also the filter) or `<DistributionList>`. Parts of a whole:
+    `<ShareTicks>`, `<ShareRing>`, or `<SplitBar>` for two. Joined against
+    left per period: `<DivergingColumns>`. A score on a row: `<Meter mark>`.
+    Independent KPIs with a change: `<StatGrid>`. One summary pattern per
+    page, and none when the table already shows the count. Counts that only
+    say how the run was made (searches billed, rows returned) go in
+    `<PageHeader stats>` or a `<MethodNote>`, not on tiles. Put the summary
+    beside something with `<Split aside>` (`ratio` `2:1` | `3:1` | `3:2` |
+    `1:1`) so the page is not one full-width stack. Never hand-draw a bar
+    list, a ring or a funnel from `<Progress>` and divs. Their bars are a
+    thin solid bar with the remainder hatched; `bar="solid"` gives a flat
+    track instead. One bar style for the whole app.
+
 The files are yours once copied, so editing them is allowed. Prefer extending a
 variant over forking a component, and keep the token vocabulary intact.
 
@@ -208,5 +254,6 @@ return data.map(p => <Person key={p.id} person={p} showContact />)
 - [ ] npm dependencies installed; Tailwind v4; React 19 (not 18)
 - [ ] `@import 'tailwindcss';` then `@import './trayo-ui/styles/trayo-ui.css';`
 - [ ] The app wrapped in `<AppShell>`, content in a `<PageContainer>`
+- [ ] The main screen has a `<PageHeader size="lead">` and a summary chosen by rule 19
 - [ ] `class="dark"` on `<html>` only if you want the dark palette; light is the default
 - [ ] For a customer build: brand resolved and applied on `<html>` (rule 17)

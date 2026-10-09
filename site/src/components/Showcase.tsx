@@ -7,12 +7,18 @@ import {
   Check,
   CheckCircle2,
   ExternalLink,
+  Layers,
+  ListChecks,
+  ListFilter,
   Mail,
+  MessageSquare,
   Moon,
   Plus,
+  Radar,
   Search,
   Sparkles,
   Sun,
+  Tags,
   Users,
 } from 'lucide-react'
 import {
@@ -20,33 +26,46 @@ import {
   AppShellNavLink,
   Badge,
   Body,
+  BreakdownTiles,
   Button,
   Callout,
   CHART_MUTED,
   CHART_SEQUENTIAL,
   ChartLegend,
+  ColumnChart,
   Company,
   CompanyCard,
   CompanyLogo,
   Code,
   DataLabel,
   DataTable,
+  DistributionList,
+  DivergingColumns,
   chartColor,
   EmptyState,
   EntityList,
+  EntityStack,
   Eyebrow,
+  Funnel,
+  HeroStat,
   Hero,
   Input,
   JobMove,
   Meta,
+  Meter,
+  MethodNote,
   PageContainer,
+  PageHeader,
   PageTitle,
   Person,
   PersonAvatar,
   PersonBanner,
   PersonCard,
+  PersonContactLinks,
   PersonDialog,
+  PostCard,
   Progress,
+  Ring,
   SectionLabel,
   SectionTitle,
   SegmentedControl,
@@ -56,6 +75,12 @@ import {
   SelectTrigger,
   SelectValue,
   Separator,
+  ShareRing,
+  ShareTicks,
+  Sparkline,
+  Split,
+  SplitBar,
+  StatBand,
   StatGrid,
   StatTile,
   Surface,
@@ -197,6 +222,26 @@ const COMPANIES: CompanyLike[] = [
 ]
 
 /* ------------------------------------------------------------------ table */
+
+const SIMPLE_FIT = [82, 76, 64, 58, 41, 73, 67, 49]
+// Eight people: over the six-row mark, so an `auto` table stays standard size.
+const SIMPLE_ROWS: PersonLike[] = [
+  ...PEOPLE,
+  { ...PEOPLE[0], id: 'p-s7', name: 'Ines Marchetti', title: 'Head of Revenue Systems' },
+  { ...PEOPLE[1], id: 'p-s8', name: 'Oskar Brandt', title: 'Director of IT' },
+]
+const SIMPLE_COLUMNS: Column<PersonLike>[] = [
+  { id: 'person', header: 'Stakeholder', skeleton: 'person', accessor: (p) => <Person person={p} /> },
+  {
+    id: 'fit',
+    header: 'Fit',
+    width: '7rem',
+    accessor: (p) => {
+      const fit = SIMPLE_FIT[Math.max(0, SIMPLE_ROWS.indexOf(p)) % SIMPLE_FIT.length]
+      return <Meter value={fit} mark={55} label={fit >= 55 ? 'Fits' : 'Below'} />
+    },
+  },
+]
 
 const PEOPLE_COLUMNS: Column<PersonLike>[] = [
   {
@@ -443,7 +488,7 @@ function DemoHeader({ compact }: { compact?: boolean }) {
               width: the 40px hero dwarfed the specimens beneath it. Marked
               important because the role's own minted `text-hero` utility
               sets font-size later in the same layer. */}
-          <Title className={compact ? undefined : '[font-size:var(--text-hero-sm)]!'}>
+          <Title className={cn('font-bold', !compact && '[font-size:var(--text-hero-sm)]!')}>
             Trayo <span className='text-accent-brand'>GTM UI</span>
           </Title>
           <Badge variant='accent'>v0.1</Badge>
@@ -585,6 +630,7 @@ function PersonDialogDemo() {
   return (
     <PersonDialog
       person={MOVER}
+      tone='plain'
       trigger={<Button variant='secondary'>Open Elena’s move</Button>}
       actions={
         <Button
@@ -1018,6 +1064,335 @@ function useDemoBrand(brand: DemoBrand, full: boolean) {
   }, [brand, full])
 }
 
+/* ------------------------------------------------- summaries and breakdowns */
+
+const GRIPE_VENDORS = [
+  { label: 'Firebase', value: 7, hint: 'mostly cost', detail: 'mostly cost · 3 hot', company: { name: 'Firebase', domain: 'firebase.com' } },
+  { label: 'MongoDB Atlas', value: 7, hint: 'mostly cost', detail: 'mostly cost · 4 hot', company: { name: 'MongoDB', domain: 'mongodb.com' } },
+  { label: 'AWS RDS', value: 2, hint: 'mostly scaling', detail: 'mostly scaling · 2 hot', company: { name: 'AWS', domain: 'aws.amazon.com' } },
+  { label: 'Neon', value: 2, hint: 'mostly cost', detail: 'mostly cost', company: { name: 'Neon', domain: 'neon.com' } },
+  { label: 'Appwrite', value: 1, hint: 'mostly cost', detail: 'mostly cost', company: { name: 'Appwrite', domain: 'appwrite.io' } },
+  { label: 'PlanetScale', value: 1, hint: 'mostly cost', detail: 'mostly cost', company: { name: 'PlanetScale', domain: 'planetscale.com' } },
+]
+const STACK_DOMAINS = ['ramp.com', 'stripe.com', 'notion.so', 'linear.app', 'vercel.com', 'figma.com', 'miro.com']
+const STACK_PEOPLE = ['Dana Whitfield', 'Justin Bell', 'Priya Raman', 'Marcus Lee', 'Elena Sousa', 'Tom Okafor']
+
+/**
+ * The shapes a screen's numbers take beyond a strip of equal tiles: page
+ * headers, headline cards, bands, pipelines and breakdowns. Sample data.
+ */
+function SummarySections() {
+  const [vendor, setVendor] = useState<string | null>(null)
+  return (
+    <>
+      <Section
+        title='Page headers'
+        caption='Three heading sizes and three things to stand on. Lead names a tool’s main screen and still reads in a thumbnail; stats put a few bare figures in the header; card and band give the header a sheet or the brand container. Pick one treatment for the whole app.'
+      >
+        <div className='grid gap-4'>
+          <Specimen name='Lead, with stats' note='40px title, eyebrow above, one sentence below.' component='<PageHeader size="lead" eyebrow stats>'>
+            <Panel>
+              <PageHeader
+                className='mb-0'
+                size='lead'
+                eyebrow='Mid-market FinServ · Q4'
+                title='Target accounts'
+                subtitle='15 companies this workspace did not already hold.'
+                stats={[
+                  { label: 'Accounts', value: 15 },
+                  { label: 'Contacts', value: 19 },
+                  { label: 'On the list', value: 34 },
+                ]}
+              />
+            </Panel>
+          </Specimen>
+          <Specimen name='Card' note='On its own sheet, with an icon, a status and a control.' component='<PageHeader variant="card" size="large" icon>'>
+            <PageHeader
+              className='mb-0'
+              variant='card'
+              size='large'
+              icon={<Radar />}
+              title='Competitor gripe radar'
+              subtitle='LinkedIn posts naming a competitor and a pain, refreshed daily.'
+              actions={
+                <>
+                  <Badge variant='success'>21 new this week</Badge>
+                  <Button variant='secondary'>Last 30 days</Button>
+                </>
+              }
+            />
+          </Specimen>
+          <Specimen name='Band' note='On the brand container. Switch the brand above to see it follow.' component='<PageHeader variant="band" size="lead">'>
+            <PageHeader
+              className='mb-0'
+              variant='band'
+              size='lead'
+              eyebrow='LinkedIn post · 21 September 2026'
+              title='Post → pipeline'
+              subtitle='Everyone who commented on one post, scored against the ICP.'
+              stats={[
+                { label: 'Commenters', value: 10 },
+                { label: 'Passed', value: 5 },
+                { label: 'Emails', value: 4 },
+              ]}
+              actions={<Button variant='secondary'>Open post</Button>}
+            />
+          </Specimen>
+        </div>
+      </Section>
+
+      <Section
+        title='Summaries'
+        caption='Pick by what the numbers are. One figure that matters gets a HeroStat; a few plain counts share a StatBand; stages of one pipeline are a Funnel; how the data was made is a MethodNote. Split sets a main column beside a narrower one, so a page is not one full-width stack.'
+      >
+        <div className='grid gap-4'>
+          <Specimen
+            name='Headline card and breakdown'
+            note='Two thirds and one third. The tiles filter: press one.'
+            component='<Split aside> <HeroStat> <BreakdownTiles>'
+          >
+            <Split
+              aside={
+                <Surface title='Where the gripes land' description={vendor ? `Showing ${vendor} only` : 'Pick one to filter'}>
+                  <BreakdownTiles items={GRIPE_VENDORS} value={vendor} onValueChange={setVendor} />
+                </Surface>
+              }
+            >
+              <HeroStat
+                title='Gripes kept'
+                description='From 264 posts read, 8 Sept to 8 Oct'
+                value={20}
+                chip={<Badge variant='warning'>10 hot</Badge>}
+                reading='Firebase and MongoDB Atlas draw 14 of the 20.'
+                media={
+                  <ColumnChart
+                    label='Gripes kept per week'
+                    items={[
+                      { label: '8 Sept', value: 7 },
+                      { label: '15 Sept', value: 4 },
+                      { label: '22 Sept', value: 6 },
+                      { label: '29 Sept', value: 3 },
+                      { label: '6 Oct', value: 0 },
+                    ]}
+                  />
+                }
+                figures={[
+                  { label: 'Posts read', value: 264, hint: '6 searches' },
+                  { label: 'Hot', value: 10, hint: 'vendor and a pain', share: 0.5 },
+                  { label: 'Named accounts', value: 16, hint: '2 with a committee', share: 0.76 },
+                ]}
+              />
+            </Split>
+          </Specimen>
+
+          <Specimen name='Band of counts' note='One sheet split by hairlines; logos and faces show who a count is made of.' component='<StatBand> <EntityStack>'>
+            <StatBand
+              items={[
+                {
+                  label: 'Accounts imported',
+                  value: 15,
+                  hint: '0 duplicates',
+                  media: (
+                    <EntityStack max={3}>
+                      {STACK_DOMAINS.map((d) => (
+                        <CompanyLogo key={d} name={d} domain={d} size='xs' />
+                      ))}
+                    </EntityStack>
+                  ),
+                },
+                {
+                  label: 'Contacts imported',
+                  value: 19,
+                  hint: 'across 8 accounts',
+                  media: (
+                    <EntityStack max={3}>
+                      {STACK_PEOPLE.map((n) => (
+                        <PersonAvatar key={n} name={n} personId={n} size='sm' />
+                      ))}
+                    </EntityStack>
+                  ),
+                },
+                { label: 'Ranked searches billed', value: 1, hint: '2 unbilled', icon: <Search /> },
+                { label: 'On the list', value: 34, icon: <ListChecks /> },
+              ]}
+            />
+          </Specimen>
+
+          <Specimen name='Band with readings' note='A titled cell per figure, with its change and a small chart.' component='<StatBand headed> <Sparkline> <Ring>'>
+            <StatBand
+              headed
+              items={[
+                {
+                  icon: <Radar />,
+                  label: 'Signals this month',
+                  value: 47,
+                  delta: '+12%',
+                  hint: 'vs last month',
+                  media: <Sparkline area values={[4, 6, 5, 9, 7, 11, 10, 14, 12, 16]} label='Signals per week' />,
+                },
+                {
+                  icon: <Building2 />,
+                  label: 'Account coverage',
+                  value: '53%',
+                  hint: '8 of 15 accounts have a contact',
+                  media: <Ring value={8 / 15} />,
+                },
+                {
+                  icon: <Tags />,
+                  label: 'Replies',
+                  value: 18,
+                  delta: '-3',
+                  hint: 'vs last month',
+                  media: <Sparkline values={[9, 8, 10, 7, 8, 6, 7, 5, 6, 5]} label='Replies per week' />,
+                },
+              ]}
+            />
+          </Specimen>
+
+          <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+            <Specimen name='Pipeline' note='Each stage says what share came through.' component='<Funnel>'>
+              <Panel title='From post to list'>
+                <Funnel
+                  stages={[
+                    { label: 'Commenters', value: 10, hint: 'author excluded' },
+                    { label: 'Passed the ICP', value: 5, hint: 'pass mark 55' },
+                    { label: 'Verified work email', value: 4 },
+                  ]}
+                />
+              </Panel>
+            </Specimen>
+            <Specimen name='Two parts' note='One bar, a figure at each end.' component='<SplitBar>'>
+              <Panel title='Kept against dropped' description='Pass mark 55 of 100'>
+                <SplitBar
+                  start={{ label: 'Kept', value: 5, hint: 'on the worklist' }}
+                  end={{ label: 'Dropped', value: 5, hint: 'a reason for each' }}
+                />
+              </Panel>
+            </Specimen>
+            <Specimen name='Solid bars' note='The same bars on a flat track, without hatching.' component='<Funnel bar="solid">'>
+              <Panel title='From post to list'>
+                <div className='flex flex-col gap-6'>
+                  <Funnel
+                    bar='solid'
+                    stages={[
+                      { label: 'Commenters', value: 10 },
+                      { label: 'Passed the ICP', value: 5 },
+                    ]}
+                  />
+                  <SplitBar bar='solid' start={{ label: 'Kept', value: 5 }} end={{ label: 'Dropped', value: 5 }} />
+                  <Meter bar='solid' value={64} mark={55} label='Worth a call' />
+                </div>
+              </Panel>
+            </Specimen>
+            <Specimen name='Score on a row' note='The pass mark is the tick.' component='<Meter mark>'>
+              <Panel title='ICP fit'>
+                <div className='flex flex-col gap-4'>
+                  <Meter value={82} mark={55} label='Strong' />
+                  <Meter value={64} mark={55} label='Worth a call' />
+                  <Meter value={42} mark={55} label='Dropped' />
+                </div>
+              </Panel>
+            </Specimen>
+          </div>
+
+          <Specimen name='Method, as steps' note='The prose opens on request.' component='<MethodNote flow points>'>
+            <MethodNote
+              icon={<ListFilter />}
+              title='How this list was built'
+              summary='6 LinkedIn topic searches through Trayo, narrowed to buyers complaining.'
+              flow
+              points={[
+                { value: 300, label: 'rows returned' },
+                { value: 264, label: 'distinct posts' },
+                { value: 91, label: 'name a vendor and a pain' },
+                { value: 37, label: 'not vendor staff' },
+                { value: 20, label: 'kept after reading' },
+              ]}
+            >
+              Every post that named a competitor alongside a cost, lock-in, scaling or reliability
+              cue was kept; posts written by people who work at those vendors were dropped. The
+              final 20 were read and labelled by hand.
+            </MethodNote>
+          </Specimen>
+          <Specimen name='Method, as sources' note='Where the data came from, side by side.' component='<MethodNote points>'>
+            <MethodNote
+              icon={<Layers />}
+              title='Where the competitor list came from'
+              summary='The post searches went wider than the roster Trayo ranked.'
+              points={[
+                { value: 12, label: 'Ranked roster', detail: 'Ranked by Trayo from the workspace positioning.' },
+                { value: 4, label: 'From the ICP competitor terms', detail: 'The names developers actually complain about.' },
+                { value: 2, label: 'On both', detail: 'Neon, Appwrite' },
+              ]}
+            />
+          </Specimen>
+        </div>
+      </Section>
+
+      <Section
+        title='Breakdowns'
+        caption='Parts of one whole, and two opposed counts. Colour marks the segment here, so these are the charts that use more than one series colour; a muted segment is the remainder.'
+      >
+        <div className='grid gap-4 lg:grid-cols-2'>
+          <Specimen name='Parts with a row each' note='Logo, name, detail, figure, share.' component='<DistributionList>'>
+            <Panel title='20 gripes, by competitor'>
+              <DistributionList
+                items={[
+                  // Without `hint`: the tiles use it for a theme, the list for the share.
+                  ...GRIPE_VENDORS.slice(0, 4).map(({ label, value, detail, company }) => ({ label, value, detail, company })),
+                  { label: 'Others', value: 2, detail: 'Appwrite, PlanetScale', icon: <Layers />, muted: true },
+                ]}
+              />
+            </Panel>
+          </Specimen>
+          <Specimen name='Opposed counts' note='Both sides share one scale.' component='<DivergingColumns>'>
+            <Panel title='Job changes at tracked accounts' description='Last six months'>
+              <DivergingColumns
+                upLabel='Joined'
+                downLabel='Left'
+                items={[
+                  { label: 'May', up: 12, down: 5 },
+                  { label: 'Jun', up: 9, down: 8 },
+                  { label: 'Jul', up: 15, down: 4 },
+                  { label: 'Aug', up: 7, down: 11 },
+                  { label: 'Sep', up: 14, down: 6 },
+                  { label: 'Oct', up: 6, down: 3 },
+                ]}
+              />
+            </Panel>
+          </Specimen>
+          <Specimen name='Parts in a line' note='Under a headline figure.' component='<ShareTicks>'>
+            <Panel title='How 100 points split' description='55 passes'>
+              <ShareTicks
+                segments={[
+                  { label: 'Buying authority', value: 35 },
+                  { label: 'Company fit', value: 25 },
+                  { label: 'Workforce signal', value: 25 },
+                  { label: 'Engagement', value: 15 },
+                ]}
+              />
+            </Panel>
+          </Specimen>
+          <Specimen name='Parts around a total' note='A muted segment is the remainder.' component='<ShareRing>'>
+            <Panel title='Where they landed'>
+              <ShareRing
+                icon={<MessageSquare />}
+                label='Commenters'
+                value={10}
+                segments={[
+                  { label: 'Strong', value: 2, hint: '20%' },
+                  { label: 'Worth a call', value: 3, hint: '30%' },
+                  { label: 'Dropped', value: 5, hint: '50%', muted: true },
+                ]}
+              />
+            </Panel>
+          </Specimen>
+        </div>
+      </Section>
+    </>
+  )
+}
+
 export function Showcase({ compact = false }: { compact?: boolean } = {}) {
   const [dark, setDark] = useState(false)
   const [brand, setBrand] = useState<DemoBrand>('trayo')
@@ -1054,7 +1429,7 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
         width='wide'
         brand={
           <>
-            <span>
+            <span className='font-bold'>
               Trayo <span className='text-accent-text'>GTM UI</span>
             </span>
             <Badge variant='soft'>demo</Badge>
@@ -1170,6 +1545,56 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                         return next
                       }),
                   }}
+                />
+              </Surface>
+            </Specimen>
+
+            <div className='mb-4 grid gap-4 lg:grid-cols-2'>
+              <Specimen
+                name='Simple table'
+                note='A list in a card: flush with the card, no rule under the last row, the row is the click target. Over six rows, so standard size.'
+                component='<DataTable variant="simple">'
+              >
+                <Surface title='Who to call' description='8 stakeholders, ranked' className='flex-1'>
+                  <DataTable
+                    variant='simple'
+                    columns={SIMPLE_COLUMNS}
+                    rows={SIMPLE_ROWS}
+                    getRowKey={(p) => p.id!}
+                    onRowClick={(p) => toast({ variant: 'preview', title: p.name, description: 'Would open the person.' })}
+                  />
+                </Surface>
+              </Specimen>
+              <Specimen
+                name='Simple table, no header'
+                note='No column header row, here in a card with no title either.'
+                component='<DataTable variant="simple" hideHeader>'
+              >
+                <Surface className='flex-1'>
+                  <DataTable
+                    variant='simple'
+                    hideHeader
+                    columns={SIMPLE_COLUMNS}
+                    rows={SIMPLE_ROWS}
+                    getRowKey={(p) => p.id!}
+                  />
+                </Surface>
+              </Specimen>
+            </div>
+
+            <Specimen
+              name='Large table'
+              note='Six rows or fewer and any table draws them large by itself: 88px rows, 64px faces, the name at card-title size. variant="large" pins it.'
+              component='<DataTable variant="large">'
+              className='mb-4'
+            >
+              <Surface title='Who to call' description='5 stakeholders, ranked'>
+                <DataTable
+                  variant='large'
+                  columns={SIMPLE_COLUMNS}
+                  rows={PEOPLE.slice(0, 5)}
+                  getRowKey={(p) => p.id!}
+                  onRowClick={(p) => toast({ variant: 'preview', title: p.name, description: 'Would open the person.' })}
                 />
               </Surface>
             </Specimen>
@@ -1306,7 +1731,7 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                     ))}
                   </div>
                   <div className='flex items-end gap-2'>
-                    {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((s) => (
+                    {(['xs', 'sm', 'md', 'lg', 'xl', '2xl'] as const).map((s) => (
                       <ToneAvatar key={s} name='Ada Lovelace' tone='violet' size={s} />
                     ))}
                   </div>
@@ -1341,6 +1766,45 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
               </Specimen>
 
               <Specimen
+                name='Contact links'
+                note='Plain by default: the circle appears on hover. Outlined draws it at rest.'
+                component='<PersonContactLinks outlined>'
+              >
+                <Panel className='flex flex-wrap items-center gap-8'>
+                  <PersonContactLinks person={{ ...PEOPLE[0], email: 'dana@ramp.com', phone: '+14155550100', profileUrl: 'https://ramp.com' }} />
+                  <PersonContactLinks outlined person={{ ...PEOPLE[0], email: 'dana@ramp.com', phone: '+14155550100', profileUrl: 'https://ramp.com' }} />
+                </Panel>
+              </Specimen>
+
+              <Specimen
+                name='Person, lead'
+                note='The one person a panel is about: a larger face, the name at section size.'
+                component='<Person variant="lead">'
+              >
+                <Panel>
+                  <Person person={PEOPLE[1]} variant='lead' showContact />
+                </Panel>
+              </Specimen>
+
+              <Specimen
+                name='Post card'
+                note='A post and its author. Long text is clamped until asked for.'
+                component='<PostCard>'
+              >
+                <PostCard
+                  className='flex-1'
+                  author={PEOPLE[0]}
+                  published='Published 21 September 2026'
+                  href='https://www.linkedin.com/'
+                  linkLabel='Open on LinkedIn'
+                  note='Comments last loaded on 23 September 2026'
+                  text={
+                    'We added $140M ARR in 90 days without hiring any new people.\n\nRevenue per employee has doubled and growth is accelerating. We have been automating all our backend tasks, and built agents that now do the work of several hundred people.\n\nWe never intended to make this a product, but it had such an impact on our own business that we are launching it for everyone.'
+                  }
+                />
+              </Specimen>
+
+              <Specimen
                 name='Person banner'
                 note='The header of a page about one person: brand fill, one action.'
                 component='<PersonBanner>'
@@ -1354,6 +1818,63 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                     </Button>
                   }
                 />
+              </Specimen>
+
+              <Specimen
+                name='Person banner, soft'
+                note='The same band on the brand container, for a quieter page.'
+                component='<PersonBanner tone="soft">'
+                className='lg:col-span-2'
+              >
+                <PersonBanner
+                  tone='soft'
+                  person={PEOPLE[0]}
+                  actions={
+                    <Button>
+                      <Mail /> Contact details
+                    </Button>
+                  }
+                />
+              </Specimen>
+
+              <Specimen
+                name='Person banner, plain'
+                note='An ordinary card: no fill, no texture. For a page that already has a brand block.'
+                component='<PersonBanner tone="plain">'
+                className='lg:col-span-2'
+              >
+                <PersonBanner
+                  tone='plain'
+                  person={PEOPLE[0]}
+                  actions={
+                    <Button>
+                      <Mail /> Contact details
+                    </Button>
+                  }
+                />
+              </Specimen>
+
+              <Specimen
+                name='Person banner, compact'
+                note='For a drawer or a side panel: a smaller face, company and title on one line where they fit. Works with any tone.'
+                component='<PersonBanner size="compact">'
+                className='lg:col-span-2'
+              >
+                <div className='grid gap-2 lg:grid-cols-3'>
+                  {(['solid', 'soft', 'plain'] as const).map((tone) => (
+                    <PersonBanner
+                      key={tone}
+                      size='compact'
+                      tone={tone}
+                      person={PEOPLE[0]}
+                      actions={
+                        <Button size='sm'>
+                          <Mail /> Contact
+                        </Button>
+                      }
+                    />
+                  ))}
+                </div>
               </Specimen>
 
               <Specimen
@@ -1645,6 +2166,8 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
               </div>
             </Section>
 
+            <SummarySections />
+
             {/* ------------------------------------ type, stats, states */}
             {/* Masonry columns: each stage sizes to its own content, so a
                 short specimen never stretches to match a tall neighbour. */}
@@ -1755,6 +2278,28 @@ export function Showcase({ compact = false }: { compact?: boolean } = {}) {
                       </Callout>
                       <Callout tone='success' icon={<CheckCircle2 />} title='Target met' compact>
                         81 accounts cleared the bar.
+                      </Callout>
+                    </div>
+                  </Panel>
+                </Specimen>
+
+                <Specimen
+                  name='Callout backgrounds'
+                  note='Four textures in the tone’s own colour. Pick one for the whole app.'
+                  component='<Callout texture>'
+                >
+                  <Panel>
+                    <div className='flex flex-col gap-2'>
+                      {(['diagonal', 'dots', 'wash', 'none'] as const).map((texture) => (
+                        <Callout key={texture} texture={texture} tone='info' title={`texture="${texture}"`}>
+                          Every row came back from the Trayo API; nothing here is hand-typed.
+                        </Callout>
+                      ))}
+                      <Callout texture='dots' tone='warning' icon={<AlertTriangle />} title='Dots, as a warning'>
+                        Only public posts from the last 30 days were read.
+                      </Callout>
+                      <Callout texture='none' title='None, as a note'>
+                        The flat tint alone, for a long note or one beside a busy panel.
                       </Callout>
                     </div>
                   </Panel>

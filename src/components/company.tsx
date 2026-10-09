@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { ExternalLink, MapPin, Users } from 'lucide-react'
 import { cn } from '../lib/cn'
+import { useEntityScale } from '../lib/entity-scale'
 import { normalizeDomain } from '../lib/brand-image'
 import { CardFooterSlot } from './card-footer-slot'
 import { CardSummary, CardTags } from './card-text'
@@ -73,8 +74,11 @@ export function Company({
   onClick,
   className,
 }: CompanyProps) {
+  // A row inside a large table: a 64px logo and the name a step up.
+  // An explicit `size` opts out, so the name never outgrows a pinned logo.
+  const large = useEntityScale() === 'large' && variant === 'row' && size == null
   const logoSize: LogoSize =
-    size ?? (variant === 'inline' ? 'sm' : variant === 'stacked' ? 'xl' : 'lg')
+    size ?? (variant === 'inline' ? 'sm' : variant === 'stacked' || large ? 'xl' : 'lg')
 
   const logo = (
     <CompanyLogo
@@ -86,7 +90,7 @@ export function Company({
   )
 
   const nameClass = cn(
-    variant === 'inline' ? 'text-name-sm' : 'text-name',
+    variant === 'inline' ? 'text-name-sm' : large ? 'text-card-title' : 'text-name',
     'truncate text-text-primary'
   )
   const name = href ? (
@@ -131,11 +135,11 @@ export function Company({
   return (
     <div
       data-slot='entity-row'
-      className={cn('flex min-w-0 items-center gap-3', onClick && 'cursor-pointer', className)}
+      className={cn('flex min-w-0 items-center', large ? 'gap-4' : 'gap-3', onClick && 'cursor-pointer', className)}
       onClick={onClick}
     >
       {logo}
-      <div className='flex min-w-0 flex-col'>
+      <div className={cn('flex min-w-0 flex-col', large ? 'gap-1' : 'gap-0.5')}>
         {name}
         {meta}
       </div>
