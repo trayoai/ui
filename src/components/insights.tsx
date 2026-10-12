@@ -496,6 +496,11 @@ export interface StatBandItem {
   media?: React.ReactNode
 }
 
+// The figure and its label keep 9rem to themselves. In a cell too narrow for
+// that and the media beside it, the media wraps under the text in place of
+// squeezing the label down to a letter and the hint into a column of words.
+const STAT_BAND_TEXT = 'flex min-w-[min(9rem,100%)] flex-1 flex-col'
+
 export interface StatBandProps extends Omit<React.ComponentProps<'dl'>, 'children'> {
   /** Two to five figures. */
   items: readonly StatBandItem[]
@@ -512,13 +517,24 @@ export interface StatBandProps extends Omit<React.ComponentProps<'dl'>, 'childre
  * separate tiles. Plain: the figure over its label, an icon or a stack of
  * faces or logos at the right. `headed`: a titled strip per cell, then the
  * figure, its change and a small chart.
+ *
+ * The cells sit side by side while each has 10rem to itself, and wrap
+ * otherwise, down to one a row. That is decided by the band's own width, not
+ * the window's: it used to switch to one row of columns at the `lg`
+ * breakpoint wherever it was, so in a narrow column on a wide screen (the
+ * aside of a `<Split>`) three figures were squeezed into 50px each. It is
+ * still a strip for the full width of a page or a main column; beside a
+ * table, a `<Funnel>` or a `<HeroStat>` reads better than a stack of these.
  */
 export function StatBand({ items, headed = false, className, ...props }: StatBandProps) {
   return (
     <dl
       data-slot='stat-band'
       className={cn(
-        'grid grid-cols-1 overflow-hidden rounded-xl bg-[image:var(--gradient-card)] shadow-[var(--shadow-card)] sm:grid-cols-2 lg:grid-flow-col lg:auto-cols-fr lg:grid-cols-none',
+        // `content-start`: stretched taller than its figures (a `<Split>`
+        // makes both columns the same height) the rows stay at the top, as a
+        // Surface's content does, in place of spreading down the card.
+        'grid grid-cols-[repeat(auto-fit,minmax(min(10rem,100%),1fr))] content-start overflow-hidden rounded-xl bg-[image:var(--gradient-card)] shadow-[var(--shadow-card)]',
         !headed && 'gap-y-4 py-4',
         className
       )}
@@ -530,7 +546,10 @@ export function StatBand({ items, headed = false, className, ...props }: StatBan
           : item.delta?.startsWith('-')
             ? 'text-destructive'
             : 'text-text-muted'
-        const divider = 'border-border-subtle sm:max-lg:even:border-l lg:border-l lg:first:border-l-0'
+        // The columns wrap by width, so a cell cannot know whether it starts a
+        // row. Every cell draws its left hairline 1px outside itself, and the
+        // band's own `overflow-hidden` clips the one at the start of a row.
+        const divider = '-ml-px border-l border-border-subtle'
         const reading = (item.delta != null || item.hint != null) && (
           <span className='text-meta flex flex-wrap gap-x-1.5'>
             {item.delta != null && <span className={cn('font-medium', tone)}>{item.delta}</span>}
@@ -539,13 +558,13 @@ export function StatBand({ items, headed = false, className, ...props }: StatBan
         )
         if (headed) {
           return (
-            <div key={i} className={cn('flex min-w-0 flex-col max-sm:not-first:border-t', divider)}>
+            <div key={i} className={cn('-mt-px flex min-w-0 flex-col border-t', divider)}>
               <dt className='text-name flex items-center gap-2 border-b border-border-subtle px-4 py-2 text-text-primary [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-text-muted'>
                 {item.icon}
                 <span className='truncate'>{item.label}</span>
               </dt>
-              <dd className='flex flex-1 items-center justify-between gap-3 p-4'>
-                <span className='flex min-w-0 flex-col'>
+              <dd className='flex flex-1 flex-wrap items-center justify-between gap-x-3 gap-y-2 p-4'>
+                <span className={STAT_BAND_TEXT}>
                   <span className='text-page-title tabular-nums text-text-primary'>{item.value}</span>
                   {reading}
                 </span>
@@ -555,8 +574,8 @@ export function StatBand({ items, headed = false, className, ...props }: StatBan
           )
         }
         return (
-          <div key={i} className={cn('flex min-w-0 items-center justify-between gap-3 px-4', divider)}>
-            <div className='flex min-w-0 flex-col'>
+          <div key={i} className={cn('flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4', divider)}>
+            <div className={STAT_BAND_TEXT}>
               <dd className='text-page-title tabular-nums text-text-primary'>{item.value}</dd>
               <dt className='text-meta truncate text-text-secondary'>{item.label}</dt>
               {reading}

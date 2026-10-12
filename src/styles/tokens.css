@@ -265,10 +265,14 @@
   /* Hover cards / popovers — one step brighter than card (pure white in
      light, the raised step in dark) so floating surfaces read as elevated. */
   --surface-popover: var(--color-app-raised);
-  /* Dialogs. Light: the shell.
+  /* Dialogs. Light: the card surface, the lightest one there is. A dialog
+     is read, not scanned: on the page's own tinted canvas its text had less
+     contrast and its headings less to stand out against. (It was the shell,
+     so a card inside a dialog stood out by its fill; it now stands out by
+     its border and shadow, as a card on a card does.)
      Dark: the raised surface — the highest elevation gets the lightest
      surface, and a dialog sits above every popover. */
-  --surface-dialog: var(--surface-shell);
+  --surface-dialog: var(--surface-card);
   /* Fields. The raised (white) surface in light, the well in dark — as ONE
      token, so the fill is a single class that a consumer's `bg-transparent`
      cancels in both themes. A forked `bg-app-raised dark:bg-surface-well`
@@ -489,7 +493,7 @@
 .light {
 
   /* Dialog surface — same as :root */
-  --surface-dialog: var(--surface-shell);
+  --surface-dialog: var(--surface-card);
   /* Field surface — same as :root */
   --surface-field: var(--color-app-raised);
   /* Dropzone surface — same as :root */
@@ -1108,7 +1112,7 @@
   --accent-foreground: var(--text-primary);
   --border: var(--border-subtle);
   --input: var(--border-subtle);
-  --surface-dialog: var(--surface-shell);
+  --surface-dialog: var(--surface-card);
   --surface-dropzone: var(--surface-card);
   --surface-hover: var(--surface-well);
   --seg-track: var(--surface-well);

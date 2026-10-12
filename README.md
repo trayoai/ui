@@ -336,9 +336,11 @@ A list with no columns to align is an `EntityList`, not a table.
   [Customer brand](#customer-brand)) rather than overriding cell heights.
 - **`layout="fixed"`** makes the per-column `width`/`className` hints
   authoritative. Pin the columns that matter and leave exactly one column
-  width-less: it absorbs surplus space and is the first to shrink. Pair it with
-  a `min-w-*` in `tableClassName` so the flexible column can't collapse to zero
-  before horizontal scrolling kicks in.
+  width-less: it absorbs surplus space and is the first to shrink. It is never
+  squeezed under 12rem: when the other columns would leave it less, the table
+  scrolls sideways instead. Keep the widths you set to what the table has room
+  for, so that does not happen at a desktop width: in the main column of a
+  `Split`, that is about 40rem in all.
 - **`onRowClick`** makes the whole row navigate; interactive cells inside it
   still receive their own clicks.
 - **`renderSubRow`** adds a full-width detail row beneath any row.
@@ -423,6 +425,32 @@ The one person a panel is about (the author of a post, the owner of an account)
 is `<Person variant="lead">`: a 96px face with the ring, the name at page-title
 size, the title and the company each on a line. A list row stays the default.
 
+An event, an article or a post that backs a claim on the screen is an
+`<EvidenceItem>`, and several of them go in an `<EvidenceList>`. It owns the
+hierarchy a hand-built stack of chips and paragraphs does not have: the tags in
+the brand tint, the headline at 16px in the primary ink, the source as a byline
+under it, and the explanation in the secondary ink.
+
+```tsx
+<EvidenceList title="Events" count={events.length}>
+  {events.map((e) => (
+    <EvidenceItem
+      key={e.id}
+      tags={e.signals}                         // three shown, then "+N more"
+      title={e.headline}
+      source={`News · ${e.date} · ${e.publication}`}
+      footer={<a href={e.url}>Source</a>}
+    >
+      {e.whyItMatters}
+    </EvidenceItem>
+  ))}
+</EvidenceList>
+```
+
+When the evidence is about a person and not a headline (someone joined, someone
+was promoted), leave `title` out and pass the person as `media`: a `<Person>`,
+and a `<JobMove>` under it.
+
 A post with its author is `<PostCard>`. It draws the author in the lead layout,
 keeps the text's line breaks and clamps it to four lines behind a "Show more"
 switch, and puts the link out in the header.
@@ -482,6 +510,8 @@ only replaces the phone value.
 A dialog is never taller than the screen. Put content that can run long (a list
 of events, a table, a long form) in a `<DialogBody>` between the header and the
 footer: the body scrolls, and the header, footer and close button stay put.
+While the body has more than fits, a hairline runs above and below it from one
+edge of the dialog to the other; a body that fits has none.
 
 ```tsx
 <DialogContent size="large">
@@ -561,7 +591,7 @@ status; `teal` is still accepted and renders as `blue`. Without `size` it is
 | States | `EmptyState` `StatTile` `Callout` `Skeleton` `Progress` |
 | Type | `PageTitle` `SectionTitle` `CardTitle` `EntityName` `Body` `Meta` `Eyebrow` `SectionLabel` `Code` `DataLabel` |
 | Controls | `Button` `Input` `Textarea` `Select` `Checkbox` `Switch` `Label` `Tabs` `SegmentedControl` `Pagination` (+ `usePagination`) |
-| Display | `Badge` `TagChip` `Card` `EntityList` `FactList` `PostCard` `Separator` `Tooltip` `ScrollArea` |
+| Display | `Badge` `TagChip` `Card` `EntityList` `FactList` `EvidenceItem` `EvidenceList` `PostCard` `Separator` `Tooltip` `ScrollArea` |
 | Overlays | `Dialog` `PersonDialog` `Popover` `DropdownMenu` |
 | Feedback | `Toaster` `toast()` `useToast()` |
 | Charts | `ChartLegend` `DataLabel` `CHART_COLORS` `CHART_SEQUENTIAL` `CHART_MUTED` `chartColor` `chartSequential` |
@@ -705,6 +735,17 @@ and a thin rail, `3:2` when the aside holds a chart, `1:1` for two equals;
 `side="start"` moves the aside to the left, and `stretch={false}` leaves each
 column at its own height.
 
+Choose what goes in each column by the width it will have, not only by the shape
+of the numbers. A `3:1` aside on a laptop is about 250px wide.
+
+| Column | Takes | Why |
+|---|---|---|
+| A thin aside (`3:1`, or `2:1` beside a table) | `Funnel`, `DistributionList`, `BreakdownTiles`, `SplitBar`, `MethodNote`, each in a `Surface` with a title | They read top to bottom |
+| The main column, or the full page width | `StatBand`, `StatGrid`, `HeroStat` with a chart, `DataTable` | They read left to right |
+
+A few counts and a long table do not need a `Split` at all: put the `StatBand`
+above the table at the full width and give the table the whole row.
+
 ```tsx
 <Split
   aside={
@@ -728,9 +769,16 @@ column at its own height.
 </Split>
 ```
 
-`StatBand` is a few figures on one sheet, split by hairlines. Each item takes a
+`StatBand` is a few figures on one sheet, split by hairlines. It is a strip for
+the full width of a page or of a main column: the figures sit side by side while
+each has 10rem to itself, and wrap otherwise. In a narrow column, such as the
+aside of a `<Split>`, it stacks one figure a row, which is readable but is not
+what it is for. Beside a table, use a `<Funnel>` or a `<HeroStat>` in a
+`<Surface>`, and put the band above the table.
+
+Each item takes a
 `label`, a `value`, an optional `hint` and `delta`, and either an `icon` or a
-`media` node at the right. `EntityStack` is the media for a count of people or
+`media` node at the right (under the text when the cell is narrow). `EntityStack` is the media for a count of people or
 companies: an overlapping pile of `<PersonAvatar size="sm">`s or
 `<CompanyLogo size="xs">`s, with the rest collapsed into a `+N` disc.
 
