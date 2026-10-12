@@ -236,31 +236,124 @@
   @apply pointer-events-none absolute inset-0 bg-repeat opacity-25 mix-blend-overlay;
   background-image: url('/noise.svg');
 }
-.hero-lines {
-  @apply pointer-events-none absolute inset-0 bg-[length:300%] bg-left bg-no-repeat opacity-10 sm:bg-[length:200%] md:bg-[length:150%] lg:bg-cover;
-  background-image: url('/lines-2.svg');
+/* White diamonds across the hero, thinner behind the copy in the middle and
+   full strength towards the edges. The same treatment as the trayo.ai footer. */
+.hero-dots {
+  @apply bg-diamonds pointer-events-none absolute inset-0 bg-center;
+  --diamond: rgb(255 255 255 / 0.35);
+  --diamond-size: 6.5%;
+  -webkit-mask-image: radial-gradient(ellipse at center, rgb(0 0 0 / 0.3) 30%, black 75%);
+  mask-image: radial-gradient(ellipse at center, rgb(0 0 0 / 0.3) 30%, black 75%);
 }
 
-/* Diagonal hatch (fading in toward the bottom right) plus grain, for sand
-   panels. Both are pseudo-elements, so content inside needs `relative z-10`. */
-.sand-texture::before,
-.sand-texture::after {
-  content: '';
+/* A ring of brighter diamonds that spreads from each hero glow as it fades in.
+   Same 8s loop and the same delays as .hero-ellipse, and --x is the glow's
+   horizontal centre, so each wave leaves from the glow that is lighting up.
+   --r (the ring's radius) is registered further down. */
+.hero-ripple {
+  @apply bg-diamonds pointer-events-none absolute inset-0 bg-center;
+  --diamond-size: 7%;
+  opacity: 0;
+  -webkit-mask-image: radial-gradient(circle at var(--x, 50%) 0%, transparent calc(var(--r) - 140px), #000 calc(var(--r) - 12px), transparent var(--r));
+  mask-image: radial-gradient(circle at var(--x, 50%) 0%, transparent calc(var(--r) - 140px), #000 calc(var(--r) - 12px), transparent var(--r));
+  animation: hero-ripple 8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite both;
+}
+.hero-ripple--2 {
+  --x: 42%;
+  animation-delay: 3s;
+}
+.hero-ripple--3 {
+  --x: 58%;
+  animation-delay: 6s;
+}
+@keyframes hero-ripple {
+  0% { --r: 0px; opacity: 0; }
+  8% { opacity: 0.8; }
+  55%, 100% { --r: 64rem; opacity: 0; }
+}
+
+/* Four corner gradients on a 10px tile, so each crossing shows a small
+   diamond. --diamond sets the colour, --diamond-size its reach (7.5% = 3px
+   corner to corner). */
+@utility bg-diamonds {
+  --d: var(--diamond-size, 7.5%);
+  --c: var(--diamond, white);
+  background-image:
+    linear-gradient(45deg, var(--c) var(--d), transparent calc(var(--d) + 3%)),
+    linear-gradient(135deg, var(--c) var(--d), transparent calc(var(--d) + 3%)),
+    linear-gradient(225deg, var(--c) var(--d), transparent calc(var(--d) + 3%)),
+    linear-gradient(315deg, var(--c) var(--d), transparent calc(var(--d) + 3%));
+  background-size: 10px 10px;
+}
+
+/* The wave a card sends out on hover (see the script at the end of the page):
+   a diamond grid seen through a ring whose radius is --r. Registered as a
+   length so the script can animate it. */
+@property --r {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+.card-ripple {
+  --diamond-size: 7%;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-position: center;
+}
+
+/* The backdrop of the "Paste into your agent" panel on trayo.ai: fine grain,
+   a white glow and a grid of white diamonds, all centred, with a second,
+   larger-diamond layer that breathes. Four child layers, so content after
+   them needs `relative z-10`. */
+.agent-backdrop > * {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-repeat: repeat;
 }
-.sand-texture::before {
-  background-image: url('/diagonal-pattern.svg');
-  opacity: 0.6;
-  -webkit-mask-image: linear-gradient(115deg, transparent 45%, black);
-  mask-image: linear-gradient(115deg, transparent 45%, black);
-}
-.sand-texture::after {
-  background-image: url('/noise.svg');
+.agent-backdrop-noise {
+  background: url('/noise-fine.svg') repeat;
   opacity: 0.7;
   mix-blend-mode: soft-light;
+}
+.agent-backdrop-glow {
+  background-image: radial-gradient(circle 18rem at 50% 50%, rgb(255 255 255 / 0.6), transparent);
+}
+.agent-backdrop-diamonds {
+  background-position: center;
+  -webkit-mask-image: radial-gradient(circle 30rem at 50% 50%, black 30%, transparent 85%);
+  mask-image: radial-gradient(circle 30rem at 50% 50%, black 30%, transparent 85%);
+}
+.agent-backdrop-diamonds--breathe {
+  --diamond-size: 10%;
+  opacity: 0;
+  -webkit-mask-image: radial-gradient(circle 16rem at 50% 50%, black 20%, transparent);
+  mask-image: radial-gradient(circle 16rem at 50% 50%, black 20%, transparent);
+}
+/* The wide version, from the "How Trayo solves it" panel on trayo.ai: the
+   coarser grain and a larger glow and diamond field. There they are centred
+   on the card the panel shows; this panel is many screens tall, so they are
+   anchored to the top of the demo instead of a share of the height. No
+   breathing layer. */
+.agent-backdrop--wide .agent-backdrop-noise {
+  background-image: url('/noise.svg');
+}
+.agent-backdrop--wide .agent-backdrop-glow {
+  background-image: radial-gradient(circle 28rem at 50% 18rem, rgb(255 255 255 / 0.55), transparent);
+}
+.agent-backdrop--wide .agent-backdrop-diamonds {
+  -webkit-mask-image: radial-gradient(circle 60rem at 50% 18rem, black 35%, transparent 85%);
+  mask-image: radial-gradient(circle 60rem at 50% 18rem, black 35%, transparent 85%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .agent-backdrop-diamonds--breathe {
+    animation: agent-backdrop-breathe 4s ease-in-out infinite;
+  }
+}
+@keyframes agent-backdrop-breathe {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
 
 @media (max-width: 640px) {
@@ -328,6 +421,9 @@
     animation: none;
     opacity: 1;
     will-change: auto;
+  }
+  .hero-ripple {
+    display: none;
   }
   .hero-cta-text {
     transition: none;

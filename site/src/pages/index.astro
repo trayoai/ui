@@ -81,12 +81,11 @@ const md = (s: string, size = '12.5px') =>
 </header>
 
 <script is:inline>
-  // Adds a shadow once the page scrolls. Below lg, also hides the header on
-  // scroll-down and brings it back on scroll-up; desktop keeps it pinned.
+  // Adds a shadow once the page scrolls, hides the header on scroll-down and
+  // brings it back on scroll-up, at every width.
   (function () {
     var header = document.querySelector('[data-header]')
     if (!header) return
-    var desktop = matchMedia('(min-width: 1024px)')
     var DEADZONE = 8
     var lastY = scrollY
     var ticking = false
@@ -95,7 +94,7 @@ const md = (s: string, size = '12.5px') =>
       ticking = false
       var y = scrollY
       header.classList.toggle('is-scrolled', y > 2)
-      if (desktop.matches || y <= header.offsetHeight) {
+      if (y <= header.offsetHeight) {
         header.classList.remove('is-hidden')
         lastY = y
         return
@@ -122,7 +121,10 @@ const md = (s: string, size = '12.5px') =>
     <img src="/Ellipse2.svg" alt="" aria-hidden="true" class="hero-ellipse hero-ellipse--2 pointer-events-none absolute top-[-16%] left-[42%] z-0 w-[70%] max-w-none -translate-x-1/2 sm:w-[55%]" />
     <img src="/Ellipse3.svg" alt="" aria-hidden="true" class="hero-ellipse hero-ellipse--3 pointer-events-none absolute top-[-23%] left-[58%] z-0 w-[95%] max-w-none -translate-x-1/2 sm:w-[75%]" />
     <div class="hero-noise" aria-hidden="true"></div>
-    <div class="hero-lines" aria-hidden="true"></div>
+    <div class="hero-dots" aria-hidden="true"></div>
+    <div class="hero-ripple" aria-hidden="true"></div>
+    <div class="hero-ripple hero-ripple--2" aria-hidden="true"></div>
+    <div class="hero-ripple hero-ripple--3" aria-hidden="true"></div>
     <div class="relative z-10 flex max-w-240 flex-col items-start px-gutter sm:items-center sm:text-center">
       <p class="hero-eyebrow hero-in relative mb-5 inline-block rounded-full bg-cream px-3 text-xs font-semibold tracking-[1px] text-neutral-900 uppercase">
         By Trayo
@@ -149,7 +151,7 @@ const md = (s: string, size = '12.5px') =>
           </span>
         </a>
       </div>
-      <p class="hero-in hero-in-3 relative mt-5 text-sm text-white/70">
+      <p class="hero-in hero-in-3 relative mt-5 text-sm text-white/90">
         React&nbsp;19 · Tailwind&nbsp;v4 · light and dark · free and open source
       </p>
     </div>
@@ -162,16 +164,25 @@ const md = (s: string, size = '12.5px') =>
     <section class="py-16">
       <p class="eyebrow mb-3 text-center">Why it matters</p>
       <h2 class="text-center text-3xl font-bold md:text-4xl">Looks finished, because it is</h2>
-      <div class="mt-9 grid grid-cols-1 divide-y divide-sand-border rounded-2xl border border-sand-border bg-white sm:grid-cols-2 sm:divide-y-0">
-        {/* Hairlines between cells: stacked rows use divide-y; in the 2-column grid the
-            second row gets a top border and the right column a left border. */}
-        {VALUE.map((v, i) => (
-          <div class:list={['p-5', i >= 2 && 'sm:border-t sm:border-sand-border', i % 2 === 1 && 'sm:border-l sm:border-sand-border']}>
-            <span class="inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-sand-border p-2 text-purple" aria-hidden="true">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" set:html={VALUE_ICONS[v.icon]} />
+      {/* The light cards of "The building blocks" on trayo.ai. */}
+      <div class="mt-9 grid gap-4 sm:grid-cols-2">
+        {VALUE.map((v) => (
+          <div class="group/card relative isolate flex flex-col overflow-hidden rounded-2xl bg-white p-6 sm:p-8" data-card-ripple="var(--color-purple)">
+            {/* A grid of light purple diamonds against the right edge. */}
+            <div
+              class="bg-diamonds pointer-events-none absolute inset-0 -z-1 bg-center opacity-25 [--diamond:var(--color-purple)] [--diamond-size:6%] mask-[linear-gradient(to_left,black,transparent_55%)]"
+              aria-hidden="true"
+            ></div>
+            {/* On hover the icon grows a little and a ring pulses out from its square. */}
+            <span class="relative size-12" aria-hidden="true">
+              <span class="absolute inset-0 rounded-xl border border-purple opacity-0 motion-safe:group-hover/card:animate-ping motion-safe:group-hover/card:opacity-40"></span>
+              <span class="relative isolate flex size-full items-center justify-center overflow-hidden rounded-xl bg-purple text-white">
+                <span class="absolute inset-0 -z-1 bg-[url('/noise-fine.svg')] bg-repeat opacity-70 mix-blend-soft-light"></span>
+                <svg class="size-6 transition-transform duration-300 ease-out group-hover/card:scale-110 motion-reduce:transition-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" set:html={VALUE_ICONS[v.icon]} />
+              </span>
             </span>
-            <h3 class="mt-4 font-semibold text-neutral-900">{v.title}</h3>
-            <p class="mt-1.5 text-sm leading-relaxed text-neutral-500">{v.body}</p>
+            <h3 class="mt-8 text-[1.75rem] leading-tight font-semibold text-neutral-900 md:max-xl:mt-5 md:max-xl:text-2xl md:max-xl:leading-tight">{v.title}</h3>
+            <p class="mt-3 text-base text-neutral-700">{v.body}</p>
           </div>
         ))}
       </div>
@@ -179,7 +190,12 @@ const md = (s: string, size = '12.5px') =>
   </div>
 
   <!-- demo, in a sand panel like the site's feature blocks -->
-  <section id="demo" class="panel-sand sand-texture mx-auto my-16 max-w-6xl px-6 py-12 md:px-10 md:py-14">
+  <section id="demo" class="panel-sand mx-auto my-16 max-w-6xl px-6 py-12 md:px-10 md:py-14">
+    <div class="agent-backdrop agent-backdrop--wide" aria-hidden="true">
+      <div class="agent-backdrop-noise"></div>
+      <div class="agent-backdrop-glow"></div>
+      <div class="agent-backdrop-diamonds bg-diamonds"></div>
+    </div>
     <div class="relative z-10">
       <p class="eyebrow mb-3">Live demo</p>
       <h2 class="max-w-2xl text-3xl font-bold md:text-4xl">See it running, right here</h2>
@@ -300,7 +316,13 @@ return data.map(p => <Person key={p.id} person={p} showContact />)`}</code></pre
     </div>
     </section>
 
-  <section class="panel-sand sand-texture mx-auto mb-16 max-w-5xl px-6 py-12 md:px-10 md:py-14">
+  <section class="panel-sand mx-auto mb-16 max-w-5xl px-6 py-12 md:px-10 md:py-14">
+    <div class="agent-backdrop" aria-hidden="true">
+      <div class="agent-backdrop-noise"></div>
+      <div class="agent-backdrop-glow"></div>
+      <div class="agent-backdrop-diamonds bg-diamonds"></div>
+      <div class="agent-backdrop-diamonds agent-backdrop-diamonds--breathe bg-diamonds"></div>
+    </div>
     <div class="relative z-10">
       <p class="eyebrow mb-3">For coding agents</p>
       <h2 class="max-w-2xl text-3xl font-bold md:text-4xl">Building this with an agent?</h2>
@@ -341,6 +363,33 @@ components for all UI in this app.</code></pre>
     </div>
   </div>
 </footer>
+  <script is:inline>
+    // On hover a wave of diamonds crosses a card from where the pointer came
+    // in: a diamond grid seen through a growing ring. --r is registered in
+    // site.css, which is what lets it animate.
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.querySelectorAll('[data-card-ripple]').forEach(function (card) {
+        card.addEventListener('pointerenter', function (event) {
+          if (event.pointerType === 'touch') return
+          var box = card.getBoundingClientRect()
+          var x = Math.min(Math.max(event.clientX - box.left, 0), box.width)
+          var y = Math.min(Math.max(event.clientY - box.top, 0), box.height)
+          var reach = Math.hypot(Math.max(x, box.width - x), Math.max(y, box.height - y))
+          var wave = document.createElement('div')
+          wave.className = 'card-ripple bg-diamonds'
+          wave.style.setProperty('--diamond', card.dataset.cardRipple)
+          var mask = 'radial-gradient(circle at ' + x + 'px ' + y + 'px, transparent calc(var(--r) - 140px), #000 calc(var(--r) - 12px), transparent var(--r))'
+          wave.style.webkitMaskImage = mask
+          wave.style.maskImage = mask
+          card.append(wave)
+          wave.animate({ '--r': ['0px', reach + 140 + 'px'] }, { duration: 2200, easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)', fill: 'forwards' })
+          wave.animate({ opacity: [0.9, 0] }, { duration: 2200, easing: 'ease-in', fill: 'forwards' }).finished.then(function () {
+            wave.remove()
+          })
+        })
+      })
+    }
+  </script>
   <script is:inline>
     // Wires up every Copy button (see copyButton above). It sits at the end of
     // the page so all code boxes exist when it runs.
