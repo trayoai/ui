@@ -73,7 +73,11 @@ the wrong place or not at all. Nothing errors at build time.
    In a dialog, use `<PersonDialog>`: it places the banner and keeps the close
    button clear of it. The one person a panel is about (a post's author, an
    account's owner) is `<Person variant="lead">`, not a list row with a
-   bigger `size`. A post with its author is `<PostCard author text>`.
+   bigger `size`. A post with its author is `<PostCard author text>`. An event or an
+   article shown as evidence (what fired, what happened, where it was
+   reported, why it matters) is an `<EvidenceItem tags title source>` in an
+   `<EvidenceList>`: never a hand-built stack of chips, a `<Meta>` and two
+   paragraphs, which comes out one size in one grey.
 
 2. **Rendering a company? Use `<Company>` or `<CompanyCard>`.** Pass the
    `domain`; the logo resolves itself. Never hand-write a logo `<img>` or an
@@ -207,7 +211,12 @@ the wrong place or not at all. Nothing errors at build time.
     ("Left", "Owner", "Reports to") goes on its own line above the entity in
     `text-meta`, never inline beside the logo or avatar. A row of chips or
     buttons that may not fit gets `flex flex-wrap gap-2`. Size a dialog with
-    its `size` prop, never a `max-w-*` class. Content in a dialog that can
+    its `size` prop, never a `max-w-*` class: `medium` for a dialog that is
+    read (an account's events, a brief, a form), `large` only when it holds
+    a table. Give the dialog's subject as the title, `<DialogTitle><Company
+    company={c} /></DialogTitle>`, and it is drawn large. A table cell shows at most
+    three chips and then one `+N more` chip: the count has its own column
+    and the row's dialog lists them all. Content in a dialog that can
     run long (a list of events, a table) goes in a `<DialogBody>` between the
     header and the footer, so the body scrolls and the footer and the close
     button stay on screen.
@@ -216,7 +225,9 @@ the wrong place or not at all. Nothing errors at build time.
     `<StatTile>`s on every screen is what makes two tools look like the same
     tool. One figure that matters: `<HeroStat>`. Stages of one pipeline
     (pulled, passed, reachable): `<Funnel>`. A few plain counts: `<StatBand>`,
-    with an `<EntityStack>` of the logos or faces a count is made of. Figures
+    with an `<EntityStack>` of the logos or faces a count is made of. A
+    `<StatBand>` is a full-width strip, above the table or in a main column:
+    never the aside of a `<Split>` beside a table. Figures
     with a change or a trend: `<StatBand headed>` with a `<Sparkline>` or
     `<Ring>`. A count per company: `<BreakdownTiles>` (pass `onValueChange`
     and it is also the filter) or `<DistributionList>`. Parts of a whole:
@@ -227,7 +238,15 @@ the wrong place or not at all. Nothing errors at build time.
     say how the run was made (searches billed, rows returned) go in
     `<PageHeader stats>` or a `<MethodNote>`, not on tiles. Put the summary
     beside something with `<Split aside>` (`ratio` `2:1` | `3:1` | `3:2` |
-    `1:1`) so the page is not one full-width stack. Never hand-draw a bar
+    `1:1`) so the page is not one full-width stack. Choose by the width the
+    column will have, not only by the shape of the numbers. A thin aside
+    (`3:1`, or `2:1` beside a table) takes what reads top to bottom: a
+    `<Funnel>`, a `<DistributionList>`, `<BreakdownTiles>`, a `<SplitBar>`,
+    a `<MethodNote>`, each in a `<Surface>` with a title. What reads left to
+    right needs a wide column: `<StatBand>`, `<StatGrid>`, `<HeroStat>` with
+    a chart and a `<DataTable>` go in the main column or across the page.
+    A few counts and a long table: the band goes above the table, full
+    width, and the table keeps the whole row. Never hand-draw a bar
     list, a ring or a funnel from `<Progress>` and divs. Their bars are a
     thin solid bar with the remainder hatched; `bar="solid"` gives a flat
     track instead. One bar style for the whole app.

@@ -4,6 +4,7 @@ import * as React from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { EntityScaleContext } from '../../lib/entity-scale'
 import { Button } from './button'
 
 function Dialog({
@@ -112,8 +113,20 @@ function DialogContent({
           // as a whole when its content is taller. That is the fallback: put
           // long content in a `<DialogBody>` and only the body scrolls, with
           // the header, footer and close button staying put.
-          'bg-surface-dialog data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid max-h-[calc(100dvh-2rem)] w-full grid-cols-[minmax(0,1fr)] max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 overflow-y-auto overscroll-contain rounded-lg border border-border-subtle p-4 shadow-lg duration-200 md:p-6',
+          //
+          // `--dialog-pad-x` is the side padding, restated for a child that
+          // has to reach the dialog's edges: the rule a scrolling
+          // `<DialogBody>` draws under itself. `overflow-x-hidden` is for the
+          // caller who overrides the padding (`p-0 md:p-0`) and not the
+          // variable, so that rule is cut at the edge in place of adding a
+          // sideways scroll.
+          'bg-surface-dialog data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid max-h-[calc(100dvh-2rem)] w-full grid-cols-[minmax(0,1fr)] max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 overflow-x-hidden overflow-y-auto overscroll-contain rounded-lg border border-border-subtle p-4 shadow-lg duration-200 [--dialog-pad-x:1rem] md:p-6 md:[--dialog-pad-x:1.5rem]',
           'has-[>[data-slot=person-banner]]:pt-12',
+          // A `<Fact>` label is a section heading here: "Signals fired",
+          // "Most recent event". On a card it is 13px, sized for a dense
+          // column; in a dialog, which is read and not scanned, it is 16px, a
+          // clear step over the 14px text under it.
+          '[&_[data-slot=fact-label]]:text-base',
           dialogSizeClasses[size],
           className
         )}
@@ -163,15 +176,58 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
  * Override the default cap via `className` (e.g. `max-h-[70vh]`).
  */
 function DialogBody({ className, ...props }: React.ComponentProps<'div'>) {
+  // Whether there is more than fits. While there is, a hairline runs above
+  // and below the body from one edge of the dialog to the other, so the
+  // content is seen to pass behind the header and the footer and not to stop
+  // at an arbitrary line of text. A body that fits has no rules: there is
+  // nothing beyond it to mark.
+  const scroller = React.useRef<HTMLDivElement>(null)
+  const [overflowing, setOverflowing] = React.useState(false)
+  const measure = React.useCallback(() => {
+    const el = scroller.current
+    if (el) setOverflowing(el.scrollHeight > el.clientHeight + 1)
+  }, [])
+  // After every commit, since the children may have changed; and when the
+  // body or anything directly in it changes size (an image loading in, the
+  // window resizing).
+  React.useLayoutEffect(measure)
+  React.useEffect(() => {
+    const el = scroller.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(measure)
+    observer.observe(el)
+    for (const child of Array.from(el.children)) observer.observe(child)
+    return () => observer.disconnect()
+  }, [measure])
+
   return (
-    <div
-      data-slot='dialog-body'
-      className={cn(
-        'flex max-h-[60vh] flex-col gap-4 overflow-y-auto py-4',
-        className
-      )}
-      {...props}
-    />
+    <div data-slot='dialog-body-frame' className='relative grid min-h-0 grid-cols-[minmax(0,1fr)]'>
+      <div
+        ref={scroller}
+        data-slot='dialog-body'
+        data-overflowing={overflowing ? '' : undefined}
+        className={cn(
+          'flex max-h-[60vh] flex-col gap-4 overflow-y-auto py-4',
+          className
+        )}
+        {...props}
+      />
+      {overflowing &&
+        // One above and one below: the body is a window onto more content,
+        // and both of its edges are where that content is cut.
+        (['top', 'bottom'] as const).map((edge) => (
+          <span
+            key={edge}
+            aria-hidden
+            data-slot='dialog-body-rule'
+            data-edge={edge}
+            className={cn(
+              'pointer-events-none absolute inset-x-[calc(var(--dialog-pad-x,0px)*-1)] h-px bg-border-subtle',
+              edge === 'top' ? 'top-0' : 'bottom-0'
+            )}
+          />
+        ))}
+    </div>
   )
 }
 
@@ -190,14 +246,31 @@ function DialogFooter({ className, ...props }: React.ComponentProps<'div'>) {
 
 function DialogTitle({
   className,
+  children,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Title>) {
   return (
     <DialogPrimitive.Title
       data-slot='dialog-title'
-      className={cn('text-card-title', className)}
+      className={cn(
+        'text-card-title',
+        // A company's line of firmographics under its name, when the title
+        // is a `<Company>`: 14px in the secondary ink, in place of the 12px
+        // muted it has in a table row.
+        '[&_[data-slot=company-meta]]:text-sm [&_[data-slot=company-meta]]:text-text-secondary',
+        // And its name at 24px: the title of the dialog, two steps over the
+        // 16px summary line and section labels under it.
+        '[&_[data-slot=entity-name]]:text-2xl [&_[data-slot=entity-name]]:leading-tight',
+        className
+      )}
       {...props}
-    />
+    >
+      {/* A `<Company>` or a `<Person>` given as the title is the subject of
+          the dialog, so it is drawn at the large scale a large table uses,
+          with a 64px logo or face. In a table row's own 14px the name was
+          the smallest heading in the dialog. */}
+      <EntityScaleContext.Provider value='large'>{children}</EntityScaleContext.Provider>
+    </DialogPrimitive.Title>
   )
 }
 
@@ -208,7 +281,10 @@ function DialogDescription({
   return (
     <DialogPrimitive.Description
       data-slot='dialog-description'
-      className={cn('text-text-muted text-sm', className)}
+      // 16px in the secondary ink. It is the dialog's summary line, the first
+      // thing read after the title; at 14px in the muted ink (about 3:1 on
+      // the dialog) it was the faintest text in it.
+      className={cn('text-base text-text-secondary', className)}
       {...props}
     />
   )

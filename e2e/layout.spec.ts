@@ -326,6 +326,29 @@ test.describe('dialogs', () => {
         await expect(content.getByRole('button', { name: 'Close' })).toBeInViewport()
         expect(await content.evaluate((el) => el.scrollTop)).toBe(0)
       })
+
+      test('a body with more than fits has a rule above and below it, each from one edge of the dialog to the other', async ({ page }) => {
+        const content = await openDialog(page, 'tall-body')
+        const dialog = (await content.boundingBox())!
+        const body = (await content.locator('[data-slot=dialog-body]').boundingBox())!
+        const title = (await content.getByRole('heading', { name: 'Ramp' }).boundingBox())!
+        const footer = (await content.getByRole('button', { name: 'Draft outreach' }).boundingBox())!
+        await expect(content.locator('[data-slot=dialog-body-rule]')).toHaveCount(2)
+        const top = (await content.locator('[data-slot=dialog-body-rule][data-edge=top]').boundingBox())!
+        const bottom = (await content.locator('[data-slot=dialog-body-rule][data-edge=bottom]').boundingBox())!
+        for (const rule of [top, bottom]) {
+          // Inside the dialog's 1px border, on both sides.
+          expect(Math.abs(rule.x - (dialog.x + 1))).toBeLessThanOrEqual(1)
+          expect(Math.abs(rule.x + rule.width - (dialog.x + dialog.width - 1))).toBeLessThanOrEqual(1)
+        }
+        // At the body's own edges: under the header, above the footer.
+        expect(Math.abs(top.y - body.y)).toBeLessThanOrEqual(1)
+        expect(top.y).toBeGreaterThan(title.y + title.height)
+        expect(Math.abs(bottom.y + bottom.height - (body.y + body.height))).toBeLessThanOrEqual(1)
+        expect(bottom.y).toBeLessThan(footer.y)
+        // And they add no sideways scroll to the dialog.
+        expect(await content.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true)
+      })
     })
   }
 
@@ -398,6 +421,213 @@ test('table skeletons are the size of the cells they stand in for', async ({ pag
   expect(await width('table-loading', 'td:nth-child(2) [data-slot=skeleton]')).toBe(
     await width('table-loaded', 'td:nth-child(2) [data-slot=company-logo]')
   )
+})
+
+// A cell taller than its row grew the row and sat hard against the hairlines:
+// the cells had no vertical padding at all.
+test('a table cell taller than the row keeps clear of the lines above and below', async ({ page }) => {
+  await open(page)
+  const box = page.locator('[data-layout-case="table-tall-cell"]')
+  const cell = box.locator('tbody tr').first().locator('td').nth(1)
+  const td = (await cell.boundingBox())!
+  const content = (await cell.locator('[data-tall-cell]').boundingBox())!
+  expect(td.height).toBeGreaterThan(68) // the row did grow
+  expect(content.y - td.y).toBeGreaterThanOrEqual(8)
+  expect(td.y + td.height - (content.y + content.height)).toBeGreaterThanOrEqual(8)
+})
+
+// In a fixed layout the one width-less column takes what the others leave. When
+// they left nothing it was 0px wide, and its text was drawn over the next cell.
+test('a fixed table keeps its width-less column, and scrolls sideways before squeezing it out', async ({ page }) => {
+  await open(page)
+  const box = page.locator('[data-scroll-case="table-fixed-squeezed"]')
+  const row = box.locator('tbody tr').first()
+  const first = (await row.locator('td').nth(0).boundingBox())!
+  const second = (await row.locator('td').nth(1).boundingBox())!
+  expect(first.width).toBeGreaterThanOrEqual(190) // 12rem
+  const name = (await row.locator('[data-signal-name]').boundingBox())!
+  const badge = (await row.locator('td').nth(1).locator('[data-slot=badge]').boundingBox())!
+  expect(overlaps(name, badge)).toBe(false)
+  expect(name.x + name.width).toBeLessThanOrEqual(second.x + 1)
+  // The other columns keep the widths they were given; the table scrolls.
+  expect(Math.round(second.width)).toBe(112) // 7rem
+  const scroller = box.locator('[data-slot=table-container]')
+  expect(await scroller.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true)
+})
+
+test('a fixed table with room to spare is given no minimum width', async ({ page }) => {
+  await open(page)
+  const tables = page.locator('[data-layout-case^="table-few-rows"] table')
+  expect(await tables.count()).toBeGreaterThan(0)
+  for (const t of await tables.all()) expect(await t.evaluate((el: HTMLElement) => el.style.minWidth)).toBe('')
+})
+
+// A StatBand lays out by its own width. It used to follow the window, so in a
+// narrow column on a desktop screen (a Split's aside) three figures got 50px
+// each: labels cut to a letter, and the logo stack on top of the hint.
+test.describe('StatBand by its own width', () => {
+  const cells = (page: Page, name: string) =>
+    page.locator(`[data-layout-case="${name}"] [data-slot=stat-band] > div`)
+  const boxes = async (page: Page, name: string) =>
+    Promise.all((await cells(page, name).all()).map(async (c) => (await c.boundingBox())!))
+
+  test('at a page width the figures share one row', async ({ page }) => {
+    await open(page)
+    const all = await boxes(page, 'stat-band-wide')
+    expect(all).toHaveLength(3)
+    expect(new Set(all.map((b) => Math.round(b.y))).size).toBe(1)
+  })
+
+  test('in a 200px column they stack, one a row, at the full width', async ({ page }) => {
+    await open(page)
+    const band = (await page.locator('[data-layout-case="stat-band-aside"] [data-slot=stat-band]').boundingBox())!
+    const all = await boxes(page, 'stat-band-aside')
+    expect(all).toHaveLength(3)
+    expect(new Set(all.map((b) => Math.round(b.y))).size).toBe(3)
+    for (const b of all) expect(b.width).toBeGreaterThanOrEqual(band.width - 2)
+  })
+
+  test('in a narrow cell the label is whole and the media sits under the text', async ({ page }) => {
+    await open(page)
+    const first = cells(page, 'stat-band-aside').first()
+    const label = first.locator('dt')
+    await expect(label).toHaveText('Two or more signals')
+    expect(await label.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true)
+    const text = (await first.locator('> div').first().boundingBox())!
+    const media = (await first.locator('[data-slot=entity-stack]').boundingBox())!
+    expect(overlaps(text, media)).toBe(false)
+    expect(media.y).toBeGreaterThanOrEqual(text.y + text.height)
+  })
+
+  test('the headed band stacks the same way', async ({ page }) => {
+    await open(page)
+    const all = await boxes(page, 'stat-band-headed-aside')
+    expect(all).toHaveLength(2)
+    expect(new Set(all.map((b) => Math.round(b.y))).size).toBe(2)
+  })
+
+  test('stretched taller than its figures, they stay at the top', async ({ page }) => {
+    await open(page)
+    const band = (await page.locator('[data-layout-case="stat-band-stretched"] [data-slot=stat-band]').boundingBox())!
+    expect(band.height).toBe(600)
+    const all = await boxes(page, 'stat-band-stretched')
+    const last = all[all.length - 1]
+    expect(last.y + last.height - band.y).toBeLessThan(400)
+  })
+})
+
+// A dialog is read, so it sits on the lightest surface, not the page's canvas.
+test('a dialog is on the card surface, lighter than the page behind it', async ({ page }) => {
+  const content = await openDialog(page, 'facts')
+  const colours = await content.evaluate((el) => {
+    const probe = (value: string) => {
+      const p = document.createElement('div')
+      p.style.background = value
+      document.body.appendChild(p)
+      const c = getComputedStyle(p).backgroundColor
+      p.remove()
+      return c
+    }
+    return {
+      dialog: getComputedStyle(el).backgroundColor,
+      card: probe('var(--surface-card)'),
+      shell: probe('var(--surface-shell)'),
+    }
+  })
+  expect(colours.dialog).toBe(colours.card)
+  expect(colours.dialog).not.toBe(colours.shell)
+})
+
+test('in a dialog the summary line and the fact labels are 16px, over 14px text', async ({ page }) => {
+  const content = await openDialog(page, 'facts')
+  const size = (sel: string) =>
+    content.locator(sel).first().evaluate((el) => getComputedStyle(el).fontSize)
+  expect(await size('[data-slot=dialog-description]')).toBe('16px')
+  expect(await size('[data-slot=fact-label]')).toBe('16px')
+  expect(await size('[data-slot=fact-text]')).toBe('14px')
+})
+
+test('a company given as a dialog title is drawn large: 64px logo, 24px name, 14px firmographics', async ({ page }) => {
+  const content = await openDialog(page, 'facts')
+  const title = content.locator('[data-slot=dialog-title]')
+  const logo = (await title.locator('[data-slot=company-logo]').boundingBox())!
+  expect(Math.round(logo.width)).toBe(64)
+  expect(await title.locator('[data-slot=entity-name]').evaluate((el) => getComputedStyle(el).fontSize)).toBe('24px')
+  expect(await title.locator('[data-slot=company-meta]').evaluate((el) => getComputedStyle(el).fontSize)).toBe('14px')
+  // `medium` is 768px wide.
+  expect(Math.round((await content.boundingBox())!.width)).toBe(768)
+  // Outside a dialog title the same name keeps its own size.
+  await open(page)
+  const elsewhere = page.locator('[data-layout-case] [data-slot=entity-name]').first()
+  expect(await elsewhere.evaluate((el) => getComputedStyle(el).fontSize)).not.toBe('24px')
+})
+
+test('on a card a fact label keeps its 13px', async ({ page }) => {
+  await open(page)
+  const label = page.locator('[data-layout-case] [data-slot=fact-label]').first()
+  expect(await label.evaluate((el) => getComputedStyle(el).fontSize)).toBe('13px')
+})
+
+// An event built from chips and paragraphs was one size in one grey. The
+// component gives each part a weight of its own.
+test.describe('EvidenceItem', () => {
+  const item = (page: Page, name = 'evidence') =>
+    page.locator(`[data-layout-case="${name}"] [data-slot=evidence-item]`).first()
+  const style = (page: Page, sel: string) =>
+    item(page)
+      .locator(sel)
+      .first()
+      .evaluate((el) => {
+        const cs = getComputedStyle(el)
+        return { size: cs.fontSize, weight: Number(cs.fontWeight), color: cs.color, background: cs.backgroundColor }
+      })
+
+  test('the headline is larger, heavier and darker than the text under it', async ({ page }) => {
+    await open(page)
+    const title = await style(page, '[data-slot=evidence-title]')
+    const text = await style(page, '[data-slot=evidence-text]')
+    expect(title.size).toBe('16px')
+    expect(text.size).toBe('14px')
+    expect(title.weight).toBeGreaterThanOrEqual(600)
+    expect(text.weight).toBeLessThan(500)
+    expect(title.color).not.toBe(text.color)
+  })
+
+  test('the tags are tinted, and are not the colour of the text', async ({ page }) => {
+    await open(page)
+    const tag = await style(page, '[data-slot=evidence-tags] [data-slot=badge]')
+    const text = await style(page, '[data-slot=evidence-text]')
+    expect(tag.color).not.toBe(text.color)
+    expect(tag.background).not.toBe('rgba(0, 0, 0, 0)')
+  })
+
+  test('five tags show as three and a count of the rest', async ({ page }) => {
+    await open(page)
+    const tags = item(page).locator('[data-slot=evidence-tags] [data-slot=badge]')
+    await expect(tags).toHaveCount(4)
+    await expect(tags.last()).toHaveText('+2 more')
+    await expect(tags.last()).toHaveAttribute('title', 'Payments migration, Subscription billing')
+  })
+
+  test('the source sits under the headline, and the list has room between its items', async ({ page }) => {
+    await open(page)
+    const title = (await item(page).locator('[data-slot=evidence-title]').boundingBox())!
+    const source = (await item(page).locator('[data-slot=evidence-source]').boundingBox())!
+    expect(source.y).toBeGreaterThanOrEqual(title.y + title.height)
+    const items = page.locator('[data-layout-case="evidence"] [data-slot=evidence-item]')
+    const first = (await items.nth(0).boundingBox())!
+    const second = (await items.nth(1).boundingBox())!
+    await expect(page.locator('[data-layout-case="evidence"] [data-slot=evidence-list-title]')).toHaveText('Events (2)')
+    // 20px of padding on each side of the hairline: more than the 8px inside an item.
+    expect(second.y - (first.y + first.height)).toBeGreaterThanOrEqual(0)
+    expect(await items.nth(1).evaluate((el) => getComputedStyle(el).paddingTop)).toBe('20px')
+  })
+})
+
+test('a dialog body that fits has no rules', async ({ page }) => {
+  const content = await openDialog(page, 'short-body')
+  await expect(content.locator('[data-slot=dialog-body]')).toBeVisible()
+  await expect(content.locator('[data-slot=dialog-body-rule]')).toHaveCount(0)
 })
 
 test('a TagChip shows text given as children', async ({ page }) => {

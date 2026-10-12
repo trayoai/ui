@@ -1,5 +1,5 @@
 import type * as React from 'react';
-import { Fragment } from 'react';
+import { Fragment, useEffect, useLayoutEffect, useRef } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '../lib/cn';
 import { EntityScaleContext } from '../lib/entity-scale';
@@ -108,9 +108,10 @@ export interface DataTableProps<T> {
    *  surplus on wide viewports and is the first to shrink (its cells should
    *  truncate) on narrow ones, before any horizontal scroll appears. */
   layout?: 'auto' | 'fixed';
-  /** Extra classes for the underlying <table>. With `layout='fixed'` use this
-   *  for a `min-w-*` floor: fixed layout ignores per-cell min-width, so without
-   *  it the flex column collapses to 0 before horizontal scroll kicks in. */
+  /** Extra classes for the underlying <table>. With `layout='fixed'` the
+   *  width-less column is kept at 12rem or more by the table itself, which
+   *  scrolls sideways sooner than let it collapse; a `min-w-*` here is only
+   *  for a table that should scroll earlier than that. */
   tableClassName?: string;
   /** When true, render skeleton placeholder rows instead of `rows`/`empty`, so
    *  a list never flashes its empty/"not found" state while a query is in
@@ -151,6 +152,61 @@ export interface DataTableProps<T> {
 /** At or under this many rows in total, an `auto` table draws them large. */
 const FEW_ROWS = 6;
 
+/** The least a width-less column is given in a fixed layout, in rem. */
+const FLEX_COLUMN_FLOOR_REM = 12;
+
+/**
+ * In a fixed layout the column widths are authoritative, and the one column
+ * left without a width takes what is over. When the widths add up to more
+ * than the table has, nothing is over: that column is 0px wide and its
+ * content is drawn on top of the next column. A `min-w-*` in `tableClassName`
+ * was the guard, and it is easy to set too low.
+ *
+ * This measures instead. When the columns that have a width leave a
+ * width-less one under the floor, the table gets the `min-width` that restores
+ * it, and scrolls sideways in its container. Measured, not computed from the
+ * column list, because a column can be hidden at this size by its className.
+ */
+function useFlexColumnFloor(tableRef: React.RefObject<HTMLTableElement | null>, enabled: boolean) {
+  const apply = useRef(() => {});
+  apply.current = () => {
+    const table = tableRef.current;
+    const container = table?.parentElement;
+    if (!table || !container) return;
+    if (!enabled) {
+      table.style.minWidth = '';
+      return;
+    }
+    const heads = Array.from(
+      table.querySelectorAll<HTMLElement>(':scope > thead > tr > th'),
+    ).filter((th) => th.getClientRects().length > 0);
+    const flexible = heads.filter((th) => th.dataset.flexColumn != null);
+    if (flexible.length === 0) {
+      table.style.minWidth = '';
+      return;
+    }
+    const sized = heads
+      .filter((th) => th.dataset.flexColumn == null)
+      .reduce((total, th) => total + th.offsetWidth, 0);
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    const needed = Math.ceil(sized + flexible.length * FLEX_COLUMN_FLOOR_REM * rem);
+    table.style.minWidth = needed > container.clientWidth ? `${needed}px` : '';
+  };
+  // After every commit: the columns, or which of them are shown, may have changed.
+  useLayoutEffect(() => apply.current());
+  useEffect(() => {
+    const container = tableRef.current?.parentElement;
+    if (!container || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => apply.current());
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [tableRef]);
+}
+
+/** A column with no `width` and no width class: the one a fixed layout flexes. */
+const isFlexColumn = (c: { width?: string; className?: string }) =>
+  c.width == null && !/(^|\s)(\S+:)?(w|min-w|max-w)-/.test(c.className ?? '');
+
 export function DataTable<T>({
   columns,
   rows,
@@ -186,6 +242,8 @@ export function DataTable<T>({
   const simple = variant !== 'default';
   // Simple rows are 64px: the 48px face keeps 8px above and below it.
   const rowHeight = large ? 'h-22' : simple ? 'h-16' : 'h-17';
+  const tableRef = useRef<HTMLTableElement>(null);
+  useFlexColumnFloor(tableRef, layout === 'fixed');
   if (!loading && rows.length === 0 && empty) return <>{empty}</>;
   // Only render skeleton placeholders when there is nothing to show yet.
   // A background refetch or poll (most data libraries flip `loading` to true
@@ -296,6 +354,7 @@ export function DataTable<T>({
         padding, so identity/checkbox columns breathe against the card edge. */}
     <div data-slot="data-table-bleed" className={simple ? '-mx-4' : 'contents'}>
     <Table
+      ref={tableRef}
       data-variant={variant}
       className={cn(
         simple
@@ -344,6 +403,7 @@ export function DataTable<T>({
                 c.className,
               )}
               style={c.width ? { width: c.width } : undefined}
+              data-flex-column={isFlexColumn(c) ? '' : undefined}
               aria-sort={ariaSort(c)}
             >
               {renderHeader(
@@ -467,15 +527,20 @@ export function DataTable<T>({
                 <TableCell
                   key={c.id}
                   className={cn(
-                    // Fixed-height rows: pin the row height (h-17) and use
-                    // horizontal-only padding so every row is 68px regardless
-                    // of cell content (avatars/controls) or the body
-                    // line-height — the base TableCell's `p-2` would let rows
-                    // vary with their content. (Height is a min for table
-                    // cells, so the vertical padding must be dropped, not just
-                    // capped.)
+                    // Fixed-height rows: the row height is pinned (h-17), so
+                    // every row is 68px whatever is in it (avatars, controls)
+                    // and whatever the body line-height.
+                    //
+                    // `py-2` sits inside that height (a cell is border-box), so
+                    // it changes nothing while the content is 16px shorter than
+                    // the row, which every standard cell is: a 48px face in 64
+                    // or 68px, a 64px face in 88px. It is there for the cell
+                    // that is taller: height is only a minimum for a table
+                    // cell, and with no padding a cell of wrapped chips grew
+                    // the row and sat hard against the hairlines above and
+                    // below it.
                     rowHeight,
-                    'px-2.5 py-0',
+                    'px-2.5 py-2',
                     large ? 'text-body' : 'text-body-sm',
                     colIndex === 0 ? 'text-text-primary' : 'text-text-muted',
                     alignClass(c.align),

@@ -94,11 +94,11 @@ export function Company({
     'truncate text-text-primary'
   )
   const name = href ? (
-    <a href={href} className={cn(nameClass, 'hover:underline hover:decoration-accent-line')}>
+    <a href={href} data-slot='entity-name' className={cn(nameClass, 'hover:underline hover:decoration-accent-line')}>
       {company.name}
     </a>
   ) : (
-    <span className={nameClass}>{company.name}</span>
+    <span data-slot='entity-name' className={nameClass}>{company.name}</span>
   )
 
   if (variant === 'inline') {
@@ -206,7 +206,7 @@ export function CompanyMeta({
 
   if (twoLine) {
     return (
-      <span className={cn('text-meta flex min-w-0 flex-col gap-1', className)}>
+      <span data-slot='company-meta' className={cn('text-meta flex min-w-0 flex-col gap-1', className)}>
         {[what, where].map(
           (line, li) =>
             line.length > 0 && (
@@ -226,6 +226,7 @@ export function CompanyMeta({
 
   return (
     <span
+      data-slot='company-meta'
       className={cn(
         'text-meta flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5',
         centered && 'justify-center',

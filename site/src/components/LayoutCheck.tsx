@@ -33,6 +33,8 @@ import {
   DialogHeader,
   DialogTitle,
   EntityList,
+  EvidenceItem,
+  EvidenceList,
   Fact,
   FactList,
   Input,
@@ -238,6 +240,82 @@ export function LayoutCheck() {
               ]}
             />
           </Case>
+          {/* The same three figures at a page's width and at the width of a
+              3:1 Split's aside. An app put the band there and got three
+              50px columns, because the layout followed the window. */}
+          <Case name='stat-band-wide' width={900}>
+            <StatBand
+              items={[
+                {
+                  label: 'Two or more signals',
+                  value: 123,
+                  hint: 'of 369 scanned · 23 at four or more',
+                  media: (
+                    <EntityStack max={4}>
+                      {['ramp.com', 'stripe.com', 'notion.so', 'linear.app', 'figma.com', 'vercel.com'].map((d) => (
+                        <CompanyLogo key={d} name={d} domain={d} size='xs' />
+                      ))}
+                    </EntityStack>
+                  ),
+                },
+                { label: 'Events in window', value: 609, hint: 'across 244 accounts' },
+                { label: 'Fired in last 14 days', value: 50, hint: 'of the qualified accounts' },
+              ]}
+            />
+          </Case>
+          <Case name='stat-band-aside' width={200}>
+            <StatBand
+              items={[
+                {
+                  label: 'Two or more signals',
+                  value: 123,
+                  hint: 'of 369 scanned · 23 at four or more',
+                  media: (
+                    <EntityStack max={4}>
+                      {['ramp.com', 'stripe.com', 'notion.so', 'linear.app', 'figma.com', 'vercel.com'].map((d) => (
+                        <CompanyLogo key={d} name={d} domain={d} size='xs' />
+                      ))}
+                    </EntityStack>
+                  ),
+                },
+                { label: 'Events in window', value: 609, hint: 'across 244 accounts' },
+                { label: 'Fired in last 14 days', value: 50, hint: 'of the qualified accounts' },
+              ]}
+            />
+          </Case>
+          <Case name='stat-band-headed-aside' width={200}>
+            <StatBand
+              headed
+              items={[
+                { icon: <Users />, label: 'Signals this month', value: 47, delta: '+12%', hint: 'vs last month', media: <Sparkline area values={[4, 6, 5, 9, 7, 11]} /> },
+                { icon: <Users />, label: 'Account coverage', value: '53%', media: <Ring value={0.53} /> },
+              ]}
+            />
+          </Case>
+          {/* Stretched far taller than its figures, as the aside of a Split
+              beside a long table is: the figures stay at the top. */}
+          <Case name='stat-band-stretched' width={200}>
+            <div className='grid h-[600px]'>
+              <StatBand
+              items={[
+                {
+                  label: 'Two or more signals',
+                  value: 123,
+                  hint: 'of 369 scanned · 23 at four or more',
+                  media: (
+                    <EntityStack max={4}>
+                      {['ramp.com', 'stripe.com', 'notion.so', 'linear.app', 'figma.com', 'vercel.com'].map((d) => (
+                        <CompanyLogo key={d} name={d} domain={d} size='xs' />
+                      ))}
+                    </EntityStack>
+                  ),
+                },
+                { label: 'Events in window', value: 609, hint: 'across 244 accounts' },
+                { label: 'Fired in last 14 days', value: 50, hint: 'of the qualified accounts' },
+              ]}
+              />
+            </div>
+          </Case>
           <Case name='breakdown-tiles-narrow' width={260}>
             <BreakdownTiles
               items={[
@@ -423,6 +501,49 @@ export function LayoutCheck() {
               tags={['Series D', 'Fintech', 'Hiring', 'New CFO', 'Expanding']}
             />
           </Case>
+          {/* Evidence: the headline leads, the tags are the only colour, and
+              five tags show as three and a count. At a dialog's width and a
+              phone's. */}
+          <Case name='evidence' width={720}>
+            <EvidenceList title='Events' count={2}>
+              <EvidenceItem
+                tags={['Fraud & compliance', 'Scale-up', 'Marketplace payouts', 'Payments migration', 'Subscription billing']}
+                title='Intuit launches Business Credit Card with native QuickBooks integration, expanding subscription billing and credit offerings.'
+                source='News · 22 Jul 2026 · FinanceX'
+                footer={<a href='#source'>Source</a>}
+              >
+                Intuit's native credit card integration creates a seamless credit and transaction workflow for 100
+                million QuickBooks users, intensifying competition in embedded finance.
+              </EvidenceItem>
+              <EvidenceItem
+                tags={['Finance leader joined']}
+                source='Job change · 1 Sept 2026 · Career Move'
+                media={<Person person={DANA} />}
+              >
+                This new hire brings finance transformation expertise.
+              </EvidenceItem>
+            </EvidenceList>
+          </Case>
+          <Case name='evidence-narrow' width={320}>
+            <EvidenceList title='Events' count={2}>
+              <EvidenceItem
+                tags={['Fraud & compliance', 'Scale-up', 'Marketplace payouts', 'Payments migration', 'Subscription billing']}
+                title='Intuit launches Business Credit Card with native QuickBooks integration, expanding subscription billing and credit offerings.'
+                source='News · 22 Jul 2026 · FinanceX'
+                footer={<a href='#source'>Source</a>}
+              >
+                Intuit's native credit card integration creates a seamless credit and transaction workflow for 100
+                million QuickBooks users, intensifying competition in embedded finance.
+              </EvidenceItem>
+              <EvidenceItem
+                tags={['Finance leader joined']}
+                source='Job change · 1 Sept 2026 · Career Move'
+                media={<Person person={DANA} />}
+              >
+                This new hire brings finance transformation expertise.
+              </EvidenceItem>
+            </EvidenceList>
+          </Case>
           {/* Written as a Badge is, with the text as children. */}
           <Case name='tag-chip-children' width={240}>
             <TagChip>Fraud &amp; KYC hiring</TagChip>
@@ -464,6 +585,69 @@ export function LayoutCheck() {
           <Case name='table-loading' width={520}>
             <DataTable scale='default' columns={TABLE_COLUMNS} rows={[]} getRowKey={(p) => p.id!} loading skeletonRows={1} />
           </Case>
+          {/* A cell taller than the row: eight chips that wrap to three lines,
+              with a line of text under them. The row grows; the content must
+              not sit against the hairlines above and below it. */}
+          <Case name='table-tall-cell' width={520}>
+            <DataTable
+              scale='default'
+              layout='fixed'
+              getRowKey={(p) => p.id!}
+              rows={[TABLE_ROW, { ...TABLE_ROW, id: 'tall-2' }]}
+              columns={[
+                { id: 'person', header: 'Person', width: '11rem', accessor: (p: PersonLike) => <Person person={p} /> },
+                {
+                  id: 'signals',
+                  header: 'Signals that fired',
+                  accessor: () => (
+                    <div data-tall-cell className='flex flex-col gap-1.5'>
+                      <div className='flex flex-wrap gap-1.5'>
+                        {['Payments migration', 'Subscription billing', 'Marketplace payouts', 'Fraud & compliance', 'Scale-up', 'Payments hiring', 'Risk hiring', 'Finance leader joined'].map((t) => (
+                          <TagChip key={t} label={t} />
+                        ))}
+                      </div>
+                      <Meta className='line-clamp-1 whitespace-normal'>Product Manager, Bill Payroll Transaction Risk</Meta>
+                    </div>
+                  ),
+                },
+              ]}
+            />
+          </Case>
+          {/* A fixed layout whose widths add up to more than the table has
+              (36rem in 520px), with one column left width-less. That column
+              was 0px wide and its name was drawn over the badge beside it.
+              Not a `Case`: this table is meant to scroll sideways, which the
+              sideways-overflow check on cases forbids. */}
+          <section className='mb-8'>
+            <Meta className='mb-2 block'>table-fixed-squeezed · 520px</Meta>
+            <div data-scroll-case='table-fixed-squeezed' style={{ width: 520 }}>
+              <DataTable
+                scale='default'
+                layout='fixed'
+                getRowKey={(r: { key: string }) => r.key}
+                rows={[
+                  { key: 'payments-migration', name: 'Payments migration', source: 'News', detects: 'The company announces it is migrating or replatforming payments.', accounts: 10, rate: '2.7%' },
+                  { key: 'risk-hiring', name: 'Risk hiring', source: 'Job post', detects: 'The company posts manager-level roles for fraud or risk.', accounts: 17, rate: '4.6%' },
+                ]}
+                columns={[
+                  {
+                    id: 'signal',
+                    header: 'Signal',
+                    accessor: (r) => (
+                      <div data-signal-name className='flex flex-col'>
+                        <span className='text-name-sm truncate text-text-primary'>{r.name}</span>
+                        <Meta className='truncate'>{r.key}</Meta>
+                      </div>
+                    ),
+                  },
+                  { id: 'source', header: 'Source', width: '7rem', accessor: (r) => <Badge variant='secondary'>{r.source}</Badge> },
+                  { id: 'detects', header: 'What it looks for', width: '16rem', accessor: (r) => <Meta className='line-clamp-2 whitespace-normal'>{r.detects}</Meta> },
+                  { id: 'accounts', header: 'Accounts hit', align: 'right', width: '7rem', accessor: (r) => r.accounts },
+                  { id: 'rate', header: 'Fire rate', align: 'right', width: '6rem', accessor: (r) => r.rate },
+                ]}
+              />
+            </div>
+          </section>
           <Case name='table-loaded' width={520}>
             <DataTable scale='default' columns={TABLE_COLUMNS} rows={[TABLE_ROW]} getRowKey={(p) => p.id!} />
           </Case>
@@ -673,6 +857,45 @@ export function LayoutCheck() {
                   <Meta>Event {i + 1} of 30, each with a line of detail under its headline.</Meta>
                 </div>
               ))}
+              </DialogBody>
+              <DialogFooter>
+                <Button>Draft outreach</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Facts in a dialog: the summary line and the fact labels are a
+              step larger than on a card. */}
+          <Dialog open={dialog === 'facts'}>
+            <DialogContent size='medium'>
+              <DialogHeader>
+                <DialogTitle>
+                  <Company company={{ ...RAMP, employeeCount: 7500, location: 'Atlanta, US' }} />
+                </DialogTitle>
+                <DialogDescription>7 distinct signals · 5 events · last fired 5 days ago</DialogDescription>
+              </DialogHeader>
+              <DialogBody>
+                <FactList>
+                  <Fact label='Signals fired'>Payments migration, subscription billing and five more.</Fact>
+                  <Fact label='Most recent event'>7 Oct 2026</Fact>
+                </FactList>
+              </DialogBody>
+            </DialogContent>
+          </Dialog>
+
+          {/* A body that fits: no rule under it. */}
+          <Dialog open={dialog === 'short-body'}>
+            <DialogContent size='large'>
+              <DialogHeader>
+                <DialogTitle>{RAMP.name}</DialogTitle>
+                <DialogDescription>Two events in a body that fits.</DialogDescription>
+              </DialogHeader>
+              <DialogBody className='gap-2'>
+                {Array.from({ length: 2 }, (_, i) => (
+                  <div key={i} className='rounded-lg border border-border-subtle p-3'>
+                    <Meta>Event {i + 1} of 2.</Meta>
+                  </div>
+                ))}
               </DialogBody>
               <DialogFooter>
                 <Button>Draft outreach</Button>
