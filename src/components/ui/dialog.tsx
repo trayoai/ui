@@ -4,6 +4,7 @@ import * as React from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { InDialogContext } from '../../lib/dialog-context'
 import { EntityScaleContext } from '../../lib/entity-scale'
 import { Button } from './button'
 
@@ -132,7 +133,7 @@ function DialogContent({
         )}
         {...props}
       >
-        {children}
+        <InDialogContext.Provider value={true}>{children}</InDialogContext.Provider>
         {showCloseButton && (
           // The same close control as the toast's — a bare 28px `quiet` circle
           // with a muted glyph that resolves on hover — so every dismissable
@@ -208,7 +209,11 @@ function DialogBody({ className, ...props }: React.ComponentProps<'div'>) {
         data-overflowing={overflowing ? '' : undefined}
         className={cn(
           'flex max-h-[60vh] flex-col gap-4 overflow-y-auto py-4',
-          className
+          className,
+          // While the rules are drawn the body keeps its 16px above and
+          // below, whatever the caller set: `<PersonDialog>` passes `py-0`,
+          // which put the first line of content hard against the top rule.
+          'data-[overflowing]:py-4'
         )}
         {...props}
       />

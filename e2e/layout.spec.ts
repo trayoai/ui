@@ -516,6 +516,124 @@ test.describe('StatBand by its own width', () => {
   })
 })
 
+// A company given as the top bar's brand was drawn as a list row: a 48px
+// logo beside a 14px name, which made the app's own name the smallest thing
+// on the bar.
+test('the top bar draws its brand for a bar: an 18px name beside a 32px logo', async ({ page }) => {
+  await open(page, '?bar=1')
+  const brand = page.locator('[data-slot=top-bar-brand]')
+  await expect(brand).toBeVisible()
+  expect(await brand.locator('[data-slot=entity-name]').evaluate((el) => getComputedStyle(el).fontSize)).toBe('18px')
+  expect(Math.round((await brand.locator('[data-slot=company-logo]').boundingBox())!.width)).toBe(32)
+  await expect(brand.locator('[data-slot=company-meta]')).toBeHidden()
+  expect((await page.locator('[data-slot=top-bar]').boundingBox())!.height).toBeLessThanOrEqual(64)
+})
+
+// A page header was `plain` in five apps of seven: it was the default, and
+// the brand band was never chosen. The brand now decides.
+test.describe('a PageHeader takes what it stands on from the brand', () => {
+  const header = (page: Page) => page.locator('[data-layout-case="page-header-brand"] [data-slot=page-header]')
+  const brand = (page: Page, value: string | null) =>
+    page.evaluate((v) => {
+      if (v == null) document.documentElement.removeAttribute('data-brand-header')
+      else document.documentElement.setAttribute('data-brand-header', v)
+    }, value)
+
+  test('with no brand it is plain', async ({ page }) => {
+    await open(page)
+    await expect(header(page)).toHaveAttribute('data-variant', 'plain')
+  })
+
+  for (const style of ['band', 'card', 'plain']) {
+    test(`a brand set to ${style} gives every unset header that style`, async ({ page }) => {
+      await open(page)
+      await brand(page, style)
+      await expect(header(page)).toHaveAttribute('data-variant', style)
+      expect(await escapees(page, '[data-layout-case="page-header-brand"]')).toEqual([])
+    })
+  }
+
+  test('a header that sets its own variant keeps it', async ({ page }) => {
+    await open(page)
+    await brand(page, 'band')
+    await expect(
+      page.locator('[data-layout-case="page-header-card-actions"] [data-slot=page-header]')
+    ).toHaveAttribute('data-variant', 'card')
+  })
+
+  test('with band headers a person banner steps down to soft, and is solid otherwise', async ({ page }) => {
+    await open(page)
+    const banner = page.locator('[data-layout-case="person-banner-dialog-width"] [data-slot=person-banner]')
+    await expect(banner).toHaveAttribute('data-tone', 'solid')
+    await brand(page, 'band')
+    await expect(banner).toHaveAttribute('data-tone', 'soft')
+    await brand(page, 'card')
+    await expect(banner).toHaveAttribute('data-tone', 'solid')
+  })
+})
+
+// Every note in every app had the diagonal lines: it was the default and
+// nothing gave a builder a reason to choose. The brand now decides.
+test.describe('a Callout takes its texture from the brand', () => {
+  const shown = (page: Page) =>
+    page.locator('[data-layout-case="callout-action-narrow"] [data-slot=callout]').evaluate((el) =>
+      Array.from(el.querySelectorAll<HTMLElement>('[data-texture-layer]'))
+        .filter((layer) => getComputedStyle(layer).display !== 'none')
+        .map((layer) => layer.dataset.textureLayer)
+    )
+  const brand = (page: Page, value: string | null) =>
+    page.evaluate((v) => {
+      if (v == null) document.documentElement.removeAttribute('data-brand-texture')
+      else document.documentElement.setAttribute('data-brand-texture', v)
+    }, value)
+
+  test('with no brand it is the plain wash', async ({ page }) => {
+    await open(page)
+    await brand(page, null)
+    expect(await shown(page)).toEqual(['wash'])
+  })
+
+  for (const texture of ['diagonal', 'dots', 'wash']) {
+    test(`a brand set to ${texture} shows that one and only that one`, async ({ page }) => {
+      await open(page)
+      await brand(page, texture)
+      expect(await shown(page)).toEqual([texture])
+    })
+  }
+
+  test('a brand set to none shows nothing', async ({ page }) => {
+    await open(page)
+    await brand(page, 'none')
+    expect(await shown(page)).toEqual([])
+  })
+})
+
+// A card built for a page is out of scale in a dialog: a PostCard drew its
+// author at 96px under a banner that already showed the same person.
+test.describe('a PostCard by where it is', () => {
+  const author = (root: ReturnType<Page['locator']>) => ({
+    face: root.locator('[data-slot=person-avatar]').first(),
+    name: root.getByText('Dana Whitfield', { exact: true }).first(),
+  })
+
+  test('on a page the author leads: a 96px face and a 24px name', async ({ page }) => {
+    await open(page)
+    const a = author(page.locator('[data-layout-case="post-card-narrow"]'))
+    expect(Math.round((await a.face.boundingBox())!.width)).toBe(96)
+    expect(await a.name.evaluate((el) => getComputedStyle(el).fontSize)).toBe('24px')
+  })
+
+  test('in a dialog the author is a row: a 48px face and a 14px name', async ({ page }) => {
+    const content = await openDialog(page, 'post-card')
+    const card = content.locator('[data-slot=dialog-body] [data-slot=surface]')
+    const a = author(card)
+    expect(Math.round((await a.face.boundingBox())!.width)).toBe(48)
+    expect(await a.name.evaluate((el) => getComputedStyle(el).fontSize)).toBe('14px')
+    expect(await card.locator('[data-slot=entity-lead]').count()).toBe(0)
+    expect(await escapees(page, '[data-slot=dialog-content]')).toEqual([])
+  })
+})
+
 // A dialog is read, so it sits on the lightest surface, not the page's canvas.
 test('a dialog is on the card surface, lighter than the page behind it', async ({ page }) => {
   const content = await openDialog(page, 'facts')
@@ -622,6 +740,15 @@ test.describe('EvidenceItem', () => {
     expect(second.y - (first.y + first.height)).toBeGreaterThanOrEqual(0)
     expect(await items.nth(1).evaluate((el) => getComputedStyle(el).paddingTop)).toBe('20px')
   })
+})
+
+test('a scrolling person dialog keeps its content clear of the rule under the banner', async ({ page }) => {
+  const content = await openDialog(page, 'tall-person')
+  const top = (await content.locator('[data-slot=dialog-body-rule][data-edge=top]').boundingBox())!
+  const first = (await content.locator('[data-tall-row]').first().boundingBox())!
+  const banner = (await content.locator('[data-slot=person-banner]').boundingBox())!
+  expect(first.y - (top.y + top.height)).toBeGreaterThanOrEqual(15)
+  expect(top.y).toBeGreaterThanOrEqual(banner.y + banner.height)
 })
 
 test('a dialog body that fits has no rules', async ({ page }) => {

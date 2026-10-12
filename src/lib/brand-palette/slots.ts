@@ -160,6 +160,16 @@ export const BRAND_ATTRIBUTE = 'data-brand'
 export const BRAND_SHELL_ATTRIBUTE = 'data-brand-shell'
 /** Set beside `data-brand` when the palette overrides the page surfaces and text. */
 export const BRAND_SURFACES_ATTRIBUTE = 'data-brand-surfaces'
+/**
+ * Set by `applyBrand`: which texture a `<Callout>` with no `texture` of its
+ * own draws. One per brand, so two apps do not share a pattern by default.
+ */
+export const BRAND_TEXTURE_ATTRIBUTE = 'data-brand-texture'
+/**
+ * Set by `applyBrand`: what a `<PageHeader>` with no `variant` of its own
+ * stands on (`plain`, `card` or `band`). One per brand, like the texture.
+ */
+export const BRAND_HEADER_ATTRIBUTE = 'data-brand-header'
 /** Marks an element (the AppShell top bar, a sidebar) that takes the brand shell colour. */
 export const SHELL_REGION_ATTRIBUTE = 'data-shell-region'
 

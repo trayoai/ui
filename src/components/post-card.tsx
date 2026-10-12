@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { ExternalLink } from 'lucide-react'
 import { cn } from '../lib/cn'
+import { useInDialog } from '../lib/dialog-context'
 import { Person, type PersonLike } from './person'
 import { Surface } from './surfaces'
 import { Button } from './ui/button'
@@ -22,6 +23,13 @@ export interface PostCardProps extends Omit<React.ComponentProps<typeof Surface>
   note?: React.ReactNode
   /** Beside the author: one action or a score. */
   actions?: React.ReactNode
+  /**
+   * Draws the author as a list row (a 48px face, the name at 14px) in place
+   * of the lead layout (a 96px face, the name at 24px). On by default inside
+   * a dialog, where the lead layout is out of scale and the person is
+   * usually in the dialog's own header already.
+   */
+  compact?: boolean
 }
 
 /** Past this many characters, or lines, the text is clamped behind a switch. */
@@ -32,7 +40,8 @@ const LONG_POST_LINES = 4
  * A post and the person who wrote it: the source a screen is built on, or
  * the post behind one row. The author leads at the larger face, the text
  * keeps its line breaks and is clamped to four lines until asked for, and
- * the link out sits in the header.
+ * the link out sits in the header. Inside a dialog the author is a list row,
+ * at the size of everything else in it.
  */
 export function PostCard({
   author,
@@ -43,8 +52,11 @@ export function PostCard({
   linkLabel = 'Open post',
   note,
   actions,
+  compact,
   ...props
 }: PostCardProps) {
+  const inDialog = useInDialog()
+  const small = compact ?? inDialog
   const [open, setOpen] = React.useState(false)
   const long = text.length > LONG_POST || text.split('\n').length > LONG_POST_LINES
   return (
@@ -63,7 +75,12 @@ export function PostCard({
       {...props}
     >
       <div className='flex flex-col gap-3'>
-        <Person person={author} variant='lead' href={author.profileUrl ?? undefined} actions={actions} />
+        <Person
+          person={author}
+          variant={small ? 'row' : 'lead'}
+          href={author.profileUrl ?? undefined}
+          actions={actions}
+        />
         <p
           className={cn(
             'text-body whitespace-pre-line text-text-primary',

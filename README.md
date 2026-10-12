@@ -453,7 +453,10 @@ and a `<JobMove>` under it.
 
 A post with its author is `<PostCard>`. It draws the author in the lead layout,
 keeps the text's line breaks and clamps it to four lines behind a "Show more"
-switch, and puts the link out in the header.
+switch, and puts the link out in the header. Inside a dialog it draws the
+author as a list row (a 48px face, the name at 14px), at the scale of the rest
+of the dialog; `compact` asks for that anywhere, and `compact={false}` keeps the
+lead layout in a dialog.
 
 ```tsx
 <PostCard
@@ -617,9 +620,16 @@ subtitle beside it, for inner views; `size="large"` (32px) for a header on a
 card; `size="lead"` (40px, with a 16px subtitle stacked under it) for a tool's
 main screen, where the title should still read in a thumbnail. An `eyebrow`
 sits above the title, an `icon` on a tile before it, and `stats` puts up to
-four bare figures on the right. `variant` sets what the header stands on:
+four bare figures on the right. `variant` is what the header stands on:
 `plain` (the page), `card` (a sheet of its own) or `band` (the brand
-container). Pick one treatment for the whole app.
+container). Leave it unset. Every header then takes the brand's, which
+`applyBrand` derives from the primary colour and sets on the root as
+`data-brand-header`: a colour with a hue gets the band two times in three and
+the card the third, and a black or grey one stays `plain`, since its container
+is a grey. With no brand applied it is `plain`.
+`applyBrand(document, input, { header: 'band' })` chooses for the app; the prop
+overrides one header. Where the headers are a band, a `<PersonBanner>` with no
+`tone` steps down to `soft`, so a screen never has two filled brand blocks.
 
 ```tsx
 <PageHeader
@@ -901,10 +911,14 @@ size them per instance.
 The note box: "how this was built", a coverage caveat, a data limit, a result
 that cleared the bar. A short `title` as the eyebrow, one to three lines of
 body, at most one `action`. Tones `note` (default) `info` `success` `warning`
-`destructive`; `compact` puts title and body on one line. `texture` sets what
-is drawn behind the copy, in the tone's colour: `diagonal` (default), `dots`,
-`wash` (the tone deepening toward the right, no pattern) or `none`. Pick one
-for the whole app.
+`destructive`; `compact` puts title and body on one line. `texture` is what is
+drawn behind the copy, in the tone's colour: `diagonal`, `dots`, `wash` (the
+tone deepening toward the right, no pattern) or `none`. Leave it unset. Every
+note then takes the brand's texture, which `applyBrand` derives from the
+primary colour and sets on the root as `data-brand-texture`, so one app is
+consistent and two apps do not share a pattern by default. With no brand
+applied it is the wash. `applyBrand(document, input, { texture: 'dots' })`
+chooses for the app; the prop overrides one note.
 
 ```tsx
 <Callout title="How this was built" action={<a href="/method">Full method</a>}>

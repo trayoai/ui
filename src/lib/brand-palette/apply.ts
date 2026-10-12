@@ -8,7 +8,30 @@ import {
   type BrandPaletteInput,
   type ResolvedBrandPalette
 } from './resolve'
-import { BRAND_ATTRIBUTE, BRAND_SHELL_ATTRIBUTE, BRAND_SURFACES_ATTRIBUTE } from './slots'
+import {
+  BRAND_ATTRIBUTE,
+  BRAND_SHELL_ATTRIBUTE,
+  BRAND_HEADER_ATTRIBUTE,
+  BRAND_SURFACES_ATTRIBUTE,
+  BRAND_TEXTURE_ATTRIBUTE
+} from './slots'
+import { parseHex, toOklch } from './color'
+import { fnv1a } from '../hash'
+
+/** The textures a brand can be given. `none` is a choice, never a derived one. */
+export const BRAND_TEXTURES = ['diagonal', 'dots', 'wash'] as const
+export type BrandTexture = (typeof BRAND_TEXTURES)[number]
+
+/**
+ * The texture a brand's notes are drawn on, derived from its primary colour.
+ * Every app used to have the diagonal lines, because that was the default
+ * and nothing gave a builder a reason to choose. A hash of the colour is
+ * arbitrary, and that is the point: it is stable for one company and spreads
+ * companies across the three, with no decision for anyone to skip.
+ */
+export function brandTexture(palette: Pick<ResolvedBrandPalette, 'slots'>): BrandTexture {
+  return BRAND_TEXTURES[fnv1a(palette.slots.primary.toLowerCase()) % BRAND_TEXTURES.length]
+}
 
 /** The subset of `Document` `applyBrand` touches, so it can run against a stub in tests. */
 export interface BrandDocument {
@@ -30,9 +53,43 @@ export interface ApplyBrandOptions extends ContractOptions {
   dialect?: Dialect | keyof typeof DIALECT_PRESETS
   /** The canvas tint strength; see `BrandPaletteInput.canvas`. */
   canvas?: BrandPaletteInput['canvas']
+  /**
+   * The texture behind a `<Callout>` that sets none. Omitted, it is derived
+   * from the primary colour (`brandTexture`); `'none'` leaves the flat tint.
+   */
+  texture?: BrandTexture | 'none'
+  /**
+   * What a `<PageHeader>` that sets no `variant` stands on. Omitted, it is
+   * derived from the primary colour (`brandHeader`).
+   */
+  header?: BrandHeaderStyle
 }
 
 const STYLE_ID = 'trayo-brand'
+
+/** What a brand's page header can stand on. */
+export const BRAND_HEADERS = ['plain', 'card', 'band'] as const
+export type BrandHeaderStyle = (typeof BRAND_HEADERS)[number]
+
+/** Under this OKLCH chroma a primary is a grey, and its container is one too. */
+const HEADER_NEUTRAL_CHROMA = 0.04
+
+/**
+ * What a brand's page header stands on, derived from its primary colour.
+ * Builders left it at `plain` almost every time, so the brand band, the one
+ * header that makes a tool look like the company's own, was never seen.
+ *
+ * A primary with a hue gets the band two times in three and its own card the
+ * third. A black, white or grey primary gets `plain`: its container is a
+ * grey, and a grey band at the top of a page reads as a disabled one.
+ */
+export function brandHeader(palette: Pick<ResolvedBrandPalette, 'slots'>): BrandHeaderStyle {
+  const primary = palette.slots.primary.toLowerCase()
+  const rgb = parseHex(primary)
+  if (!rgb || toOklch(rgb).c < HEADER_NEUTRAL_CHROMA) return 'plain'
+  // A different salt from the texture's, so the two do not move together.
+  return fnv1a(`header:${primary}`) % 3 === 2 ? 'card' : 'band'
+}
 
 /**
  * Brands a document in one call — the whole sequence a build agent would
@@ -47,7 +104,7 @@ const STYLE_ID = 'trayo-brand'
 export function applyBrand(
   doc: BrandDocument,
   contract: BrandThemeContract | BrandPaletteInput,
-  { theme = 'auto', dialect, canvas, ...contractOptions }: ApplyBrandOptions = {}
+  { theme = 'auto', dialect, canvas, texture, header, ...contractOptions }: ApplyBrandOptions = {}
 ): ResolvedBrandPalette {
   // A raw BrandPaletteInput can carry every contract field too; mapping it
   // through the contract must not lose the fields only the raw shape has.
@@ -78,6 +135,8 @@ export function applyBrand(
     doc.head.append(style)
   }
   for (const [k, v] of Object.entries(brandAttributes(palette))) root.setAttribute(k, v)
+  root.setAttribute(BRAND_TEXTURE_ATTRIBUTE, texture ?? brandTexture(palette))
+  root.setAttribute(BRAND_HEADER_ATTRIBUTE, header ?? brandHeader(palette))
   root.classList.toggle('dark', theme === 'dark' || (theme === 'auto' && palette.theme === 'dark'))
   const dialectValue = typeof dialect === 'string' ? DIALECT_PRESETS[dialect] : dialect
   if (dialectValue)
@@ -89,7 +148,9 @@ export function applyBrand(
 export const BRAND_ROOT_ATTRIBUTES = [
   BRAND_ATTRIBUTE,
   BRAND_SHELL_ATTRIBUTE,
-  BRAND_SURFACES_ATTRIBUTE
+  BRAND_SURFACES_ATTRIBUTE,
+  BRAND_TEXTURE_ATTRIBUTE,
+  BRAND_HEADER_ATTRIBUTE
 ] as const
 
 function pick<T extends object, K extends keyof T>(obj: T, keys: K[]): Partial<Pick<T, K>> {

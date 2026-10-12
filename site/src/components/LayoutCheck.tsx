@@ -145,14 +145,26 @@ export function LayoutCheck() {
   // `?dialog=<mode>` opens one dialog case; read after mount so the server
   // and client render the same markup.
   const [dialog, setDialog] = useState<string | null>(null)
+  // `?bar=1` gives the shell a top bar with a company as its brand.
+  const [bar, setBar] = useState(false)
   const [ready, setReady] = useState(false)
   useEffect(() => {
     setDialog(new URLSearchParams(window.location.search).get('dialog'))
+    setBar(new URLSearchParams(window.location.search).has('bar'))
     setReady(true)
   }, [])
 
   return (
-    <AppShell>
+    <AppShell
+      brand={
+        bar ? (
+          <>
+            <Company company={RAMP} />
+            <Badge variant='soft'>Community</Badge>
+          </>
+        ) : undefined
+      }
+    >
       <PageContainer>
         <div data-layout-ready={ready ? '' : undefined}>
           <Case name='page-header-band-stats' width={320}>
@@ -169,6 +181,19 @@ export function LayoutCheck() {
                 { label: 'Phones', value: '5/6' },
               ]}
               actions={<Button variant='secondary'>Account brief</Button>}
+            />
+          </Case>
+          {/* No `variant`: the brand on the root decides what it stands on. */}
+          <Case name='page-header-brand' width={720}>
+            <PageHeader
+              size='lead'
+              eyebrow='LinkedIn · 12 Sept 2026 – 12 Oct 2026'
+              title='Community seeding list'
+              subtitle='Who is talking in public about corporate cards and spend management.'
+              stats={[
+                { label: 'Posts scanned', value: 185 },
+                { label: 'People ranked', value: 24 },
+              ]}
             />
           </Case>
           <Case name='page-header-card-actions' width={320}>
@@ -882,6 +907,28 @@ export function LayoutCheck() {
               </DialogBody>
             </DialogContent>
           </Dialog>
+
+          {/* A post inside a dialog about its author: the banner already has
+              the person at full size, so the card draws them as a row. */}
+          <PersonDialog person={DANA} open={dialog === 'post-card'}>
+            <PostCard
+              author={DANA}
+              title='Most-engaged post in the window'
+              published='Published 16 September 2026'
+              href='https://example.com/post'
+              text={LONG_SUMMARY}
+            />
+          </PersonDialog>
+
+          {/* A person dialog with more than fits. It sets no padding on its
+              body, so the content sat against the rule under the banner. */}
+          <PersonDialog person={DANA} open={dialog === 'tall-person'}>
+            {Array.from({ length: 30 }, (_, i) => (
+              <div key={i} data-tall-row className='rounded-lg border border-border-subtle p-3'>
+                <Meta>Fact {i + 1} of 30.</Meta>
+              </div>
+            ))}
+          </PersonDialog>
 
           {/* A body that fits: no rule under it. */}
           <Dialog open={dialog === 'short-body'}>
