@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Mail, MapPin, Phone, UserRound } from 'lucide-react'
+import { useBrandHeader } from '../lib/brand-header'
 import { cn } from '../lib/cn'
 import { useEntityScale } from '../lib/entity-scale'
 import { CardFooterSlot } from './card-footer-slot'
@@ -467,9 +468,12 @@ export interface PersonBannerProps {
   contacted?: boolean
   href?: string
   /**
-   * `solid` (default) is the brand fill. `soft` is the brand container: the
-   * same band in the pale tint. `plain` is an ordinary card with no fill or
-   * texture, for a page that already has a brand block or should stay neutral.
+   * `solid` is the brand fill. `soft` is the brand container: the same band
+   * in the pale tint. `plain` is an ordinary card with no fill or texture,
+   * for a page that already has a brand block or should stay neutral.
+   * Unset, it is `solid`, except in an app whose brand gives its page
+   * headers the band: two filled brand blocks on one screen compete, so the
+   * banner steps down to `soft` there.
    */
   tone?: 'solid' | 'soft' | 'plain'
   /**
@@ -498,10 +502,12 @@ export function PersonBanner({
   actions,
   contacted,
   href,
-  tone = 'solid',
+  tone: toneProp,
   size = 'default',
   className,
 }: PersonBannerProps) {
+  const brandHeader = useBrandHeader()
+  const tone = toneProp ?? (brandHeader === 'band' ? 'soft' : 'solid')
   const nameClass = 'text-section truncate text-text-primary'
   const soft = tone === 'soft'
   const plain = tone === 'plain'

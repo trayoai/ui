@@ -7,6 +7,8 @@ export {
   BRAND_SHELL_TOKENS,
   BRAND_SLOTS,
   BRAND_SURFACES_ATTRIBUTE,
+  BRAND_TEXTURE_ATTRIBUTE,
+  BRAND_HEADER_ATTRIBUTE,
   BRAND_SURFACE_TOKENS,
   BRAND_TOKENS,
   SHELL_REGION_ATTRIBUTE,
@@ -51,5 +53,16 @@ export {
   type DialectOption
 } from './dialect'
 export { brandFromWorkspace, type WorkspaceBrand, type WorkspaceBrandMapping } from './workspace'
-export { applyBrand, BRAND_ROOT_ATTRIBUTES, type ApplyBrandOptions, type BrandDocument } from './apply'
+export {
+  applyBrand,
+  brandHeader,
+  brandTexture,
+  BRAND_HEADERS,
+  BRAND_ROOT_ATTRIBUTES,
+  BRAND_TEXTURES,
+  type ApplyBrandOptions,
+  type BrandDocument,
+  type BrandHeaderStyle,
+  type BrandTexture
+} from './apply'
 export { contrast, parseHex } from './color'

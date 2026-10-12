@@ -40,11 +40,14 @@ export interface CalloutProps
    */
   compact?: boolean
   /**
-   * What is drawn behind the copy, in the tone's own colour. `diagonal`
-   * (default) is fine lines fading in toward the right. `dots` is the dot grid
-   * against the right edge. `wash` is the tone deepening toward the right,
-   * with no pattern. `none` is the flat tint alone, for a long note or one
-   * that sits beside a busy panel.
+   * What is drawn behind the copy, in the tone's own colour. Leave it unset
+   * and the brand decides: `applyBrand` gives each company one of the three
+   * patterns, so every note in an app matches and two apps do not look alike
+   * by default (with no brand applied it is the `wash`). Set it to override
+   * one note. `diagonal` is fine lines fading in toward the right. `dots` is
+   * the dot grid against the right edge. `wash` is the tone deepening toward
+   * the right, with no pattern. `none` is the flat tint alone, for a long
+   * note or one that sits beside a busy panel.
    */
   texture?: CalloutTexture
 }
@@ -88,6 +91,16 @@ const TEXTURE: Record<Exclude<CalloutTexture, 'none'>, string> = {
   wash: 'bg-[image:linear-gradient(115deg,transparent_45%,color-mix(in_oklab,currentColor_18%,transparent))]',
 }
 
+// Which layer shows for which `data-brand-texture` on an ancestor. The wash
+// is the one for no brand at all, and for a brand set to `none` nothing shows.
+const BRAND_LAYER: Record<Exclude<CalloutTexture, 'none'>, string> = {
+  diagonal: 'hidden [[data-brand-texture=diagonal]_&]:block',
+  dots: 'hidden [[data-brand-texture=dots]_&]:block',
+  // One rule, not a hide and a show: the two would have equal weight and
+  // the stylesheet's order would decide between them.
+  wash: '[[data-brand-texture]:not([data-brand-texture=wash])_&]:hidden',
+}
+
 /**
  * An explanatory note, caveat or status panel. Give it a short `title`, one
  * to three lines of body copy as children, and at most one `action`.
@@ -107,7 +120,7 @@ export function Callout({
   icon,
   action,
   compact = false,
-  texture = 'diagonal',
+  texture,
   role,
   className,
   children,
@@ -118,7 +131,7 @@ export function Callout({
     <div
       data-slot='callout'
       data-tone={tone}
-      data-texture={texture}
+      data-texture={texture ?? 'brand'}
       role={role ?? (tone === 'destructive' ? 'alert' : 'note')}
       className={cn(
         // `isolate overflow-hidden` keeps the texture layer inside the panel.
@@ -131,12 +144,25 @@ export function Callout({
     >
       {/* The texture layer, in the tone's own colour: each one fades in from
           the right, so it never sits behind the start of a line. */}
-      {texture !== 'none' && (
-        <span
-          aria-hidden
-          className={cn('pointer-events-none absolute inset-0 -z-10', TEXTURE[texture], t.icon)}
-        />
-      )}
+      {texture == null
+        ? // The brand's texture. All three layers are in the markup and the
+          // attribute `applyBrand` sets on the root shows one of them, so
+          // the choice needs no script here and is right on first paint.
+          (['diagonal', 'dots', 'wash'] as const).map((name) => (
+            <span
+              key={name}
+              aria-hidden
+              data-texture-layer={name}
+              className={cn('pointer-events-none absolute inset-0 -z-10', TEXTURE[name], t.icon, BRAND_LAYER[name])}
+            />
+          ))
+        : texture !== 'none' && (
+            <span
+              aria-hidden
+              data-texture-layer={texture}
+              className={cn('pointer-events-none absolute inset-0 -z-10', TEXTURE[texture], t.icon)}
+            />
+          )}
       {/* Icon and text wrap as one unit, and ask for 16rem before the action
           may share their line: in a narrow column a `shrink-0` action beside
           the text took a third of the panel and left the copy a few words

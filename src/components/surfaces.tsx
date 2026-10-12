@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Slot } from '@radix-ui/react-slot'
+import { useBrandHeader } from '../lib/brand-header'
 import { cn } from '../lib/cn'
 
 /**
@@ -74,7 +75,20 @@ export function AppShell({
             {brand != null && (
               <div
                 data-slot='top-bar-brand'
-                className='flex min-w-0 items-center gap-2 text-name text-text-primary'
+                // The app's name, at 18px: it is the one label on the bar that
+                // says where you are, and at the name role's 14px it read as
+                // small as the tag beside it. A `<Company>` given as the brand
+                // is drawn for a bar and not for a list: a 32px logo, where a
+                // row's 48px logo made the 14px name beside it look smaller
+                // still.
+                className={cn(
+                  'flex min-w-0 items-center gap-2 text-name text-lg text-text-primary',
+                  '[&_[data-slot=entity-name]]:text-lg',
+                  '[&_[data-slot=company-logo]]:size-8 [&_[data-slot=company-logo]]:rounded-md',
+                  '[&_[data-slot=entity-row]]:gap-2.5',
+                  // Its industry and headcount belong on a row or a card, not a bar.
+                  '[&_[data-slot=company-meta]]:hidden'
+                )}
               >
                 {brand}
               </div>
@@ -396,10 +410,11 @@ const PAGE_HEADER_VARIANT = {
  * a card or a screen that should lead without the hero size. Inner views
  * keep the default.
  *
- * `variant` changes what the header stands on: `plain` (the page), `card` (a
- * sheet of its own) or `band` (the brand container). `stats` puts a few bare
- * figures on the right, for counts that describe the page without needing
- * tiles. Pick one variant for the whole app.
+ * `variant` is what the header stands on: `plain` (the page), `card` (a
+ * sheet of its own) or `band` (the brand container). Leave it unset and the
+ * brand decides, one for the whole app (`plain` when no brand is applied);
+ * set it to override. `stats` puts a few bare figures on the right, for
+ * counts that describe the page without needing tiles.
  */
 export function PageHeader({
   title,
@@ -410,7 +425,7 @@ export function PageHeader({
   stats,
   actions,
   size = 'default',
-  variant = 'plain',
+  variant: variantProp,
   className,
   ...props
 }: Omit<React.ComponentProps<'header'>, 'title'> & {
@@ -428,6 +443,10 @@ export function PageHeader({
   size?: 'default' | 'large' | 'lead'
   variant?: keyof typeof PAGE_HEADER_VARIANT
 }) {
+  // With no `variant` the brand decides (see `brandHeader`): `applyBrand`
+  // writes its choice on the root and every header in the app follows it.
+  const brandVariant = useBrandHeader()
+  const variant = variantProp ?? brandVariant
   const lead = size === 'lead'
   const large = size === 'large'
   const line = subtitle ?? description

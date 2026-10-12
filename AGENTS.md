@@ -123,16 +123,17 @@ the wrong place or not at all. Nothing errors at build time.
     default. A tool's main screen takes `<PageHeader size="lead">` (40px, an
     `eyebrow` above, a one-sentence `subtitle` below) so it reads in a
     screenshot; inner views keep the default size, and `size="large"` is the
-    step between. The title is three to six words. `variant` is `plain` |
-    `card` | `band` (the brand container): pick one for the whole app, and
-    never put a `band` header and a solid `<PersonBanner>` on one screen. The same goes for the textures: `bg-dot-grid` fills the empty
+    step between. The title is three to six words. Leave `variant` unset:
+    `applyBrand` gives the company `plain`, `card` or `band` (the brand
+    container) for every header in the app, and a `<PersonBanner>` steps
+    down to its soft tone where the headers are a band. The same goes for the textures: `bg-dot-grid` fills the empty
     part of a screen (an empty state, an idle panel), never the space behind
     a table or body text.
 
 11. **Notes go in `<Callout>`.** "How this was built", a coverage caveat, a
     data limit, a target met: `<Callout tone="note|info|success|warning|destructive">`,
-    never a hand-made bordered div. Its `texture` is `diagonal` (default) |
-    `dots` | `wash` | `none`: one for the whole app. How the data was made,
+    never a hand-made bordered div. Leave its `texture` unset: `applyBrand`
+    gives the company one for the whole app. How the data was made,
     when it has numbers (rows returned, kept, sources), is a `<MethodNote>`:
     `points` as figures, `flow` for a sequence, the prose as children behind
     its switch. A caveat or a warning stays a `<Callout>`.

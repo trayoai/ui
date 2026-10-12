@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest'
 
 import {
   applyBrand,
+  brandHeader,
+  brandTexture,
+  BRAND_HEADERS,
+  BRAND_TEXTURES,
   checkDialect,
   resolveBrandPalette,
   DIALECT_PRESETS,
@@ -122,6 +126,80 @@ describe('applyBrand', () => {
     expect(() => applyBrand(doc, { ...slack, primary: 'aubergine' })).toThrow(/invalid brand palette/)
     expect(styles).toHaveLength(0)
     expect(attrs.size).toBe(0)
+  })
+})
+
+describe('brand texture', () => {
+  const primaries = ['#635bff', '#15191e', '#00b3fe', '#171717', '#3ecf8e', '#c5b1f9', '#e4f222', '#7f3add', '#7a005d']
+  const textureOf = (primary: string) => brandTexture(resolveBrandPalette({ primary }))
+
+  it('applyBrand sets one of the three on the root, derived from the primary', () => {
+    const { doc, attrs } = fakeDocument()
+    const palette = applyBrand(doc, { primary: '#635bff' })
+    expect(BRAND_TEXTURES).toContain(attrs.get('data-brand-texture'))
+    expect(attrs.get('data-brand-texture')).toBe(brandTexture(palette))
+  })
+
+  it('is the same for a colour however it is written, and every time', () => {
+    expect(textureOf('#635BFF')).toBe(textureOf('#635bff'))
+    expect(textureOf('#635bff')).toBe(textureOf('#635bff'))
+  })
+
+  it('spreads brands across all three, so two apps do not share one by default', () => {
+    expect(new Set(primaries.map(textureOf)).size).toBe(BRAND_TEXTURES.length)
+  })
+
+  it('the option overrides the derived one, and none is allowed', () => {
+    const { doc, attrs } = fakeDocument()
+    applyBrand(doc, { primary: '#635bff' }, { texture: 'dots' })
+    expect(attrs.get('data-brand-texture')).toBe('dots')
+    applyBrand(doc, { primary: '#635bff' }, { texture: 'none' })
+    expect(attrs.get('data-brand-texture')).toBe('none')
+  })
+
+  it('a second brand replaces the first one\'s texture', () => {
+    const { doc, attrs } = fakeDocument()
+    applyBrand(doc, { primary: '#635bff' }, { texture: 'dots' })
+    applyBrand(doc, { primary: '#15191e' })
+    expect(attrs.get('data-brand-texture')).toBe(textureOf('#15191e'))
+  })
+})
+
+describe('brand header', () => {
+  const headerOf = (primary: string) => brandHeader(resolveBrandPalette({ primary }))
+
+  it('applyBrand sets it on the root, derived from the primary', () => {
+    const { doc, attrs } = fakeDocument()
+    const palette = applyBrand(doc, { primary: '#635bff' })
+    expect(BRAND_HEADERS).toContain(attrs.get('data-brand-header'))
+    expect(attrs.get('data-brand-header')).toBe(brandHeader(palette))
+  })
+
+  it('a black or grey primary gets the plain header, never a grey band', () => {
+    for (const grey of ['#000000', '#15191e', '#171717', '#222326', '#808080']) {
+      expect(headerOf(grey)).toBe('plain')
+    }
+  })
+
+  it('a primary with a hue gets the band or the card, and brands land on both', () => {
+    const chromatic = ['#635bff', '#00b3fe', '#3ecf8e', '#c5b1f9', '#e4f222', '#e01e5a', '#fb0f01', '#4a8cff', '#7f3add']
+    const styles = chromatic.map(headerOf)
+    expect(styles).not.toContain('plain')
+    expect(new Set(styles)).toEqual(new Set(['band', 'card']))
+    // The band is the more common of the two.
+    expect(styles.filter((s) => s === 'band').length).toBeGreaterThan(styles.filter((s) => s === 'card').length)
+  })
+
+  it('is the same for a colour however it is written', () => {
+    expect(headerOf('#635BFF')).toBe(headerOf('#635bff'))
+  })
+
+  it('the option overrides the derived one, and a second brand replaces it', () => {
+    const { doc, attrs } = fakeDocument()
+    applyBrand(doc, { primary: '#15191e' }, { header: 'band' })
+    expect(attrs.get('data-brand-header')).toBe('band')
+    applyBrand(doc, { primary: '#15191e' })
+    expect(attrs.get('data-brand-header')).toBe('plain')
   })
 })
 
