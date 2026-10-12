@@ -745,10 +745,43 @@ test.describe('EvidenceItem', () => {
 test('a scrolling person dialog keeps its content clear of the rule under the banner', async ({ page }) => {
   const content = await openDialog(page, 'tall-person')
   const top = (await content.locator('[data-slot=dialog-body-rule][data-edge=top]').boundingBox())!
-  const first = (await content.locator('[data-tall-row]').first().boundingBox())!
+  const first = (await content.locator('[data-first-note]').boundingBox())!
   const banner = (await content.locator('[data-slot=person-banner]').boundingBox())!
   expect(first.y - (top.y + top.height)).toBeGreaterThanOrEqual(15)
   expect(top.y).toBeGreaterThanOrEqual(banner.y + banner.height)
+})
+
+// The lead layout is sized for a page. Two of them in a dialog were the
+// largest things in it.
+test.describe('a lead Person by where it is', () => {
+  const measure = async (root: ReturnType<Page['locator']>) => ({
+    face: Math.round((await root.locator('[data-slot=person-avatar]').first().boundingBox())!.width),
+    name: await root.getByText('Dana Whitfield', { exact: true }).first().evaluate((el) => getComputedStyle(el).fontSize),
+  })
+
+  test('on a page: a 96px face and a 24px name', async ({ page }) => {
+    await open(page)
+    expect(await measure(page.locator('[data-layout-case="person-lead-narrow"]'))).toEqual({ face: 96, name: '24px' })
+  })
+
+  test('in a dialog: a 64px face and an 18px name', async ({ page }) => {
+    const content = await openDialog(page, 'leads')
+    expect(await measure(content.locator('[data-slot=dialog-body]'))).toEqual({ face: 64, name: '18px' })
+    expect(await escapees(page, '[data-slot=dialog-content]')).toEqual([])
+  })
+})
+
+// The body is a column with a height limit, which squeezed a child that
+// clips its own overflow down to a sliver before it would scroll.
+test('a scrolling dialog body does not squash a note at the top of it', async ({ page }) => {
+  const content = await openDialog(page, 'tall-person')
+  const note = content.locator('[data-first-note]')
+  const { height, natural } = await note.evaluate((el) => ({
+    height: el.getBoundingClientRect().height,
+    natural: el.scrollHeight,
+  }))
+  expect(height).toBeGreaterThanOrEqual(natural)
+  await expect(note.getByText('The budget owner was found')).toBeInViewport()
 })
 
 test('a dialog body that fits has no rules', async ({ page }) => {

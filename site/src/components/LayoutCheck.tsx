@@ -923,12 +923,32 @@ export function LayoutCheck() {
           {/* A person dialog with more than fits. It sets no padding on its
               body, so the content sat against the rule under the banner. */}
           <PersonDialog person={DANA} open={dialog === 'tall-person'}>
+            <Callout tone='success' title='Buyer in hand' data-first-note>
+              The budget owner was found, with a work email, without importing anyone.
+            </Callout>
             {Array.from({ length: 30 }, (_, i) => (
               <div key={i} data-tall-row className='rounded-lg border border-border-subtle p-3'>
                 <Meta>Fact {i + 1} of 30.</Meta>
               </div>
             ))}
           </PersonDialog>
+
+          {/* Two people in a dialog about a company, each as the lead of a
+              column: drawn a step smaller than on a page. */}
+          <Dialog open={dialog === 'leads'}>
+            <DialogContent size='large'>
+              <DialogHeader>
+                <DialogTitle>{RAMP.name}</DialogTitle>
+                <DialogDescription>The person who signed up, and who owns the budget.</DialogDescription>
+              </DialogHeader>
+              <DialogBody>
+                <div className='grid gap-6 sm:grid-cols-2'>
+                  <Person person={DANA} variant='lead' showContact />
+                  <Person person={{ ...DANA, id: 'p-9', name: 'Evan Escalle', title: 'Head of Finance' }} variant='lead' showContact />
+                </div>
+              </DialogBody>
+            </DialogContent>
+          </Dialog>
 
           {/* A body that fits: no rule under it. */}
           <Dialog open={dialog === 'short-body'}>

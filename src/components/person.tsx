@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { Mail, MapPin, Phone, UserRound } from 'lucide-react'
 import { useBrandHeader } from '../lib/brand-header'
+import { useInDialog } from '../lib/dialog-context'
 import { cn } from '../lib/cn'
 import { useEntityScale } from '../lib/entity-scale'
 import { CardFooterSlot } from './card-footer-slot'
@@ -112,12 +113,19 @@ export function Person({
   // An explicit `size` opts out: the name must not grow beside a face the
   // caller has pinned small.
   const large = useEntityScale() === 'large' && variant === 'row' && size == null
+  // The lead layout is sized for a page: a 96px face and a 24px name. In a
+  // dialog that is out of scale with everything around it, and there are
+  // often two of them side by side, so it steps down to a 64px face and an
+  // 18px name. An explicit `size` still wins.
+  const inDialog = useInDialog()
   const avatarSize: AvatarSize =
     size ??
     (variant === 'inline'
       ? 'sm'
       : variant === 'lead'
-        ? '2xl'
+        ? inDialog
+          ? 'xl'
+          : '2xl'
         : variant === 'stacked' || large
           ? 'xl'
           : 'lg')

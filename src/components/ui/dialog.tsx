@@ -208,7 +208,11 @@ function DialogBody({ className, ...props }: React.ComponentProps<'div'>) {
         data-slot='dialog-body'
         data-overflowing={overflowing ? '' : undefined}
         className={cn(
-          'flex max-h-[60vh] flex-col gap-4 overflow-y-auto py-4',
+          // `[&>*]:shrink-0`: the body is a column with a height limit, and a
+          // column squeezes its children before it scrolls. One that clips
+          // its own overflow (a `<Callout>`) has no minimum height to stop
+          // at, so it was crushed to a sliver with its text cut off.
+          'flex max-h-[60vh] flex-col gap-4 overflow-y-auto py-4 [&>*]:shrink-0',
           className,
           // While the rules are drawn the body keeps its 16px above and
           // below, whatever the caller set: `<PersonDialog>` passes `py-0`,

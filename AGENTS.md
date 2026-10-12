@@ -73,7 +73,9 @@ the wrong place or not at all. Nothing errors at build time.
    In a dialog, use `<PersonDialog>`: it places the banner and keeps the close
    button clear of it. The one person a panel is about (a post's author, an
    account's owner) is `<Person variant="lead">`, not a list row with a
-   bigger `size`. A post with its author is `<PostCard author text>`. An event or an
+   bigger `size`. Never set a `size` on a person inside a dialog: the kit
+   draws people a step smaller there (a lead is 64px, not 96px), and a
+   `<PersonDialog>` already has its subject at full size in the banner. A post with its author is `<PostCard author text>`. An event or an
    article shown as evidence (what fired, what happened, where it was
    reported, why it matters) is an `<EvidenceItem tags title source>` in an
    `<EvidenceList>`: never a hand-built stack of chips, a `<Meta>` and two

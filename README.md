@@ -423,7 +423,9 @@ variant="secondary"` there.
 
 The one person a panel is about (the author of a post, the owner of an account)
 is `<Person variant="lead">`: a 96px face with the ring, the name at page-title
-size, the title and the company each on a line. A list row stays the default.
+size, the title and the company each on a line. A list row stays the default. Inside
+a dialog the lead layout steps down on its own, to a 64px face and an 18px name:
+do not set a `size` on a person there.
 
 An event, an article or a post that backs a claim on the screen is an
 `<EvidenceItem>`, and several of them go in an `<EvidenceList>`. It owns the
